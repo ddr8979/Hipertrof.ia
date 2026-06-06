@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "./auth-provider";
-import { Home, Dumbbell, BookOpen, Apple, Users, User } from "lucide-react";
+import { Home, Dumbbell, BookOpen, Apple, Users, User, Shield } from "lucide-react";
 
 export function BottomNav() {
   const path = usePathname();
@@ -10,11 +10,13 @@ export function BottomNav() {
   if (!user) return null;
 
   const isTrainer = user.role === "TRAINER" || user.role === "ADMIN" || user.role === "OWNER";
+  const isOwnerOrAdmin = user.role === "ADMIN" || user.role === "OWNER";
 
   const links = isTrainer
     ? [
         { href: "/dashboard", label: "Inicio", Icon: Home },
         { href: "/trainer",   label: "Alumnos", Icon: Users },
+        ...(isOwnerOrAdmin ? [{ href: "/admin", label: "Admin", Icon: Shield }] : []),
         { href: "/ejercicios", label: "Manual", Icon: BookOpen },
         { href: "/perfil",    label: "Perfil", Icon: User },
       ]
