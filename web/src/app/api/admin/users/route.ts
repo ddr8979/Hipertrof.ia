@@ -35,8 +35,10 @@ export async function GET(req: NextRequest) {
 
 // PATCH /api/admin/users — aprueba o rechaza un usuario
 export async function PATCH(req: NextRequest) {
-  const session = await requireAdmin(req);
-  if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  const session = await getSession();
+  if (!session || session.role !== "ADMIN") {
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  }
 
   const { userId, approved } = await req.json();
   if (!userId || typeof approved !== "boolean") {

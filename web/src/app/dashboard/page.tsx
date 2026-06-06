@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
-import { Flame, Calendar, Dumbbell, Zap, Apple, Users, User, BarChart2 } from "lucide-react";
+import { Flame, Calendar, Dumbbell, Zap, Apple, Users, User, BarChart2, BookOpen } from "lucide-react";
 import { Mascota } from "@/components/mascota";
 
 type Profile = {
@@ -363,6 +363,23 @@ export default function Dashboard() {
             </div>
           </Link>
         )}
+
+        <Link href="/ejercicios" style={{ textDecoration: "none", gridColumn: "span 2" }}>
+          <div className="action-tile" style={{
+            background: "linear-gradient(135deg, rgba(0, 255, 135, 0.08), rgba(0, 198, 255, 0.03))",
+            border: "1px solid rgba(0, 255, 135, 0.18)",
+            display: "flex", flexDirection: "row", alignItems: "center", gap: 14, minHeight: 72, height: 72
+          }}>
+            <div className="tile-icon" style={{ background: "rgba(0, 255, 135, 0.12)", marginTop: 0 }}>
+              <BookOpen size={20} color="var(--brand)" />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <p className="tile-label" style={{ marginTop: 0, fontSize: "0.95rem" }}>Manual de Ejercicios</p>
+              <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Técnicas, GIFs e instrucciones</p>
+            </div>
+            <span style={{ marginLeft: "auto", color: "var(--brand)", fontSize: "1.2rem", fontWeight: 700 }}>→</span>
+          </div>
+        </Link>
       </div>
 
       {/* ── Trainer shortcut hero ── */}

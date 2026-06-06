@@ -14,6 +14,21 @@ function HomeIcon({ active }: { active: boolean }) {
   );
 }
 
+function DumbbellIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m6.5 6.5 11 11" />
+      <path d="m21 21-1-1" />
+      <path d="m3 3 1 1" />
+      <path d="m18.5 5.5 3 3-3.5 3.5-3-3 3.5-3.5Z" fill={active ? "currentColor" : "none"} strokeWidth={active ? 0 : 1.8} />
+      <path d="m18.5 5.5 3 3-3.5 3.5-3-3 3.5-3.5Z" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.8} />
+      <path d="m5.5 18.5 3 3-3.5 3.5-3-3 3.5-3.5Z" fill={active ? "currentColor" : "none"} strokeWidth={active ? 0 : 1.8} />
+      <path d="m5.5 18.5 3 3-3.5 3.5-3-3 3.5-3.5Z" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.8} />
+    </svg>
+  );
+}
+
 function BookIcon({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
@@ -75,7 +90,8 @@ export function BottomNav() {
 
   const links = [
     { href: "/dashboard", label: "Inicio", Icon: HomeIcon },
-    { href: "/rutinas",   label: "Mi entreno", Icon: BookIcon },
+    { href: "/rutinas",   label: "Mi entreno", Icon: DumbbellIcon },
+    { href: "/ejercicios", label: "Manual", Icon: BookIcon },
     { href: "/calorias",  label: "¿Qué comer?", Icon: CalcIcon },
     ...(isTrainer ? [{ href: "/trainer", label: "Mi profe", Icon: UsersIcon }] : []),
     { href: "/perfil",    label: "Perfil", Icon: ProfileIcon },

@@ -300,11 +300,6 @@ export async function GET() {
       data: { role: "ADMIN", isApproved: true }
     });
 
-    const total = await prisma.exercise.count();
-    if (total > 0) {
-      return NextResponse.json({ ok: true, message: "Base de datos ya poblada y roles actualizados", seeded: 0 });
-    }
-
     let count = 0;
     for (const ex of EXERCISES) {
       await prisma.exercise.upsert({
