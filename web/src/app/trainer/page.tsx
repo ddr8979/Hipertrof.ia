@@ -134,10 +134,10 @@ export default function TrainerPage() {
   // advanced create routine form
   const [progName, setProgName] = useState("");
   const [progDesc, setProgDesc] = useState("");
-  const [workouts, setWorkouts] = useState<WorkoutInput[]>([
-    { name: "[#7c3aed] Día 1", exercises: [] }
-  ]);
+  const [workouts, setWorkouts] = useState<WorkoutInput[]>([]);
   const [busy, setBusy] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
+  const [selectedDays, setSelectedDays] = useState<Record<string, string[]>>({});
 
   // expanded routines state for preview
   const [expandedPrograms, setExpandedPrograms] = useState<Record<string, boolean>>({});
@@ -279,7 +279,9 @@ export default function TrainerPage() {
         setToast({ msg: "Rutina creada ✅", type: "success" });
         setProgName("");
         setProgDesc("");
-        setWorkouts([{ name: "[#7c3aed] Día 1", exercises: [] }]);
+        setWorkouts([]);
+        setSelectedDays({});
+        setWizardStep(1);
         await load();
       } else {
         const d = await res.json();
@@ -610,362 +612,354 @@ export default function TrainerPage() {
       {/* ── RUTINAS ── */}
       {tab === "rutinas" && (
         <div className="anim-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {/* Create routine form */}
+          {/* Create routine wizard form */}
           <form onSubmit={createRoutine} className="glass card" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <p className="section-title" style={{ margin: 0 }}>Diseñador de rutinas</p>
-            <div className="field">
-              <label className="label">Nombre de la rutina</label>
-              <input className="input" value={progName} onChange={e => setProgName(e.target.value)}
-                placeholder="Ej. Tirón/Empuje/Piernas 3 días" required />
-            </div>
-            <div className="field">
-              <label className="label">Descripción (opcional)</label>
-              <textarea className="input" value={progDesc} onChange={e => setProgDesc(e.target.value)}
-                placeholder="Objetivo principal del plan, semanas recomendadas..." rows={2} />
+
+            {/* Wizard Steps indicator */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, paddingBottom: 12, borderBottom: "1px solid var(--border)" }}>
+              {[
+                { step: 1, title: "📋 Datos" },
+                { step: 2, title: "📅 Días" },
+                { step: 3, title: "🏋️ Ejercicios" }
+              ].map(s => (
+                <div key={s.step} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: "50%",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontWeight: 900, fontSize: "0.85rem",
+                    background: wizardStep === s.step ? "linear-gradient(135deg, var(--brand), var(--brand2))" : wizardStep > s.step ? "var(--brand)" : "rgba(255,255,255,0.05)",
+                    color: wizardStep >= s.step ? "#000" : "var(--text2)",
+                    transition: "all 200ms"
+                  }}>
+                    {s.step}
+                  </div>
+                  <span style={{ fontSize: "0.8rem", fontWeight: wizardStep === s.step ? 800 : 500, color: wizardStep === s.step ? "var(--brand)" : "var(--muted)" }}>
+                    {s.title}
+                  </span>
+                </div>
+              ))}
             </div>
 
-            {/* Splits pre-hechos */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, background: "rgba(255,255,255,0.03)", padding: 12, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)" }}>
-              <span style={{ fontSize: "0.72rem", fontWeight: 800, color: "var(--brand)", textTransform: "uppercase", letterSpacing: "0.08em" }}>PLANTILLAS DE DÍAS (SPLITS PRE-HECHOS):</span>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                <button type="button" className="btn btn-ghost btn-xs" onClick={() => {
-                  setWorkouts([
-                    { name: "[#7c3aed] Lunes (Tirón)", exercises: [] },
-                    { name: "[#00ff87] Miércoles (Empuje)", exercises: [] },
-                    { name: "[#00c6ff] Viernes (Pierna)", exercises: [] }
-                  ]);
-                }}>3 días (Tirón/Empuje/Pierna)</button>
-                <button type="button" className="btn btn-ghost btn-xs" onClick={() => {
-                  setWorkouts([
-                    { name: "[#7c3aed] Lunes (Torso)", exercises: [] },
-                    { name: "[#00ff87] Martes (Pierna)", exercises: [] },
-                    { name: "[#00c6ff] Jueves (Torso)", exercises: [] },
-                    { name: "[#ff5e3a] Viernes (Pierna)", exercises: [] }
-                  ]);
-                }}>4 días (Torso/Pierna)</button>
-                <button type="button" className="btn btn-ghost btn-xs" onClick={() => {
-                  setWorkouts([
-                    { name: "[#7c3aed] Lunes (Pecho/Espalda)", exercises: [] },
-                    { name: "[#00ff87] Martes (Pierna)", exercises: [] },
-                    { name: "[#00c6ff] Miércoles (Hombros/Brazos)", exercises: [] },
-                    { name: "[#ff5e3a] Jueves (Pecho/Espalda)", exercises: [] },
-                    { name: "[#ffb300] Viernes (Pierna)", exercises: [] }
-                  ]);
-                }}>5 días (Arnold Split)</button>
-              </div>
-            </div>
+            {/* STEP 1: GENERAL INFO */}
+            {wizardStep === 1 && (
+              <div className="anim-fade" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div className="field">
+                  <label className="label" style={{ fontSize: "0.9rem", fontWeight: 800 }}>Nombre de la rutina</label>
+                  <input className="input" value={progName} onChange={e => setProgName(e.target.value)}
+                    placeholder="Ej. Mi rutina de fuerza / Arnold Split..." style={{ minHeight: 52 }} required />
+                </div>
+                <div className="field">
+                  <label className="label" style={{ fontSize: "0.9rem", fontWeight: 800 }}>Descripción (opcional)</label>
+                  <textarea className="input" value={progDesc} onChange={e => setProgDesc(e.target.value)}
+                    placeholder="Objetivo principal del plan, semanas recomendadas..." rows={3} />
+                </div>
+                
+                {/* Splits pre-hechos (quick sets) */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, background: "rgba(255,255,255,0.03)", padding: 12, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)" }}>
+                  <span style={{ fontSize: "0.72rem", fontWeight: 800, color: "var(--brand)", textTransform: "uppercase", letterSpacing: "0.08em" }}>SPLITS PRE-HECHOS (PLANTILLAS DE DÍAS):</span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    <button type="button" className="btn btn-ghost btn-xs" onClick={() => {
+                      setSelectedDays({
+                        "Lunes": ["Pecho", "Brazos"],
+                        "Miércoles": ["Piernas"],
+                        "Viernes": ["Espalda", "Hombros"]
+                      });
+                      setToast({ msg: "Plantilla 3 días cargada (Tirón/Empuje/Pierna)", type: "success" });
+                    }}>3 días (Pecho+Brazos / Piernas / Espalda+Hombros)</button>
+                    <button type="button" className="btn btn-ghost btn-xs" onClick={() => {
+                      setSelectedDays({
+                        "Lunes": ["Pecho", "Hombros", "Tríceps"],
+                        "Martes": ["Espalda", "Bíceps"],
+                        "Jueves": ["Piernas"],
+                        "Viernes": ["Cardio", "Abdomen"]
+                      });
+                      setToast({ msg: "Plantilla 4 días cargada", type: "success" });
+                    }}>4 días (Torso / Pierna / Cardio)</button>
+                  </div>
+                </div>
 
-            {/* Workouts Builder */}
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <p style={{ margin: 0, fontWeight: 800, fontSize: "0.9rem", color: "var(--brand)" }}>Días de Entrenamiento</p>
-                <button type="button" onClick={addDay} className="btn btn-ghost btn-sm" style={{ height: 36, padding: "0 12px" }}>
-                  <Plus size={16} /> Agregar Día
+                <button type="button" onClick={() => {
+                  if (!progName.trim()) {
+                    setToast({ msg: "Ingresá un nombre para la rutina", type: "error" });
+                    return;
+                  }
+                  setWizardStep(2);
+                }} className="btn btn-primary btn-full" style={{ minHeight: 56, fontSize: "1rem", fontWeight: 800 }}>
+                  Elegir días de entrenamiento ➔
                 </button>
               </div>
+            )}
 
-              {workouts.map((w, wIdx) => {
-                const { color: dayColor, cleanName: dayCleanName } = parseWorkoutName(w.name);
-                const displayColor = dayColor || "#7c3aed";
-                return (
-                  <div key={wIdx} className="glass" style={{
-                    borderRadius: "var(--radius-sm)",
-                    padding: 16,
-                    marginBottom: 16,
-                    border: `1.5px solid ${displayColor}33`,
-                    background: `linear-gradient(135deg, ${displayColor}08 0%, rgba(255,255,255,0.02) 100%)`,
-                    boxShadow: `0 8px 32px -4px ${displayColor}0d`
-                  }}>
-                    {/* Day Color Selector */}
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 12 }}>
-                      <Calendar size={18} color={displayColor} style={{ flexShrink: 0 }} />
-                      
-                      <input className="input" style={{ flex: 1, minHeight: 40, height: 40, background: "transparent", border: "none", borderBottom: `1.5px solid ${displayColor}55`, borderRadius: 0, padding: "4px 0", fontSize: "0.95rem", fontWeight: 700 }}
-                        value={dayCleanName} onChange={e => {
-                          const ws = [...workouts];
-                          ws[wIdx].name = formatWorkoutName(dayColor, e.target.value);
-                          setWorkouts(ws);
-                        }} placeholder="Ej. Lunes (Pecho)" required />
-
-                      <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-                        {[
-                          { name: "Violeta", hex: "#7c3aed" },
-                          { name: "Verde", hex: "#00ff87" },
-                          { name: "Celeste", hex: "#00c6ff" },
-                          { name: "Naranja", hex: "#ff5e3a" },
-                          { name: "Amarillo", hex: "#ffb300" },
-                          { name: "Rojo", hex: "#ff4757" },
-                          { name: "Rosa", hex: "#ff75a0" }
-                        ].map(c => (
-                          <button key={c.hex} type="button" onClick={() => {
-                            const ws = [...workouts];
-                            ws[wIdx].name = formatWorkoutName(c.hex, dayCleanName);
-                            ws[wIdx].exercises = ws[wIdx].exercises.map(ex => ({
-                              ...ex,
-                              color: ex.color === "#3b82f6" || !ex.color ? c.hex : ex.color
-                            }));
-                            setWorkouts(ws);
-                          }} style={{
-                            width: 14,
-                            height: 14,
-                            borderRadius: "50%",
-                            backgroundColor: c.hex,
-                            border: displayColor === c.hex ? "2px solid #fff" : "1px solid rgba(0,0,0,0.3)",
-                            cursor: "pointer",
-                            padding: 0,
-                            transform: displayColor === c.hex ? "scale(1.2)" : "scale(1)",
-                            transition: "all 120ms"
-                          }} title={c.name} />
-                        ))}
-                      </div>
-                      
-                      <button type="button" onClick={() => removeDay(wIdx)} className="btn btn-ghost btn-icon-sm" style={{ border: "none", background: "rgba(255,71,87,0.1)", color: "var(--danger)" }}><Trash2 size={16} /></button>
-                    </div>
-
-                    {/* Quick day presets */}
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-                      {["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo", "Cardio", "Descanso"].map(pres => (
-                        <button key={pres} type="button" className="chip" style={{ height: 26, padding: "0 10px", fontSize: "0.72rem", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6 }}
-                          onClick={() => {
-                            const ws = [...workouts];
-                            ws[wIdx].name = formatWorkoutName(dayColor, pres);
-                            setWorkouts(ws);
-                          }}>
-                          {pres}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      {w.exercises.map((ex, eIdx) => {
-                        const colors = [
-                          { name: "Azul", hex: "#3b82f6" },
-                          { name: "Verde", hex: "#10b981" },
-                          { name: "Violeta", hex: "#8b5cf6" },
-                          { name: "Rosa", hex: "#ec4899" },
-                          { name: "Naranja", hex: "#f97316" },
-                          { name: "Amarillo", hex: "#f59e0b" },
-                          { name: "Gris", hex: "#64748b" }
-                        ];
-
-                        return (
-                          <div key={eIdx} style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 12,
-                            background: "rgba(255,255,255,0.015)",
-                            borderLeft: `4px solid ${ex.color || "#3b82f6"}`,
-                            borderTop: "1px solid var(--border)",
-                            borderRight: "1px solid var(--border)",
-                            borderBottom: "1px solid var(--border)",
-                            padding: 12,
-                            borderRadius: "var(--radius-xs)"
-                          }}>
-                            {/* Row 1: Mover, Order, Name Search, Group, Remove */}
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-                              {/* Touch Reorder Arrows */}
-                              <div style={{ display: "flex", flexDirection: "column", gap: 2, marginRight: 2 }}>
-                                <button 
+            {/* STEP 2: DAYS & MUSCLES SELECTION */}
+            {wizardStep === 2 && (
+              <div className="anim-fade" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--muted)" }}>Seleccioná qué días se entrena y qué se trabaja cada día</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map(day => {
+                    const isDaySelected = selectedDays[day] !== undefined;
+                    const muscles = selectedDays[day] || [];
+                    
+                    return (
+                      <div key={day} className="glass" style={{
+                        borderRadius: "var(--radius-sm)",
+                        padding: 14,
+                        border: isDaySelected ? "1.5px solid var(--brand)" : "1px solid var(--border)",
+                        background: isDaySelected ? "rgba(0, 255, 135, 0.02)" : "rgba(255,255,255,0.01)",
+                        transition: "all 150ms"
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: isDaySelected ? 10 : 0 }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newDays = { ...selectedDays };
+                              if (isDaySelected) {
+                                delete newDays[day];
+                              } else {
+                                newDays[day] = [];
+                              }
+                              setSelectedDays(newDays);
+                            }}
+                            style={{
+                              padding: "10px 14px",
+                              borderRadius: "var(--radius-xs)",
+                              border: isDaySelected ? "2px solid var(--brand)" : "1.5px solid var(--border2)",
+                              background: isDaySelected ? "rgba(0, 255, 135, 0.1)" : "transparent",
+                              color: isDaySelected ? "var(--brand)" : "var(--text)",
+                              fontWeight: 800,
+                              fontSize: "0.88rem",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                              transition: "all 120ms"
+                            }}
+                          >
+                            <span>{isDaySelected ? "✓" : "+"}</span> {day}
+                          </button>
+                          
+                          {isDaySelected && (
+                            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--brand2)" }}>
+                              {muscles.length > 0 ? muscles.join(" + ") : "Sin músculos asignados"}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {isDaySelected && (
+                          <div className="anim-fade" style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, paddingTop: 8, borderTop: "1px dashed var(--border)" }}>
+                            {["💪 Pecho", "🦴 Espalda", "🦵 Piernas", "🏋️ Hombros", "💪 Brazos", "🔥 Cardio", "🧘 Abdomen", "🦵 Piernas+Glúteos"].map(mItem => {
+                              const mName = mItem.substring(2); // "Pecho", etc.
+                              const isMuscleSelected = muscles.includes(mName);
+                              return (
+                                <button
+                                  key={mItem}
                                   type="button"
-                                  onClick={() => moveExInWorkout(wIdx, eIdx, "up")}
-                                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: eIdx === 0 ? "var(--muted)" : "var(--text)", padding: "2px 4px", borderRadius: 4, cursor: "pointer" }}
-                                  disabled={eIdx === 0}
-                                >
-                                  ▲
-                                </button>
-                                <button 
-                                  type="button"
-                                  onClick={() => moveExInWorkout(wIdx, eIdx, "down")}
-                                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: eIdx === w.exercises.length - 1 ? "var(--muted)" : "var(--text)", padding: "2px 4px", borderRadius: 4, cursor: "pointer" }}
-                                  disabled={eIdx === w.exercises.length - 1}
-                                >
-                                  ▼
-                                </button>
-                              </div>
-
-                              <div style={{ width: 44 }}>
-                                <input className="input" style={{ minHeight: 40, height: 40, padding: "0 4px", fontSize: "0.82rem", textAlign: "center", fontWeight: 800 }}
-                                  value={ex.orderLabel} onChange={e => updateEx(wIdx, eIdx, "orderLabel", e.target.value)}
-                                  placeholder="N°" title="Número o código (ej: 1, A1, B1)" required />
-                              </div>
-
-                              <div style={{ flex: "2 1 180px", display: "flex", gap: 4 }}>
-                                <input className="input" style={{ minHeight: 40, height: 40, padding: "0 10px", fontSize: "0.85rem", flex: 1 }}
-                                  value={ex.name} onChange={e => updateEx(wIdx, eIdx, "name", e.target.value)}
-                                  placeholder="Escribí o buscá ejercicio..." required />
-                                <button 
-                                  type="button" 
                                   onClick={() => {
-                                    setSearchExModal({ wIdx, eIdx });
-                                    setTrainerSearchQuery(ex.name);
+                                    const newDays = { ...selectedDays };
+                                    const dayMuscles = newDays[day];
+                                    if (dayMuscles.includes(mName)) {
+                                      newDays[day] = dayMuscles.filter(x => x !== mName);
+                                    } else {
+                                      newDays[day] = [...dayMuscles, mName];
+                                    }
+                                    setSelectedDays(newDays);
                                   }}
-                                  className="btn btn-ghost" 
-                                  style={{ minHeight: 40, height: 40, width: 40, padding: 0 }}
-                                  title="Buscar en base de datos"
+                                  className={`chip ${isMuscleSelected ? "active" : ""}`}
+                                  style={{
+                                    padding: "6px 12px",
+                                    fontSize: "0.75rem",
+                                    border: isMuscleSelected ? "2px solid var(--brand2)" : "1px solid var(--border2)",
+                                    background: isMuscleSelected ? "rgba(0, 198, 255, 0.15)" : "rgba(255,255,255,0.02)",
+                                    color: isMuscleSelected ? "var(--brand2)" : "var(--text2)",
+                                    borderRadius: 99,
+                                    cursor: "pointer",
+                                    fontWeight: 700,
+                                    transition: "all 100ms"
+                                  }}
                                 >
-                                  <Search size={16} />
+                                  {mItem}
                                 </button>
-                              </div>
-
-                              <div style={{ flex: "1 1 140px", display: "flex", flexDirection: "column", gap: 4 }}>
-                                <span style={{ fontSize: "0.68rem", color: "var(--text2)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center" }}>
-                                  ¿Súper serie?
-                                </span>
-                                <div style={{ display: "flex", gap: 6 }}>
-                                  <button
-                                    type="button"
-                                    onClick={() => updateEx(wIdx, eIdx, "isSuperSet", true)}
-                                    className="btn btn-xs"
-                                    style={{
-                                      flex: 1,
-                                      minHeight: 32,
-                                      height: 32,
-                                      fontSize: "0.78rem",
-                                      fontWeight: 800,
-                                      background: ex.isSuperSet ? "rgba(0, 255, 135, 0.16)" : "var(--surface)",
-                                      border: ex.isSuperSet ? "1.5px solid var(--brand)" : "1px solid var(--border)",
-                                      color: ex.isSuperSet ? "var(--brand)" : "var(--text2)",
-                                      boxShadow: ex.isSuperSet ? "0 0 10px rgba(0, 255, 135, 0.4)" : "none",
-                                      transition: "all 150ms ease",
-                                      padding: 0
-                                    }}
-                                  >
-                                    Sí
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => updateEx(wIdx, eIdx, "isSuperSet", false)}
-                                    className="btn btn-xs"
-                                    style={{
-                                      flex: 1,
-                                      minHeight: 32,
-                                      height: 32,
-                                      fontSize: "0.78rem",
-                                      fontWeight: 800,
-                                      background: !ex.isSuperSet ? "rgba(255, 71, 87, 0.16)" : "var(--surface)",
-                                      border: !ex.isSuperSet ? "1.5px solid var(--danger)" : "1px solid var(--border)",
-                                      color: !ex.isSuperSet ? "var(--danger)" : "var(--text2)",
-                                      boxShadow: !ex.isSuperSet ? "0 0 10px rgba(255, 71, 87, 0.4)" : "none",
-                                      transition: "all 150ms ease",
-                                      padding: 0
-                                    }}
-                                  >
-                                    No
-                                  </button>
-                                </div>
-                              </div>
-                              <button type="button" onClick={() => removeEx(wIdx, eIdx)}
-                                className="btn btn-ghost btn-icon-sm" style={{ background: "transparent", border: "none", color: "var(--danger)" }}>
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-
-                            {/* Row 2: Sets, Reps, Rest, Target Weight, Weight Unit */}
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
-                              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-                                
-                                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                  <span style={{ color: "var(--text2)", fontSize: "0.72rem", fontWeight: 700 }}>SETS</span>
-                                  <div style={{ display: "flex", alignItems: "center", background: "rgba(8,10,20,0.6)", borderRadius: 8, border: "1px solid var(--border2)", overflow: "hidden", height: 32 }}>
-                                    <button type="button" onClick={() => updateEx(wIdx, eIdx, "sets", Math.max(1, ex.sets - 1))} style={{ width: 24, height: "100%", background: "none", border: "none", color: "var(--text2)", fontSize: "1.1rem", cursor: "pointer" }}>-</button>
-                                    <span style={{ width: 20, textAlign: "center", fontSize: "0.8rem", fontWeight: 800 }}>{ex.sets}</span>
-                                    <button type="button" onClick={() => updateEx(wIdx, eIdx, "sets", ex.sets + 1)} style={{ width: 24, height: "100%", background: "none", border: "none", color: "var(--text2)", fontSize: "1.1rem", cursor: "pointer" }}>+</button>
-                                  </div>
-                                </div>
-
-                                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                  <span style={{ color: "var(--text2)", fontSize: "0.72rem", fontWeight: 700 }}>REPS</span>
-                                  <input className="input" style={{ width: 52, minHeight: 32, height: 32, padding: "0 4px", fontSize: "0.8rem", textAlign: "center", borderRadius: 8 }}
-                                    value={ex.reps} onChange={e => updateEx(wIdx, eIdx, "reps", e.target.value)}
-                                    placeholder="8-12" required />
-                                </div>
-
-                                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                  <span style={{ color: "var(--text2)", fontSize: "0.72rem", fontWeight: 700 }}>PESO</span>
-                                  <input className="input" type="number" step="0.5" style={{ width: 55, minHeight: 32, height: 32, padding: "0 4px", fontSize: "0.8rem", textAlign: "center", borderRadius: 8 }}
-                                    value={ex.targetWeight ?? 20} onChange={e => updateEx(wIdx, eIdx, "targetWeight", Number(e.target.value))}
-                                    placeholder="20" required />
-                                  <select className="input" style={{ width: 55, minHeight: 32, height: 32, padding: "0 2px", fontSize: "0.75rem", borderRadius: 8, background: "rgba(0,0,0,0.5)" }}
-                                    value={ex.weightUnit ?? "kg"} onChange={e => updateEx(wIdx, eIdx, "weightUnit", e.target.value)}>
-                                    <option value="kg">kg</option>
-                                    <option value="lbs">lbs</option>
-                                  </select>
-                                </div>
-
-                                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                  <span style={{ color: "var(--text2)", fontSize: "0.72rem", fontWeight: 700 }}>PAUSA</span>
-                                  <div style={{ display: "flex", alignItems: "center", background: "rgba(8,10,20,0.6)", borderRadius: 8, border: "1px solid var(--border2)", overflow: "hidden", height: 32 }}>
-                                    <button type="button" onClick={() => updateEx(wIdx, eIdx, "rest", Math.max(0, ex.rest - 15))} style={{ width: 24, height: "100%", background: "none", border: "none", color: "var(--text2)", fontSize: "0.85rem", cursor: "pointer" }}>-15</button>
-                                    <span style={{ width: 30, textAlign: "center", fontSize: "0.8rem", fontWeight: 800 }}>{ex.rest}s</span>
-                                    <button type="button" onClick={() => updateEx(wIdx, eIdx, "rest", ex.rest + 15)} style={{ width: 24, height: "100%", background: "none", border: "none", color: "var(--text2)", fontSize: "0.85rem", cursor: "pointer" }}>+15</button>
-                                  </div>
-                                </div>
-
-                              </div>
-
-                              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                                {colors.map(c => (
-                                  <button key={c.hex} type="button" onClick={() => updateEx(wIdx, eIdx, "color", c.hex)}
-                                    style={{
-                                      width: 16,
-                                      height: 16,
-                                      borderRadius: "50%",
-                                      backgroundColor: c.hex,
-                                      border: ex.color === c.hex ? "2px solid #fff" : "1.5px solid rgba(0,0,0,0.2)",
-                                      cursor: "pointer",
-                                      padding: 0,
-                                      transform: ex.color === c.hex ? "scale(1.2)" : "scale(1)",
-                                      transition: "all 120ms"
-                                    }}
-                                    title={c.name}
-                                  />
-                                ))}
-                              </div>
-                            </div>
+                              );
+                            })}
                           </div>
-                        );
-                      })}
-                      <button type="button" onClick={() => addEx(wIdx)} className="btn btn-ghost" style={{ minHeight: 40, height: 40, fontSize: "0.82rem", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", borderRadius: "var(--radius-xs)", marginTop: 10 }}>
-                        <Plus size={14} /> Añadir Ejercicio
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {workouts.length > 0 && (
-              <div style={{
-                padding: "14px 18px", borderRadius: "var(--radius-sm)",
-                background: "linear-gradient(135deg, rgba(124,58,237,0.08), rgba(0,198,255,0.04))",
-                border: "1px solid rgba(124,58,237,0.25)",
-                marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center"
-              }}>
-                <div>
-                  <p style={{ margin: 0, fontSize: "0.72rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.06em" }}>Tonelaje total acumulado del plan</p>
-                  <p style={{ margin: "4px 0 0", fontSize: "1.5rem", fontWeight: 900, color: "var(--brand2)" }}>
-                    {(() => {
-                      let total = 0;
-                      workouts.forEach(w => {
-                        w.exercises.forEach(ex => {
-                          const reps = Number(ex.reps.replace(/[^\d]/g, "")) || 10;
-                          const weight = Number(ex.targetWeight) || 0;
-                          total += ex.sets * reps * weight;
-                        });
-                      });
-                      return total.toLocaleString();
-                    })()} <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>unidades mixtas</span>
-                  </p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-                <div style={{ textAlign: "right" }}>
-                  <p style={{ margin: 0, fontSize: "0.72rem", color: "var(--muted)", fontWeight: 700 }}>Estimación</p>
-                  <p style={{ margin: "2px 0 0", fontSize: "0.78rem", color: "var(--text2)", fontWeight: 600 }}>Suma de todos los días</p>
+                
+                <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+                  <button type="button" onClick={() => setWizardStep(1)} className="btn btn-ghost" style={{ flex: 1, minHeight: 52 }}>
+                    ◀ Atrás
+                  </button>
+                  <button type="button" onClick={() => {
+                    const activeDays = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].filter(d => selectedDays[d] !== undefined);
+                    if (activeDays.length === 0) {
+                      setToast({ msg: "Elegí al menos 1 día de entrenamiento", type: "error" });
+                      return;
+                    }
+                    
+                    // Sincronizar workouts conservando ejercicios si ya existían
+                    const newWorkouts = activeDays.map(day => {
+                      const muscles = selectedDays[day];
+                      const cleanName = muscles.length > 0 ? `${day} — ${muscles.join(" + ")}` : day;
+                      const fullName = `[#7c3aed] ${cleanName}`;
+                      
+                      const existing = workouts.find(w => w.name.includes(day));
+                      return {
+                        name: fullName,
+                        exercises: existing ? existing.exercises : []
+                      };
+                    });
+                    
+                    setWorkouts(newWorkouts);
+                    setWizardStep(3);
+                  }} className="btn btn-primary" style={{ flex: 2, minHeight: 52, fontWeight: 800 }}>
+                    Asignar ejercicios ➔
+                  </button>
                 </div>
               </div>
             )}
 
-            <button type="submit" className="btn btn-primary btn-full" disabled={busy || !progName}>
-              {busy ? "Guardando rutina..." : "Crear rutina completa"}
-            </button>
+            {/* STEP 3: EXERCISES ASSIGNMENT */}
+            {wizardStep === 3 && (
+              <div className="anim-fade" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--muted)" }}>Asigná los ejercicios, series, repeticiones y descansos para cada día</p>
+                
+                {workouts.map((w, wIdx) => {
+                  const { cleanName: dayCleanName } = parseWorkoutName(w.name);
+                  return (
+                    <div key={wIdx} className="glass" style={{
+                      borderRadius: "var(--radius-sm)",
+                      padding: 16,
+                      border: "1.5px solid rgba(124, 58, 237, 0.25)",
+                      background: "linear-gradient(135deg, rgba(124,58,237,0.03) 0%, rgba(255,255,255,0.01) 100%)"
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, borderBottom: "1px solid var(--border)", paddingBottom: 8 }}>
+                        <span style={{ fontSize: "1.1rem" }}>📅</span>
+                        <h4 style={{ margin: 0, fontWeight: 900, fontSize: "1rem", color: "var(--brand)" }}>{dayCleanName}</h4>
+                      </div>
+                      
+                      {/* Exercises list */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        {w.exercises.map((ex, eIdx) => (
+                          <div key={eIdx} style={{
+                            background: "rgba(255,255,255,0.015)",
+                            borderLeft: `4px solid ${ex.isSuperSet ? "var(--brand3)" : "var(--brand2)"}`,
+                            borderTop: "1px solid var(--border)",
+                            borderRight: "1px solid var(--border)",
+                            borderBottom: "1px solid var(--border)",
+                            padding: 12,
+                            borderRadius: "var(--radius-xs)",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 12
+                          }}>
+                            {/* Row 1: Move arrows, Name search, SuperSet switch and delete */}
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                <button type="button" onClick={() => moveExInWorkout(wIdx, eIdx, "up")} disabled={eIdx === 0} style={{ padding: "2px 4px", fontSize: "0.7rem", borderRadius: 4, border: "1px solid var(--border)", background: "transparent", cursor: "pointer", color: eIdx === 0 ? "var(--muted)" : "#fff" }}>▲</button>
+                                <button type="button" onClick={() => moveExInWorkout(wIdx, eIdx, "down")} disabled={eIdx === w.exercises.length - 1} style={{ padding: "2px 4px", fontSize: "0.7rem", borderRadius: 4, border: "1px solid var(--border)", background: "transparent", cursor: "pointer", color: eIdx === w.exercises.length - 1 ? "var(--muted)" : "#fff" }}>▼</button>
+                              </div>
+                              
+                              <div style={{ flex: 1, minWidth: 150 }}>
+                                <input className="input" value={ex.name} onChange={e => updateEx(wIdx, eIdx, "name", e.target.value)} placeholder="Buscá o escribí ejercicio..." style={{ minHeight: 40, height: 40, fontSize: "0.85rem" }} required />
+                              </div>
+                              
+                              <button type="button" onClick={() => {
+                                setSearchExModal({ wIdx, eIdx });
+                                setTrainerSearchQuery(ex.name);
+                              }} className="btn btn-ghost btn-sm" style={{ width: 40, height: 40, padding: 0 }} title="Buscar en biblioteca">
+                                <Search size={16} />
+                              </button>
+                              
+                              {/* SuperSet Switch */}
+                              <button
+                                type="button"
+                                onClick={() => updateEx(wIdx, eIdx, "isSuperSet", !ex.isSuperSet)}
+                                className={`btn btn-xs ${ex.isSuperSet ? "active" : ""}`}
+                                style={{
+                                  height: 32,
+                                  fontSize: "0.7rem",
+                                  fontWeight: 800,
+                                  background: ex.isSuperSet ? "rgba(124, 58, 237, 0.2)" : "rgba(255,255,255,0.03)",
+                                  border: ex.isSuperSet ? "1.5px solid var(--brand)" : "1px solid var(--border2)",
+                                  color: ex.isSuperSet ? "var(--brand)" : "var(--text2)",
+                                  borderRadius: 8
+                                }}
+                              >
+                                {ex.isSuperSet ? "💥 Súper Serie" : "Normal"}
+                              </button>
+                              
+                              <button type="button" onClick={() => removeEx(wIdx, eIdx)} className="btn btn-ghost btn-icon-sm" style={{ color: "var(--danger)", background: "transparent", border: "none" }}>
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                            
+                            {/* Row 2: Tactile steppers for Sets, Reps, Weight, Rest */}
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", justifyContent: "space-between" }}>
+                              {/* Sets */}
+                              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                <span style={{ color: "var(--text2)", fontSize: "0.72rem", fontWeight: 800 }}>SERIES</span>
+                                <div style={{ display: "flex", alignItems: "center", background: "rgba(0,0,0,0.4)", borderRadius: 8, border: "1px solid var(--border)", overflow: "hidden", height: 32 }}>
+                                  <button type="button" onClick={() => updateEx(wIdx, eIdx, "sets", Math.max(1, ex.sets - 1))} style={{ width: 26, height: "100%", background: "none", border: "none", color: "#fff", fontWeight: 800, fontSize: "1.1rem", cursor: "pointer" }}>-</button>
+                                  <span style={{ width: 22, textAlign: "center", fontSize: "0.82rem", fontWeight: 900 }}>{ex.sets}</span>
+                                  <button type="button" onClick={() => updateEx(wIdx, eIdx, "sets", ex.sets + 1)} style={{ width: 26, height: "100%", background: "none", border: "none", color: "#fff", fontWeight: 800, fontSize: "1.1rem", cursor: "pointer" }}>+</button>
+                                </div>
+                              </div>
+                              
+                              {/* Reps */}
+                              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                <span style={{ color: "var(--text2)", fontSize: "0.72rem", fontWeight: 800 }}>REPS</span>
+                                <input className="input" value={ex.reps} onChange={e => updateEx(wIdx, eIdx, "reps", e.target.value)} placeholder="Ej: 10 o 8-12" style={{ width: 64, minHeight: 32, height: 32, fontSize: "0.8rem", textAlign: "center", borderRadius: 8 }} required />
+                              </div>
+                              
+                              {/* Weight */}
+                              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                <span style={{ color: "var(--text2)", fontSize: "0.72rem", fontWeight: 800 }}>PESO</span>
+                                <div style={{ display: "flex", alignItems: "center", background: "rgba(0,0,0,0.4)", borderRadius: 8, border: "1px solid var(--border)", overflow: "hidden", height: 32 }}>
+                                  <button type="button" onClick={() => updateEx(wIdx, eIdx, "targetWeight", Math.max(0, (ex.targetWeight ?? 20) - 2.5))} style={{ width: 26, height: "100%", background: "none", border: "none", color: "#fff", fontWeight: 800, cursor: "pointer" }}>-</button>
+                                  <input className="input" type="number" step="0.5" value={ex.targetWeight ?? 20} onChange={e => updateEx(wIdx, eIdx, "targetWeight", Number(e.target.value))} style={{ width: 50, height: "100%", background: "transparent", border: "none", textAlign: "center", fontSize: "0.82rem", fontWeight: 900, padding: 0 }} />
+                                  <button type="button" onClick={() => updateEx(wIdx, eIdx, "targetWeight", (ex.targetWeight ?? 20) + 2.5)} style={{ width: 26, height: "100%", background: "none", border: "none", color: "#fff", fontWeight: 800, cursor: "pointer" }}>+</button>
+                                </div>
+                                <select className="input" value={ex.weightUnit ?? "kg"} onChange={e => updateEx(wIdx, eIdx, "weightUnit", e.target.value)} style={{ width: 52, minHeight: 32, height: 32, fontSize: "0.75rem", borderRadius: 8, background: "rgba(0,0,0,0.5)", padding: "0 2px" }}>
+                                  <option value="kg">kg</option>
+                                  <option value="lbs">lbs</option>
+                                </select>
+                              </div>
+                              
+                              {/* Rest */}
+                              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                <span style={{ color: "var(--text2)", fontSize: "0.72rem", fontWeight: 800 }}>PAUSA</span>
+                                <div style={{ display: "flex", alignItems: "center", background: "rgba(0,0,0,0.4)", borderRadius: 8, border: "1px solid var(--border)", overflow: "hidden", height: 32 }}>
+                                  <button type="button" onClick={() => updateEx(wIdx, eIdx, "rest", Math.max(0, ex.rest - 15))} style={{ width: 32, height: "100%", background: "none", border: "none", color: "#fff", fontSize: "0.72rem", cursor: "pointer" }}>-15s</button>
+                                  <span style={{ width: 34, textAlign: "center", fontSize: "0.8rem", fontWeight: 900 }}>{ex.rest}s</span>
+                                  <button type="button" onClick={() => updateEx(wIdx, eIdx, "rest", ex.rest + 15)} style={{ width: 32, height: "100%", background: "none", border: "none", color: "#fff", fontSize: "0.72rem", cursor: "pointer" }}>+15s</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        <button type="button" onClick={() => addEx(wIdx)} className="btn btn-ghost" style={{ minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: "var(--radius-xs)" }}>
+                          <Plus size={16} /> ➕ Agregar ejercicio
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                {/* Step 3 buttons */}
+                <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+                  <button type="button" onClick={() => setWizardStep(2)} className="btn btn-ghost" style={{ flex: 1, minHeight: 56 }}>
+                    ◀ Atrás
+                  </button>
+                  <button type="submit" className="btn btn-primary" style={{ flex: 2, minHeight: 56, fontWeight: 900, fontSize: "1.05rem" }} disabled={busy}>
+                    {busy ? "Guardando rutina..." : "💾 Crear rutina completa"}
+                  </button>
+                </div>
+              </div>
+            )}
           </form>
 
           {/* Programs list */}

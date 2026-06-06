@@ -20,14 +20,17 @@ export async function GET() {
   return NextResponse.json({ user });
 }
 
-// PATCH /api/profile — actualiza datos físicos del propio atleta + recalcula BMR/TDEE
+// PATCH /api/profile — actualiza datos físicos + preferencias alimentarias
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
-  const { name, sex, ageYears, heightCm, weightKg, activity } = await req.json();
+  const {
+    name, sex, ageYears, heightCm, weightKg, activity,
+    // Preferencias alimentarias
+    dietType, dietGoal, foodLikes, foodDislikes, favoriteMeals,
+  } = await req.json();
 
-  // recalculate Harris-Benedict if we have all fields
   let bmrKcal: number | undefined;
   let tdeeKcal: number | undefined;
   let activityFactor: number | undefined;
@@ -45,12 +48,22 @@ export async function PATCH(req: NextRequest) {
     tdeeKcal = Math.round(bmr * activityFactor);
   }
 
+  const profileData: Record<string, any> = {
+    sex, ageYears, heightCm, weightKg, activity,
+    bmrKcal, tdeeKcal, activityFactor,
+  };
+  if (dietType !== undefined)    profileData.dietType    = dietType;
+  if (dietGoal !== undefined)    profileData.dietGoal    = dietGoal;
+  if (foodLikes !== undefined)   profileData.foodLikes   = typeof foodLikes === "string" ? foodLikes : JSON.stringify(foodLikes);
+  if (foodDislikes !== undefined) profileData.foodDislikes = typeof foodDislikes === "string" ? foodDislikes : JSON.stringify(foodDislikes);
+  if (favoriteMeals !== undefined) profileData.favoriteMeals = typeof favoriteMeals === "string" ? favoriteMeals : JSON.stringify(favoriteMeals);
+
   const [updatedUser] = await prisma.$transaction([
     prisma.user.update({ where: { id: session.id }, data: { name } }),
     prisma.profile.upsert({
       where: { userId: session.id },
-      create: { userId: session.id, sex, ageYears, heightCm, weightKg, activity, bmrKcal, tdeeKcal, activityFactor },
-      update: { sex, ageYears, heightCm, weightKg, activity, bmrKcal, tdeeKcal, activityFactor },
+      create: { userId: session.id, ...profileData },
+      update: profileData,
     }),
   ]);
 

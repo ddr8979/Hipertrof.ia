@@ -16,7 +16,7 @@
   --warn:      #ffa502;
   --success:   #2ed573;
   --text:      #eef0f8;
-  --text2:     #b0b8d4;
+  --text2:     #d1d6e6;
   --muted:     #5c6480;
   --radius:    20px;
   --radius-sm: 14px;
@@ -137,11 +137,11 @@ body::before {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 56px;
+  min-height: 60px;
   padding: 0 24px;
   border-radius: var(--radius-sm);
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.08rem;
   cursor: pointer;
   border: none;
   transition: transform 120ms ease, opacity 120ms ease, box-shadow 120ms ease;
@@ -210,7 +210,7 @@ textarea.input { min-height: auto; padding: 14px 16px; resize: none; line-height
 
 .label {
   display: block;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--text2);
   margin-bottom: 8px;
@@ -571,24 +571,28 @@ textarea.input { min-height: auto; padding: 14px 16px; resize: none; line-height
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 34px;
-  padding: 0 14px;
+  height: 38px;
+  padding: 0 16px;
   border-radius: 99px;
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   font-weight: 700;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: all 140ms;
+  transition: all 160ms cubic-bezier(0.4, 0, 0.2, 1);
   border: 1.5px solid var(--border2);
   background: var(--surface);
   color: var(--text2);
   white-space: nowrap;
 }
+.chip:active {
+  transform: scale(0.95);
+}
 .chip.active {
   border-color: var(--brand);
-  background: rgba(0, 255, 135, 0.16);
+  background: rgba(0, 255, 135, 0.18);
   color: var(--brand);
-  box-shadow: 0 0 12px rgba(0, 255, 135, 0.25);
+  box-shadow: 0 0 16px rgba(0, 255, 135, 0.35);
+  transform: scale(1.05);
 }
 
 /* ─── Macro card ──────────────────────────────────────────── */

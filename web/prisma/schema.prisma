@@ -80,6 +80,13 @@ model Profile {
   medals          String?
   streak          Int      @default(0)
   maxStreak       Int      @default(0)
+
+  // Preferencias alimentarias
+  dietType        String?  // "omnivoro" | "vegetariano" | "vegano" | "sin_gluten"
+  dietGoal        String?  // "volumen" | "definicion" | "mantenimiento"
+  foodLikes       String?  // JSON array de alimentos favoritos
+  foodDislikes    String?  // JSON array de alimentos no deseados
+  favoriteMeals   String?  // JSON array de comidas favoritas
 }
 
 model TrainingProgram {
@@ -186,13 +193,22 @@ model Recipe {
   id          String   @id @default(cuid())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  name        String
+  name        String   @unique
   description String?
   calories    Int
   proteinG    Int
   carbsG      Int
   fatsG       Int
   countryCode String? @default("UY")
+
+  // Metadatos adicionales
+  category    String?  // "desayuno" | "almuerzo" | "cena" | "snack" | "postre"
+  tags        String?  // JSON array: ["pollo", "bajo-carbohidrato"]
+  prepMinutes Int?
+  difficulty  String?  // "facil" | "media" | "dificil"
+  servings    Int?     @default(1)
+  imageEmoji  String?  // emoji representativo de la receta
+  dietTypes   String?  // JSON: ["omnivoro", "vegetariano"]
 
   mealLogs MealLog[]
 }
