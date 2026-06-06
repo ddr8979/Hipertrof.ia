@@ -149,6 +149,7 @@ export default function TrainerPage() {
 
   // Creador de rutinas: exercise selector modal
   const [searchExModal, setSearchExModal] = useState<{ wIdx: number; eIdx: number } | null>(null);
+  const [activeInput, setActiveInput] = useState<{ wIdx: number; eIdx: number } | null>(null);
   const [exerciseDb, setExerciseDb] = useState<any[]>([]);
   const [trainerSearchQuery, setTrainerSearchQuery] = useState("");
   const [trainerFilterMuscle, setTrainerFilterMuscle] = useState("");
@@ -867,8 +868,84 @@ export default function TrainerPage() {
                                 <button type="button" onClick={() => moveExInWorkout(wIdx, eIdx, "down")} disabled={eIdx === w.exercises.length - 1} style={{ padding: "2px 4px", fontSize: "0.7rem", borderRadius: 4, border: "1px solid var(--border)", background: "transparent", cursor: "pointer", color: eIdx === w.exercises.length - 1 ? "var(--muted)" : "#fff" }}>▼</button>
                               </div>
                               
-                              <div style={{ flex: 1, minWidth: 150 }}>
-                                <input className="input" value={ex.name} onChange={e => updateEx(wIdx, eIdx, "name", e.target.value)} placeholder="Buscá o escribí ejercicio..." style={{ minHeight: 40, height: 40, fontSize: "0.85rem" }} required />
+                              <div style={{ flex: 1, minWidth: 150, position: "relative" }}>
+                                <input
+                                  className="input"
+                                  value={ex.name}
+                                  onChange={e => {
+                                    updateEx(wIdx, eIdx, "name", e.target.value);
+                                    setActiveInput({ wIdx, eIdx });
+                                  }}
+                                  onFocus={() => setActiveInput({ wIdx, eIdx })}
+                                  onBlur={() => setTimeout(() => setActiveInput(null), 250)}
+                                  placeholder="Buscá o escribí ejercicio..."
+                                  style={{ minHeight: 40, height: 40, fontSize: "0.85rem" }}
+                                  required
+                                />
+                                {activeInput?.wIdx === wIdx && activeInput?.eIdx === eIdx && (
+                                  <div style={{
+                                    position: "absolute",
+                                    top: "100%",
+                                    left: 0,
+                                    right: 0,
+                                    background: "#0c0f1d",
+                                    border: "1.5px solid var(--border)",
+                                    borderRadius: 12,
+                                    maxHeight: 180,
+                                    overflowY: "auto",
+                                    zIndex: 1000,
+                                    boxShadow: "0 10px 25px rgba(0,0,0,0.6)",
+                                    marginTop: 4
+                                  }}>
+                                    {(() => {
+                                      const query = ex.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+                                      const suggestions = exerciseDb.filter(item => {
+                                        if (!query) return true;
+                                        const nameNorm = item.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+                                        return nameNorm.includes(query);
+                                      }).slice(0, 8);
+
+                                      if (suggestions.length === 0) {
+                                        return (
+                                          <div style={{ padding: "10px 12px", fontSize: "0.75rem", color: "var(--muted)" }}>
+                                            Crear "{ex.name}"
+                                          </div>
+                                        );
+                                      }
+
+                                      return suggestions.map(item => (
+                                        <button
+                                          key={item.id}
+                                          type="button"
+                                          onMouseDown={() => {
+                                            updateEx(wIdx, eIdx, "name", item.name);
+                                            setActiveInput(null);
+                                          }}
+                                          style={{
+                                            width: "100%",
+                                            textAlign: "left",
+                                            padding: "10px 12px",
+                                            background: "transparent",
+                                            border: "none",
+                                            color: "var(--text)",
+                                            fontSize: "0.78rem",
+                                            fontWeight: 600,
+                                            cursor: "pointer",
+                                            borderBottom: "1px solid rgba(255,255,255,0.03)",
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "center"
+                                          }}
+                                        >
+                                          <span>{item.name}</span>
+                                          <span style={{ fontSize: "0.62rem", color: "var(--brand2)", background: "rgba(0,198,255,0.08)", padding: "2px 6px", borderRadius: 6 }}>
+                                            {item.muscleGroup}
+                                          </span>
+                                        </button>
+                                      ));
+                                    })()}
+                                  </div>
+                                )}
                               </div>
                               
                               <button type="button" onClick={() => {
