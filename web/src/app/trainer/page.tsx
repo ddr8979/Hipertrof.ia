@@ -17,7 +17,8 @@ import {
   Star,
   Award,
   Flame,
-  Activity
+  Activity,
+  Eye
 } from "lucide-react";
 
 type ToastType = { msg: string; type: "success" | "error" };
@@ -97,10 +98,10 @@ const formatWorkoutName = (color: string | null, cleanName: string) => {
 };
 
 const MEDALS_TYPES = [
-  { id: "Novato", title: "🌱 Novato" },
-  { id: "Constante", title: "⚡ Constante" },
-  { id: "Fuerza Brutal", title: "💪 Fuerza Brutal" },
-  { id: "Superacion", title: "👑 Superación" },
+  { id: "Novato", title: "Novato" },
+  { id: "Constante", title: "Constante" },
+  { id: "Fuerza Brutal", title: "Fuerza Brutal" },
+  { id: "Superacion", title: "Superación" },
 ];
 
 const MUSCLE_GROUPS = [
@@ -540,8 +541,8 @@ export default function TrainerPage() {
                       {a.name ?? a.email}
                     </p>
                     <p style={{ margin: "2px 0 0", fontSize: "0.78rem", color: "var(--text2)" }}>
-                      {a.profile?.streak ? `🔥 Racha: ${a.profile.streak} d | ` : ""}
-                      {a.profile?.grade ? `⭐ Nota: ${a.profile.grade}` : "Sin evaluar"}
+                      {a.profile?.streak ? `Racha: ${a.profile.streak} d | ` : ""}
+                      {a.profile?.grade ? `Nota: ${a.profile.grade}` : "Sin evaluar"}
                     </p>
                   </div>
                   <div style={{ flexShrink: 0 }}>
@@ -579,7 +580,7 @@ export default function TrainerPage() {
 
             {/* Splits pre-hechos */}
             <div style={{ display: "flex", flexDirection: "column", gap: 8, background: "rgba(255,255,255,0.03)", padding: 12, borderRadius: "var(--radius-sm)", border: "1px solid var(--border)" }}>
-              <span style={{ fontSize: "0.72rem", fontWeight: 800, color: "var(--brand)", textTransform: "uppercase", letterSpacing: "0.08em" }}>⚡ PLANTILLAS DE DÍAS (SPLITS PRE-HECHOS):</span>
+              <span style={{ fontSize: "0.72rem", fontWeight: 800, color: "var(--brand)", textTransform: "uppercase", letterSpacing: "0.08em" }}>PLANTILLAS DE DÍAS (SPLITS PRE-HECHOS):</span>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 <button type="button" className="btn btn-ghost btn-xs" onClick={() => {
                   setWorkouts([
@@ -760,14 +761,52 @@ export default function TrainerPage() {
                                 </button>
                               </div>
 
-                              <div style={{ flex: "1 1 110px" }}>
-                                <select className="input" style={{ minHeight: 40, height: 40, padding: "0 10px", fontSize: "0.85rem", background: "rgba(255,255,255,0.01)" }}
-                                  value={ex.isSuperSet ? "true" : "false"} 
-                                  onChange={e => updateEx(wIdx, eIdx, "isSuperSet", e.target.value === "true")}
-                                >
-                                  <option value="false">Súper serie: No</option>
-                                  <option value="true">Súper serie: Sí</option>
-                                </select>
+                              <div style={{ flex: "1 1 140px", display: "flex", flexDirection: "column", gap: 4 }}>
+                                <span style={{ fontSize: "0.68rem", color: "var(--text2)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center" }}>
+                                  ¿Súper serie?
+                                </span>
+                                <div style={{ display: "flex", gap: 6 }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateEx(wIdx, eIdx, "isSuperSet", true)}
+                                    className="btn btn-xs"
+                                    style={{
+                                      flex: 1,
+                                      minHeight: 32,
+                                      height: 32,
+                                      fontSize: "0.78rem",
+                                      fontWeight: 800,
+                                      background: ex.isSuperSet ? "rgba(0, 255, 135, 0.16)" : "var(--surface)",
+                                      border: ex.isSuperSet ? "1.5px solid var(--brand)" : "1px solid var(--border)",
+                                      color: ex.isSuperSet ? "var(--brand)" : "var(--text2)",
+                                      boxShadow: ex.isSuperSet ? "0 0 10px rgba(0, 255, 135, 0.4)" : "none",
+                                      transition: "all 150ms ease",
+                                      padding: 0
+                                    }}
+                                  >
+                                    Sí
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateEx(wIdx, eIdx, "isSuperSet", false)}
+                                    className="btn btn-xs"
+                                    style={{
+                                      flex: 1,
+                                      minHeight: 32,
+                                      height: 32,
+                                      fontSize: "0.78rem",
+                                      fontWeight: 800,
+                                      background: !ex.isSuperSet ? "rgba(255, 71, 87, 0.16)" : "var(--surface)",
+                                      border: !ex.isSuperSet ? "1.5px solid var(--danger)" : "1px solid var(--border)",
+                                      color: !ex.isSuperSet ? "var(--danger)" : "var(--text2)",
+                                      boxShadow: !ex.isSuperSet ? "0 0 10px rgba(255, 71, 87, 0.4)" : "none",
+                                      transition: "all 150ms ease",
+                                      padding: 0
+                                    }}
+                                  >
+                                    No
+                                  </button>
+                                </div>
                               </div>
                               <button type="button" onClick={() => removeEx(wIdx, eIdx)}
                                 className="btn btn-ghost btn-icon-sm" style={{ background: "transparent", border: "none", color: "var(--danger)" }}>
@@ -1066,12 +1105,12 @@ export default function TrainerPage() {
               <label className="label" style={{ display: "flex", alignItems: "center", gap: 4 }}><Star size={12} color="#f59e0b" /> Calificación del Alumno</label>
               <select className="input" value={grade} onChange={e => setGrade(e.target.value)}>
                 <option value="">Sin calificar / Quitar nota</option>
-                <option value="Excelente ⭐⭐⭐">Excelente ⭐⭐⭐</option>
-                <option value="Muy Bueno ⭐⭐">Muy Bueno ⭐⭐</option>
-                <option value="Bueno ⭐">Bueno ⭐</option>
-                <option value="Constante 👍">Constante 👍</option>
-                <option value="En Progreso 💪">En Progreso 💪</option>
-                <option value="Requiere Atención ⚠️">Requiere Atención ⚠️</option>
+                <option value="Excelente">Excelente</option>
+                <option value="Muy Bueno">Muy Bueno</option>
+                <option value="Bueno">Bueno</option>
+                <option value="Constante">Constante</option>
+                <option value="En Progreso">En Progreso</option>
+                <option value="Requiere Atención">Requiere Atención</option>
               </select>
             </div>
 
@@ -1174,7 +1213,7 @@ export default function TrainerPage() {
                         setSearchExModal(null);
                       }}
                     >
-                      <p style={{ margin: 0, fontWeight: 700, fontSize: "0.88rem" }}>🏋️ {ex.name}</p>
+                      <p style={{ margin: 0, fontWeight: 700, fontSize: "0.88rem" }}>{ex.name}</p>
                       <p style={{ margin: 0, fontSize: "0.72rem", color: "var(--muted)" }}>{ex.muscleGroup} · {ex.equipment}</p>
                     </div>
                     {ex.gifUrl && (
@@ -1186,7 +1225,7 @@ export default function TrainerPage() {
                         }}
                         style={{ background: "rgba(0,255,135,0.1)", border: "none", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
                       >
-                        👁️
+                        <Eye size={14} color="var(--brand)" />
                       </button>
                     )}
                   </div>

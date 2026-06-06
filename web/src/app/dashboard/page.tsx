@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
-import { Flame, Calendar } from "lucide-react";
+import { Flame, Calendar, Dumbbell, Zap, Apple, Users, User, BarChart2 } from "lucide-react";
 
 type Profile = {
   bmrKcal: number | null;
@@ -24,9 +24,9 @@ function Loader() {
 
 function GreetingTime() {
   const h = new Date().getHours();
-  if (h < 12) return "☀️ Buenos días";
-  if (h < 18) return "🌤️ Buenas tardes";
-  return "🌙 Buenas noches";
+  if (h < 12) return "Buenos días";
+  if (h < 18) return "Buenas tardes";
+  return "Buenas noches";
 }
 
 export default function Dashboard() {
@@ -56,6 +56,23 @@ export default function Dashboard() {
       });
     });
   }, [user]);
+
+  const toggleAttendance = async (dayStr: string) => {
+    try {
+      const res = await fetch("/api/profile/attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: dayStr }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setAttendances(data.attendances ?? []);
+        setProfile((prev) => prev ? { ...prev, streak: data.streak, maxStreak: data.maxStreak } : null);
+      }
+    } catch (err) {
+      console.error("Error al registrar asistencia:", err);
+    }
+  };
 
   if (loading || !user) return <Loader />;
 
@@ -137,11 +154,10 @@ export default function Dashboard() {
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ position: "relative" }}>
                 <Flame size={32} color="var(--warn)" style={{ fill: "var(--warn)", filter: "drop-shadow(0 0 6px var(--warn))" }} className="anim-pulse" />
-                <span style={{ position: "absolute", bottom: -2, right: -4, background: "rgba(0,0,0,0.6)", borderRadius: 99, padding: "1px 4px", fontSize: "0.55rem", fontWeight: 800 }}>🔥</span>
               </div>
               <div>
                 <p style={{ margin: 0, fontSize: "1.05rem", fontWeight: 900, color: "var(--text)" }}>
-                  ¡Tu racha: {profile?.streak ?? 0} {profile?.streak === 1 ? "día" : "días"}! 🔥
+                  ¡Tu racha: {profile?.streak ?? 0} {profile?.streak === 1 ? "día" : "días"}!
                 </p>
                 <p style={{ margin: 0, fontSize: "0.7rem", color: "var(--muted)", fontWeight: 600 }}>
                   Racha Máx: {profile?.maxStreak ?? 0} días
@@ -169,30 +185,39 @@ export default function Dashboard() {
               const isToday = new Date().getDate() === day && new Date().getMonth() === new Date().getMonth() && new Date().getFullYear() === new Date().getFullYear();
               
               return (
-                <div key={day} style={{
-                  aspectRatio: "1",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "0.8rem",
-                  fontWeight: 700,
-                  position: "relative",
-                  background: attended 
-                    ? "linear-gradient(135deg, var(--brand) 0%, var(--brand2) 100%)" 
-                    : isToday 
-                      ? "rgba(255,255,255,0.08)" 
-                      : "rgba(255,255,255,0.02)",
-                  color: attended ? "#030508" : isToday ? "var(--brand)" : "var(--text2)",
-                  border: attended 
-                    ? "none" 
-                    : isToday 
-                      ? "1px dashed var(--brand)" 
-                      : "1px solid var(--border)",
-                  boxShadow: attended ? "0 0 10px rgba(0,255,135,0.25)" : "none"
-                }}>
+                <button 
+                  key={day} 
+                  type="button"
+                  onClick={() => toggleAttendance(dayStr)}
+                  style={{
+                    aspectRatio: "1",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    position: "relative",
+                    cursor: "pointer",
+                    background: attended 
+                      ? "linear-gradient(135deg, var(--brand) 0%, var(--brand2) 100%)" 
+                      : isToday 
+                        ? "rgba(255,255,255,0.08)" 
+                        : "rgba(255,255,255,0.02)",
+                    color: attended ? "#030508" : isToday ? "var(--brand)" : "var(--text2)",
+                    border: attended 
+                      ? "none" 
+                      : isToday 
+                        ? "1.5px dashed var(--brand)" 
+                        : "1px solid var(--border)",
+                    boxShadow: attended ? "0 0 10px rgba(0,255,135,0.35)" : "none",
+                    outline: "none",
+                    transition: "all 150ms ease",
+                    padding: 0
+                  }}
+                >
                   {day}
-                </div>
+                </button>
               );
             })}
           </div>
@@ -256,8 +281,8 @@ export default function Dashboard() {
             display: "flex", alignItems: "center", gap: 16, cursor: "pointer",
             background: "rgba(0,255,135,0.03)"
           }}>
-            <div style={{ width: 48, height: 48, borderRadius: 14, background: "rgba(0,255,135,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem", flexShrink: 0 }}>
-              📊
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: "rgba(0,255,135,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <BarChart2 size={24} color="var(--brand)" />
             </div>
             <div>
               <p style={{ margin: 0, fontWeight: 800, fontSize: "1rem" }}>Completá tu perfil</p>
@@ -277,7 +302,7 @@ export default function Dashboard() {
             border: "1px solid rgba(0,255,135,0.2)",
           }}>
             <div className="tile-icon" style={{ background: "rgba(0,255,135,0.15)" }}>
-              <span style={{ fontSize: "1.4rem" }}>🏋️</span>
+              <Dumbbell size={20} color="var(--brand)" />
             </div>
             <p className="tile-label">Registrar sesión</p>
             <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Logueá tu entrenamiento</p>
@@ -290,7 +315,7 @@ export default function Dashboard() {
             border: "1px solid rgba(0,198,255,0.2)",
           }}>
             <div className="tile-icon" style={{ background: "rgba(0,198,255,0.15)" }}>
-              <span style={{ fontSize: "1.4rem" }}>⚡</span>
+              <Zap size={20} color="var(--brand2)" />
             </div>
             <p className="tile-label">Calcular 1RM</p>
             <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Epley formula</p>
@@ -303,7 +328,7 @@ export default function Dashboard() {
             border: "1px solid rgba(255,165,2,0.18)",
           }}>
             <div className="tile-icon" style={{ background: "rgba(255,165,2,0.12)" }}>
-              <span style={{ fontSize: "1.4rem" }}>🍎</span>
+              <Apple size={20} color="var(--warn)" />
             </div>
             <p className="tile-label">Ver calorías</p>
             <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Harris-Benedict</p>
@@ -317,7 +342,7 @@ export default function Dashboard() {
               border: "1px solid rgba(124,58,237,0.2)",
             }}>
               <div className="tile-icon" style={{ background: "rgba(124,58,237,0.15)" }}>
-                <span style={{ fontSize: "1.4rem" }}>👥</span>
+                <Users size={20} color="var(--brand3)" />
               </div>
               <p className="tile-label">Panel Trainer</p>
               <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Gestioná alumnos</p>
@@ -330,7 +355,7 @@ export default function Dashboard() {
               border: "1px solid rgba(168,85,247,0.18)",
             }}>
               <div className="tile-icon" style={{ background: "rgba(168,85,247,0.12)" }}>
-                <span style={{ fontSize: "1.4rem" }}>👤</span>
+                <User size={20} color="#a855f7" />
               </div>
               <p className="tile-label">Mi perfil</p>
               <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Datos físicos</p>
@@ -349,8 +374,8 @@ export default function Dashboard() {
             border: "1px solid rgba(0,255,135,0.18)",
             display: "flex", alignItems: "center", gap: 16, cursor: "pointer"
           }}>
-            <div style={{ width: 48, height: 48, borderRadius: 14, background: "linear-gradient(135deg,rgba(0,255,135,0.2),rgba(0,198,255,0.15))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }}>
-              👥
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: "linear-gradient(135deg,rgba(0,255,135,0.2),rgba(0,198,255,0.15))", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Users size={24} color="#00ff87" />
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ margin: 0, fontWeight: 800, fontSize: "1.05rem" }}>Panel Trainer</p>
@@ -360,6 +385,58 @@ export default function Dashboard() {
           </div>
         </Link>
       )}
+
+      {/* ── Partículas animadas de fondo ── */}
+      <Particles />
     </main>
+  );
+}
+
+function Particles() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return (
+    <>
+      <style>{`
+        @keyframes floatParticle {
+          0% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0; }
+          10% { opacity: 0.35; }
+          90% { opacity: 0.35; }
+          100% { transform: translateY(-120px) translateX(20px) scale(0.6); opacity: 0; }
+        }
+      `}</style>
+      <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}>
+        {[...Array(10)].map((_, i) => {
+          const left = `${(i * 11) % 100}%`;
+          const top = `${(40 + (i * 7)) % 100}%`;
+          const size = `${3 + (i % 3)}px`;
+          const delay = `${i * 0.4}s`;
+          const duration = `${7 + (i % 4)}s`;
+          return (
+            <div
+              key={i}
+              style={{
+                position: "absolute",
+                left,
+                top,
+                width: size,
+                height: size,
+                borderRadius: "50%",
+                background: i % 2 === 0 ? "var(--brand)" : "var(--brand2)",
+                opacity: 0,
+                filter: "blur(0.5px)",
+                animation: `floatParticle ${duration} infinite linear`,
+                animationDelay: delay,
+              }}
+            />
+          );
+        })}
+      </div>
+    </>
   );
 }

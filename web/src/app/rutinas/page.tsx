@@ -92,7 +92,7 @@ export default function RutinasPage() {
   const { user, loading } = useAuth();
   const router = useNextRouter();
   const [toast, setToast] = useState<ToastMsg | null>(null);
-  const [tab, setTab] = useState<"log" | "rutinas">("log");
+  const [tab, setTab] = useState<"log" | "rutinas" | "ejercicios">("log");
   const [programs, setPrograms] = useState<Program[]>([]);
   const [logs, setLogs] = useState<Log[]>([]);
   const [weeklyVol, setWeeklyVol] = useState(0);
@@ -236,7 +236,7 @@ export default function RutinasPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setToast({ msg: "Ejercicio creado ✅", type: "success" });
+        setToast({ msg: "Ejercicio creado", type: "success" });
         setExName(data.exercise.name);
         setShowCreator(false);
         setNewName("");
@@ -353,7 +353,7 @@ export default function RutinasPage() {
     return (
       <main className="page" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "70dvh", textAlign: "center" }}>
         <div className="empty-state">
-          <div className="empty-state-icon">🏋️</div>
+          <div className="empty-state-icon"><Dumbbell size={28} color="var(--brand)" /></div>
           <p className="empty-title">Sección para Atletas</p>
           <p className="empty-sub">Esta sección es para que los atletas registren sus sesiones.</p>
           <button onClick={() => router.push("/trainer")} className="btn btn-primary" style={{ marginTop: 8 }}>
@@ -409,10 +409,13 @@ export default function RutinasPage() {
       {/* Tabs */}
       <div className="tab-bar">
         <button className={`tab-btn${tab === "log" ? " active" : ""}`} onClick={() => setTab("log")}>
-          ✏️ Registrar
+          Registrar
         </button>
         <button className={`tab-btn${tab === "rutinas" ? " active" : ""}`} onClick={() => setTab("rutinas")}>
-          📋 Mis rutinas
+          Mis rutinas
+        </button>
+        <button className={`tab-btn${tab === "ejercicios" ? " active" : ""}`} onClick={() => setTab("ejercicios")}>
+          Biblioteca
         </button>
       </div>
 
@@ -445,9 +448,9 @@ export default function RutinasPage() {
               </div>
 
               {/* Suggestions Dropdown */}
-              {showSug && exName && (
+              {showSug && (
                 <div className="autocomplete" style={{ maxHeight: 260, overflowY: "auto" }}>
-                  {suggestions.map(s => (
+                  {(exName ? suggestions : dbExercises.slice(0, 15)).map(s => (
                     <div 
                       key={s.id} 
                       className="autocomplete-item"
@@ -455,7 +458,7 @@ export default function RutinasPage() {
                       onMouseDown={() => { setExName(s.name); setShowSug(false); }}
                     >
                       <div>
-                        <p style={{ margin: 0, fontWeight: 700 }}>🏋️ {s.name}</p>
+                        <p style={{ margin: 0, fontWeight: 700 }}>{s.name}</p>
                         <p style={{ margin: 0, fontSize: "0.72rem", color: "var(--muted)" }}>{s.muscleGroup} · {s.equipment}</p>
                       </div>
                       {s.gifUrl && (
@@ -473,17 +476,16 @@ export default function RutinasPage() {
                       )}
                     </div>
                   ))}
-                  {suggestions.length === 0 && (
+                  {exName && suggestions.length === 0 && (
                     <div 
                       className="autocomplete-item"
                       style={{ textAlign: "center", color: "var(--brand2)", fontWeight: 700 }}
                       onMouseDown={() => {
-                        setNewName(exName);
                         setShowCreator(true);
                         setShowSug(false);
                       }}
                     >
-                      ✨ Crear "{exName}" personalizado
+                      + Crear ejercicio "{exName}"
                     </div>
                   )}
                 </div>
@@ -572,7 +574,7 @@ export default function RutinasPage() {
             )}
 
             <button type="submit" className="btn btn-primary btn-full" disabled={busy || !exName} style={{ fontSize: "1.05rem" }}>
-              {busy ? "Guardando…" : "✅ Registrar serie"}
+              {busy ? "Guardando…" : "Registrar serie"}
             </button>
           </form>
 
@@ -584,8 +586,8 @@ export default function RutinasPage() {
                 <div key={l.id} className="log-card">
                   <div style={{
                     width: 40, height: 40, borderRadius: 11, flexShrink: 0,
-                    background: "rgba(0,255,135,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem"
-                  }}>🏋️</div>
+                    background: "rgba(0,255,135,0.1)", display: "flex", alignItems: "center", justifyContent: "center"
+                  }}><Dumbbell size={18} color="var(--brand)" /></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p className="log-ex-name" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {l.exercise.name}
@@ -686,7 +688,7 @@ export default function RutinasPage() {
                               }
                               
                               setTab("log");
-                              setToast({ msg: `🏋️ Cargado: ${ex.exercise.name}`, type: "success" });
+                              setToast({ msg: `Cargado: ${ex.exercise.name}`, type: "success" });
                             }}
                             style={{
                               display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -781,6 +783,103 @@ export default function RutinasPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ── EJERCICIOS (BIBLIOTECA) TAB ── */}
+      {tab === "ejercicios" && (
+        <div className="anim-fade" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Controles de Búsqueda y Filtro */}
+          <div className="glass card" style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                className="input"
+                style={{ minHeight: 44, height: 44, fontSize: "0.9rem", flex: 1 }}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Buscar ejercicio..."
+              />
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <select 
+                className="input" 
+                style={{ minHeight: 38, height: 38, padding: "0 10px", fontSize: "0.8rem", width: "auto", flex: 1 }}
+                value={filterMuscle}
+                onChange={e => setFilterMuscle(e.target.value)}
+              >
+                <option value="">Todos los músculos</option>
+                {MUSCLE_GROUPS.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+              <select 
+                className="input" 
+                style={{ minHeight: 38, height: 38, padding: "0 10px", fontSize: "0.8rem", width: "auto", flex: 1 }}
+                value={filterEquip}
+                onChange={e => setFilterEquip(e.target.value)}
+              >
+                <option value="">Todo equipamiento</option>
+                {EQUIPMENTS.map(eq => <option key={eq} value={eq}>{eq}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Listado de ejercicios en la base de datos */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: "50dvh", overflowY: "auto", paddingBottom: 16 }}>
+            {dbExercises
+              .filter(ex => {
+                const matchesSearch = !searchQuery || ex.name.toLowerCase().includes(searchQuery.toLowerCase());
+                const matchesMuscle = !filterMuscle || ex.muscleGroup === filterMuscle;
+                const matchesEquip = !filterEquip || ex.equipment === filterEquip;
+                return matchesSearch && matchesMuscle && matchesEquip;
+              })
+              .map(ex => (
+                <div 
+                  key={ex.id}
+                  className="list-item"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", margin: 0 }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontWeight: 700, fontSize: "0.92rem" }}>{ex.name}</p>
+                    <p style={{ margin: 0, fontSize: "0.72rem", color: "var(--muted)" }}>{ex.muscleGroup} · {ex.equipment}</p>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    {ex.gifUrl && (
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setPreviewGif(ex.gifUrl);
+                          setPreviewName(ex.name);
+                        }}
+                        style={{ background: "rgba(0,255,135,0.1)", border: "none", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                      >
+                        <Eye size={16} color="var(--brand)" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExName(ex.name);
+                        setTab("log");
+                      }}
+                      style={{ background: "rgba(0,198,255,0.1)", border: "none", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                      title="Registrar"
+                    >
+                      <Plus size={16} color="var(--brand2)" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            {dbExercises.filter(ex => {
+              const matchesSearch = !searchQuery || ex.name.toLowerCase().includes(searchQuery.toLowerCase());
+              const matchesMuscle = !filterMuscle || ex.muscleGroup === filterMuscle;
+              const matchesEquip = !filterEquip || ex.equipment === filterEquip;
+              return matchesSearch && matchesMuscle && matchesEquip;
+            }).length === 0 && (
+              <div className="empty-state glass">
+                <p className="empty-title">No se encontraron ejercicios</p>
+                <p className="empty-sub">Probá cambiando los términos de búsqueda o filtros.</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
