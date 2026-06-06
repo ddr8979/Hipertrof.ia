@@ -55,6 +55,10 @@ model User {
   whatsappNotifications WhatsappNotification[]
   attendances         Attendance[]
   oneRMRecords        OneRMRecord[]
+
+  trainerId           String?
+  trainer             User?                  @relation("TrainerAthletes", fields: [trainerId], references: [id], onDelete: SetNull)
+  athletes            User[]                 @relation("TrainerAthletes")
 }
 
 model Profile {

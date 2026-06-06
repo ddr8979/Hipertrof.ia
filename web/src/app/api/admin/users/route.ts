@@ -17,8 +17,17 @@ export async function GET(req: NextRequest) {
 
   const onlyPending = req.nextUrl.searchParams.get("pending") === "true";
 
+  let whereClause: any = {};
+  if (onlyPending) {
+    whereClause.isApproved = false;
+    whereClause.role = "ATHLETE";
+    if (session.role === "TRAINER") {
+      whereClause.trainerId = session.id;
+    }
+  }
+
   const users = await prisma.user.findMany({
-    where: onlyPending ? { isApproved: false, role: "ATHLETE" } : {},
+    where: whereClause,
     select: {
       id: true,
       name: true,

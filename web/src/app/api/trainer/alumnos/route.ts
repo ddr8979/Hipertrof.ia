@@ -11,7 +11,10 @@ export async function GET() {
     return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
 
   const athletes = await prisma.user.findMany({
-    where: { role: "ATHLETE" },
+    where: {
+      role: "ATHLETE",
+      trainerId: session.role === "TRAINER" ? session.id : undefined,
+    },
     include: {
       profile: true,
       assignedPrograms: {
@@ -53,6 +56,7 @@ export async function POST(req: NextRequest) {
         passwordHash: hash,
         role: "ATHLETE",
         isApproved: true,
+        trainerId: session.role === "TRAINER" ? session.id : undefined,
         profile: { create: {} },
       },
     });

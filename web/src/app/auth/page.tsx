@@ -20,10 +20,27 @@ function AuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("ATHLETE");
+  const [trainers, setTrainers] = useState<any[]>([]);
+  const [trainerId, setTrainerId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<ToastType | null>(null);
   const { user, refresh, loading } = useAuth();
   const router = useRouter();
+
+  // Fetch approved trainers for athlete registration
+  useEffect(() => {
+    if (mode === "register" && role === "ATHLETE") {
+      fetch("/api/auth/trainers")
+        .then((r) => r.json())
+        .then((data) => {
+          setTrainers(data.trainers ?? []);
+          if (data.trainers && data.trainers.length > 0) {
+            setTrainerId(data.trainers[0].id);
+          }
+        })
+        .catch((err) => console.error("Error al cargar trainers:", err));
+    }
+  }, [mode, role]);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -34,7 +51,7 @@ function AuthForm() {
         router.replace("/dashboard");
       }
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, mode]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -43,7 +60,7 @@ function AuthForm() {
       const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
       const body = mode === "login"
         ? { email, password }
-        : { email, password, name, role };
+        : { email, password, name, role, trainerId: role === "ATHLETE" ? trainerId : undefined };
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -192,9 +209,9 @@ function AuthForm() {
               )}
 
               <div className="field">
-                <label className="label">Email</label>
-                <input className="input" type="email" value={email}
-                  onChange={e => setEmail(e.target.value)} placeholder="ejemplo@correo.com" required />
+                <label className="label">Email o Teléfono</label>
+                <input className="input" type="text" value={email}
+                  onChange={e => setEmail(e.target.value)} placeholder="ejemplo@correo.com o +59899123456" required />
               </div>
 
               <div className="field">
@@ -202,6 +219,19 @@ function AuthForm() {
                 <input className="input" type="password" value={password}
                   onChange={e => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" required minLength={6} />
               </div>
+
+              {mode === "register" && role === "ATHLETE" && (
+                <div className="field">
+                  <label className="label">Tu Personal Trainer</label>
+                  <select className="input" value={trainerId}
+                    onChange={e => setTrainerId(e.target.value)} required>
+                    <option value="">Seleccioná tu trainer...</option>
+                    {trainers.map(t => (
+                      <option key={t.id} value={t.id}>{t.name} ({t.email})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <button type="submit" className="btn btn-primary btn-full"
                 style={{ marginTop: 8 }} disabled={isSubmitting}>

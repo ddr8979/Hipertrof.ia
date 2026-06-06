@@ -4,14 +4,14 @@ import { prisma } from "@/server/db";
 import { createSession } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  const { email, password, name, role } = await req.json();
+  const { email, password, name, role, trainerId } = await req.json();
 
   if (!email || !password || !name)
     return NextResponse.json({ error: "Faltan campos" }, { status: 400 });
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing)
-    return NextResponse.json({ error: "Email ya registrado" }, { status: 409 });
+    return NextResponse.json({ error: "Email o Teléfono ya registrado" }, { status: 409 });
 
   const hash = await bcrypt.hash(password, 12);
 
@@ -23,6 +23,10 @@ export async function POST(req: NextRequest) {
     isApproved = true;
   }
 
+  if (resolvedRole === "ATHLETE" && !trainerId) {
+    return NextResponse.json({ error: "Debes seleccionar un Personal Trainer" }, { status: 400 });
+  }
+
   const user = await prisma.user.create({
     data: {
       email,
@@ -30,6 +34,7 @@ export async function POST(req: NextRequest) {
       passwordHash: hash,
       role: resolvedRole as any,
       isApproved,
+      trainerId: resolvedRole === "ATHLETE" ? trainerId : null,
       profile: { create: {} },
     },
   });
