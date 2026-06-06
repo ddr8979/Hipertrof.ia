@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/server/db";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const total = await prisma.recipe.count();
   if (total === 0) {
     await prisma.recipe.create({
@@ -16,7 +16,20 @@ export async function GET() {
     });
   }
 
-  const recipes = await prisma.recipe.findMany({ orderBy: { createdAt: "desc" }, take: 30 });
+  const { searchParams } = new URL(req.url);
+  const targetKcal = Number(searchParams.get("targetKcal") ?? 0);
+  const range = Number(searchParams.get("range") ?? 300);
+
+  const recipes = await prisma.recipe.findMany({
+    where: targetKcal > 0 ? {
+      calories: {
+        gte: targetKcal - range,
+        lte: targetKcal + range,
+      }
+    } : {},
+    orderBy: { createdAt: "desc" },
+    take: 30
+  });
   return NextResponse.json({ recipes });
 }
 

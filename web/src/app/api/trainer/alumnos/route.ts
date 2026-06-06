@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
         name,
         passwordHash: hash,
         role: "ATHLETE",
+        isApproved: true,
         profile: { create: {} },
       },
     });

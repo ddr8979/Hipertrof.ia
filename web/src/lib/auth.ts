@@ -12,6 +12,7 @@ export type SessionUser = {
   email: string;
   name: string | null;
   role: "ATHLETE" | "TRAINER" | "GYM_OWNER" | "ADMIN";
+  isApproved: boolean;
 };
 
 // ── Sign a JWT and set cookie ────────────────────────────────

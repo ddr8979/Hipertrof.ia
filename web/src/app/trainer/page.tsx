@@ -115,6 +115,8 @@ const EQUIPMENTS = [
   "Discos", "Bandas Elásticas", "Máquina", "Multipower (Smith)"
 ];
 
+type PendingUser = { id: string; name: string | null; email: string; createdAt: string };
+
 export default function TrainerPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -123,6 +125,7 @@ export default function TrainerPage() {
 
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
+  const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
 
   // assign form
   const [selAthlete, setSelAthlete] = useState("");
@@ -163,16 +166,34 @@ export default function TrainerPage() {
 
   const load = async () => {
     if (user?.role === "ATHLETE") return;
-    const [ar, pr, er] = await Promise.all([
+    const [ar, pr, er, pu] = await Promise.all([
       fetch("/api/trainer/alumnos").then(r => r.json()),
       fetch("/api/trainer/programas").then(r => r.json()),
       fetch("/api/exercises").then(r => r.json()),
+      fetch("/api/admin/users?pending=true").then(r => r.json()),
     ]);
     setAthletes(ar.athletes ?? []);
     setPrograms(pr.programs ?? []);
     setExerciseDb(er.exercises ?? []);
+    setPendingUsers(pu.users ?? []);
     if (!selProgram && pr.programs?.[0]) setSelProgram(pr.programs[0].id);
     if (!selAthlete && ar.athletes?.[0]) setSelAthlete(ar.athletes[0].id);
+  };
+
+  const approveUser = async (userId: string, approved: boolean) => {
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ userId, approved }),
+      });
+      if (res.ok) {
+        setToast({ msg: approved ? "Acceso aprobado ✅" : "Usuario rechazado", type: approved ? "success" : "error" });
+        await load();
+      }
+    } catch {
+      setToast({ msg: "Error de red", type: "error" });
+    }
   };
 
   useEffect(() => {
@@ -419,6 +440,31 @@ export default function TrainerPage() {
       {/* ── ALUMNOS ── */}
       {tab === "alumnos" && (
         <div className="anim-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+          {/* Accesos pendientes */}
+          {pendingUsers.length > 0 && (
+            <div className="glass card" style={{ display: "flex", flexDirection: "column", gap: 12, border: "1.5px solid rgba(255,179,0,0.3)", background: "rgba(255,179,0,0.04)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: "1.1rem" }}>⏳</span>
+                <p className="section-title" style={{ margin: 0, color: "#ffb300" }}>Accesos Pendientes ({pendingUsers.length})</p>
+              </div>
+              {pendingUsers.map(u => (
+                <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "rgba(255,255,255,0.03)", borderRadius: "var(--radius-xs)", border: "1px solid var(--border)" }}>
+                  <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg, #ffb300, #ff5e3a)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, color: "#111", flexShrink: 0, fontSize: "0.95rem" }}>
+                    {(u.name ?? u.email)[0].toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontWeight: 700, fontSize: "0.9rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.name ?? u.email}</p>
+                    <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--text2)" }}>{u.email}</p>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                    <button onClick={() => approveUser(u.id, true)} className="btn btn-xs" style={{ background: "rgba(0,255,135,0.15)", border: "1px solid rgba(0,255,135,0.4)", color: "var(--brand)", minWidth: 70 }}>✓ Aprobar</button>
+                    <button onClick={() => approveUser(u.id, false)} className="btn btn-xs" style={{ background: "rgba(255,71,87,0.1)", border: "1px solid rgba(255,71,87,0.3)", color: "var(--danger)", minWidth: 70 }}>✗ Rechazar</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           
           {/* Create/Assign panel */}
           <div className="glass card" style={{ display: "flex", flexDirection: "column", gap: 14 }}>

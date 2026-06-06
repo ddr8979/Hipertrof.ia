@@ -15,16 +15,21 @@ export async function POST(req: NextRequest) {
 
   const hash = await bcrypt.hash(password, 12);
 
+  const resolvedRole = (role ?? "ATHLETE") as string;
+  // TRAINER y ADMIN se aprueban automáticamente; ATHLETE queda pendiente
+  const isApproved = resolvedRole === "TRAINER" || resolvedRole === "ADMIN";
+
   const user = await prisma.user.create({
     data: {
       email,
       name,
       passwordHash: hash,
-      role: role ?? "ATHLETE",
-      profile: { create: {} }, // empty profile, filled later
+      role: resolvedRole as any,
+      isApproved,
+      profile: { create: {} },
     },
   });
 
-  await createSession({ id: user.id, email: user.email, name: user.name, role: user.role });
-  return NextResponse.json({ ok: true, role: user.role });
+  await createSession({ id: user.id, email: user.email, name: user.name, role: user.role, isApproved: user.isApproved });
+  return NextResponse.json({ ok: true, role: user.role, isPending: !user.isApproved });
 }

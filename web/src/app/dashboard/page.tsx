@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { Flame, Calendar, Dumbbell, Zap, Apple, Users, User, BarChart2 } from "lucide-react";
+import { Mascota } from "@/components/mascota";
 
 type Profile = {
   bmrKcal: number | null;
@@ -248,7 +249,7 @@ export default function Dashboard() {
           <p className="section-title">Tu metabolismo diario</p>
           <div style={{ display: "flex", gap: 0, alignItems: "stretch" }}>
             <div style={{ flex: 1, textAlign: "center" }}>
-              <p style={{ margin: 0, fontSize: "0.7rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700 }}>Mantenimiento</p>
+              <p style={{ margin: 0, fontSize: "0.7rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700 }}>Lo que necesitás comer</p>
               <p style={{ margin: "6px 0 0", fontSize: "2.4rem", fontWeight: 900, color: "var(--brand)", lineHeight: 1, letterSpacing: "-0.04em" }}>
                 {profile.tdeeKcal.toLocaleString()}
               </p>
@@ -257,7 +258,7 @@ export default function Dashboard() {
             <div style={{ width: 1, background: "var(--border)", margin: "0 16px" }} />
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ textAlign: "center" }}>
-                <p style={{ margin: 0, fontSize: "0.65rem", color: "var(--muted)", fontWeight: 700, textTransform: "uppercase" }}>BMR Basal</p>
+                <p style={{ margin: 0, fontSize: "0.65rem", color: "var(--muted)", fontWeight: 700, textTransform: "uppercase" }}>Lo que quemás sin hacer nada</p>
                 <p style={{ margin: "2px 0 0", fontSize: "1.2rem", fontWeight: 800 }}>{profile.bmrKcal?.toLocaleString()}</p>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
@@ -309,7 +310,7 @@ export default function Dashboard() {
           </div>
         </Link>
 
-        <Link href="/calculadora" style={{ textDecoration: "none" }}>
+        <Link href="/calculadora?tab=1rm" style={{ textDecoration: "none" }}>
           <div className="action-tile" style={{
             background: "linear-gradient(135deg, rgba(0,198,255,0.12), rgba(0,198,255,0.04))",
             border: "1px solid rgba(0,198,255,0.2)",
@@ -318,11 +319,11 @@ export default function Dashboard() {
               <Zap size={20} color="var(--brand2)" />
             </div>
             <p className="tile-label">Calcular 1RM</p>
-            <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Epley formula</p>
+            <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Fuerza máxima</p>
           </div>
         </Link>
 
-        <Link href="/calculadora?tab=calorias" style={{ textDecoration: "none" }}>
+        <Link href="/calorias" style={{ textDecoration: "none" }}>
           <div className="action-tile" style={{
             background: "linear-gradient(135deg, rgba(255,165,2,0.1), rgba(255,165,2,0.03))",
             border: "1px solid rgba(255,165,2,0.18)",
@@ -330,8 +331,8 @@ export default function Dashboard() {
             <div className="tile-icon" style={{ background: "rgba(255,165,2,0.12)" }}>
               <Apple size={20} color="var(--warn)" />
             </div>
-            <p className="tile-label">Ver calorías</p>
-            <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Harris-Benedict</p>
+            <p className="tile-label">¿Cuánto comer?</p>
+            <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Tus calorías diarias</p>
           </div>
         </Link>
 
@@ -385,6 +386,9 @@ export default function Dashboard() {
           </div>
         </Link>
       )}
+
+      {/* ── Mascota flotante ── */}
+      <Mascota context="dashboard" />
 
       {/* ── Partículas animadas de fondo ── */}
       <Particles />

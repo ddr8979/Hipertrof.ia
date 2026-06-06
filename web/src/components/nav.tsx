@@ -14,15 +14,18 @@ function HomeIcon({ active }: { active: boolean }) {
   );
 }
 
-function DumbbellIcon({ active }: { active: boolean }) {
+function BookIcon({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6.5 6.5h11M6.5 17.5h11" strokeWidth={active ? 2.5 : 1.8} />
-      <rect x="2" y="8" width="4" height="8" rx="2" fill={active ? "currentColor" : "none"} strokeWidth={active ? 0 : 1.8} />
-      <rect x="18" y="8" width="4" height="8" rx="2" fill={active ? "currentColor" : "none"} strokeWidth={active ? 0 : 1.8} />
-      <rect x="5" y="10" width="2" height="4" rx="1" fill={active ? "currentColor" : "none"} strokeWidth={active ? 0 : 1.8} />
-      <rect x="17" y="10" width="2" height="4" rx="1" fill={active ? "currentColor" : "none"} strokeWidth={active ? 0 : 1.8} />
+      <path d="M2 6c0-1.1.9-2 2-2h7a2 2 0 0 1 2 2v13l-4.5-2.7L4 19V6Z"
+        fill={active ? "currentColor" : "none"} strokeWidth={active ? 0 : 1.8} />
+      <path d="M2 6c0-1.1.9-2 2-2h7a2 2 0 0 1 2 2v13l-4.5-2.7L4 19V6Z"
+        fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.8} />
+      <path d="M22 6c0-1.1-.9-2-2-2h-7a2 2 0 0 0-2 2v13l4.5-2.7L20 19V6Z"
+        fill={active ? "currentColor" : "none"} strokeWidth={active ? 0 : 1.8} />
+      <path d="M22 6c0-1.1-.9-2-2-2h-7a2 2 0 0 0-2 2v13l4.5-2.7L20 19V6Z"
+        fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.8} />
     </svg>
   );
 }
@@ -72,9 +75,9 @@ export function BottomNav() {
 
   const links = [
     { href: "/dashboard", label: "Inicio", Icon: HomeIcon },
-    { href: "/rutinas",   label: "Rutinas", Icon: DumbbellIcon },
-    { href: "/calculadora", label: "Calcular", Icon: CalcIcon },
-    ...(isTrainer ? [{ href: "/trainer", label: "Trainer", Icon: UsersIcon }] : []),
+    { href: "/rutinas",   label: "Mi entreno", Icon: BookIcon },
+    { href: "/calorias",  label: "¿Qué comer?", Icon: CalcIcon },
+    ...(isTrainer ? [{ href: "/trainer", label: "Mi profe", Icon: UsersIcon }] : []),
     { href: "/perfil",    label: "Perfil", Icon: ProfileIcon },
   ];
 

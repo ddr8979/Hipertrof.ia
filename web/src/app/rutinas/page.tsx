@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter as useNextRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { Toast } from "@/components/toast";
+import { Mascota } from "@/components/mascota";
 import { 
   Play, Eye, ArrowUp, ArrowDown, Scale, Info, Sparkles, Plus, Trash2, Search, Dumbbell, Award, Edit3, ArrowLeftRight, GripVertical 
 } from "lucide-react";
@@ -964,6 +965,8 @@ export default function RutinasPage() {
         </div>
       )}
 
+      {/* ── Mascota flotante ── */}
+      <Mascota context="rutinas" />
     </main>
   );
 }
