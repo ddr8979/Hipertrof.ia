@@ -5,7 +5,7 @@ import { prisma } from "@/server/db";
 // GET /api/trainer/programas — todos los programas para el dropdown de asignación
 export async function GET() {
   const session = await getSession();
-  if (!session || (session.role !== "TRAINER" && session.role !== "ADMIN"))
+  if (!session || (session.role !== "TRAINER" && session.role !== "ADMIN" && session.role !== "OWNER"))
     return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
 
   const programs = await prisma.trainingProgram.findMany({
@@ -45,7 +45,7 @@ export async function GET() {
 // POST — crear programa completo
 export async function POST(req: NextRequest) {
   const session = await getSession();
-  if (!session || (session.role !== "TRAINER" && session.role !== "ADMIN"))
+  if (!session || (session.role !== "TRAINER" && session.role !== "ADMIN" && session.role !== "OWNER"))
     return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
 
   const { name, description, workouts } = await req.json();

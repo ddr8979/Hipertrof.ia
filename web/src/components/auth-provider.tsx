@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (loading) return;
     if (!user) return;
-    if (user.role === "ADMIN" || user.role === "TRAINER") return;
+    if (user.role === "ADMIN" || user.role === "TRAINER" || user.role === "OWNER") return;
     if (!user.isApproved && pathname !== "/pendiente") {
       router.replace("/pendiente");
     }

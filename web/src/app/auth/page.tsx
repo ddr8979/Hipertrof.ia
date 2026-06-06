@@ -211,7 +211,7 @@ function AuthForm() {
               <div className="field">
                 <label className="label">Email o Teléfono</label>
                 <input className="input" type="text" value={email}
-                  onChange={e => setEmail(e.target.value)} placeholder="ejemplo@correo.com o +59899123456" required />
+                  onChange={e => setEmail(e.target.value)} placeholder="Email o Teléfono" required />
               </div>
 
               <div className="field">

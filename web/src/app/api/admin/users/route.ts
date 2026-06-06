@@ -4,7 +4,7 @@ import { prisma } from "@/server/db";
 
 async function requireAdmin(req: NextRequest) {
   const session = await getSession();
-  if (!session || (session.role !== "ADMIN" && session.role !== "TRAINER")) {
+  if (!session || (session.role !== "ADMIN" && session.role !== "TRAINER" && session.role !== "OWNER")) {
     return null;
   }
   return session;
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 // PATCH /api/admin/users — aprueba o rechaza un usuario
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
-  if (!session || (session.role !== "ADMIN" && session.role !== "TRAINER")) {
+  if (!session || (session.role !== "ADMIN" && session.role !== "TRAINER" && session.role !== "OWNER")) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 

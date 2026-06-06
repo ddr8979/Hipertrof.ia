@@ -7,7 +7,7 @@ import bcrypt from "bcryptjs";
 // GET /api/trainer/alumnos — lista atletas del trainer
 export async function GET() {
   const session = await getSession();
-  if (!session || (session.role !== "TRAINER" && session.role !== "ADMIN"))
+  if (!session || (session.role !== "TRAINER" && session.role !== "ADMIN" && session.role !== "OWNER"))
     return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
 
   const athletes = await prisma.user.findMany({
@@ -31,7 +31,7 @@ export async function GET() {
 // POST /api/trainer/alumnos — asignar o crear alumno
 export async function POST(req: NextRequest) {
   const session = await getSession();
-  if (!session || (session.role !== "TRAINER" && session.role !== "ADMIN"))
+  if (!session || (session.role !== "TRAINER" && session.role !== "ADMIN" && session.role !== "OWNER"))
     return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
 
   const body = await req.json();

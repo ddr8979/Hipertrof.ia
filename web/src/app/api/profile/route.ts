@@ -73,7 +73,7 @@ export async function PATCH(req: NextRequest) {
 // POST /api/profile — Entrenador asigna calificaciones y medallas a un alumno
 export async function POST(req: NextRequest) {
   const session = await getSession();
-  if (!session || (session.role !== "TRAINER" && session.role !== "ADMIN")) {
+  if (!session || (session.role !== "TRAINER" && session.role !== "ADMIN" && session.role !== "OWNER")) {
     return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
   }
 

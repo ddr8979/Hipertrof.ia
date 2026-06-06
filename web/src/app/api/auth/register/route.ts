@@ -16,10 +16,10 @@ export async function POST(req: NextRequest) {
   const hash = await bcrypt.hash(password, 12);
 
   let resolvedRole = (role ?? "ATHLETE") as string;
-  let isApproved = resolvedRole === "TRAINER" || resolvedRole === "ADMIN";
+  let isApproved = resolvedRole === "TRAINER" || resolvedRole === "ADMIN" || resolvedRole === "OWNER";
 
   if (email.toLowerCase() === "carrizoaxel67@gmail.com") {
-    resolvedRole = "ADMIN";
+    resolvedRole = "OWNER";
     isApproved = true;
   }
 

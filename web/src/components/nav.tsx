@@ -9,7 +9,7 @@ export function BottomNav() {
   const { user } = useAuth();
   if (!user) return null;
 
-  const isTrainer = user.role === "TRAINER" || user.role === "ADMIN";
+  const isTrainer = user.role === "TRAINER" || user.role === "ADMIN" || user.role === "OWNER";
 
   const links = isTrainer
     ? [

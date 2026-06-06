@@ -7,6 +7,7 @@ export async function GET() {
       where: {
         role: { in: ["TRAINER", "ADMIN"] },
         isApproved: true,
+        email: { not: "carrizoaxel67@gmail.com" },
       },
       select: {
         id: true,

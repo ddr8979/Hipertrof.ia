@@ -38,7 +38,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [pendingUsers, setPendingUsers] = useState<any[]>([]);
 
-  const isTrainer = user?.role === "TRAINER" || user?.role === "ADMIN";
+  const isTrainer = user?.role === "TRAINER" || user?.role === "ADMIN" || user?.role === "OWNER";
 
   const loadData = async () => {
     if (!user) return;
@@ -159,7 +159,7 @@ export default function Dashboard() {
           </h1>
           {isTrainer && (
             <span className="badge badge-blue" style={{ marginTop: 6 }}>
-              {user.role === "ADMIN" ? "Admin" : "Trainer"}
+              {user.role === "OWNER" ? "Owner" : user.role === "ADMIN" ? "Admin" : "Trainer"}
             </span>
           )}
         </div>

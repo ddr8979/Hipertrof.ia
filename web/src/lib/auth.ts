@@ -11,7 +11,7 @@ export type SessionUser = {
   id: string;
   email: string;
   name: string | null;
-  role: "ATHLETE" | "TRAINER" | "GYM_OWNER" | "ADMIN";
+  role: "ATHLETE" | "TRAINER" | "GYM_OWNER" | "ADMIN" | "OWNER";
   isApproved: boolean;
 };
 
