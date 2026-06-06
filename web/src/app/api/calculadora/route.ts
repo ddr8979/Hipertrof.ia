@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
       take: 10,
     });
 
-    const history = rawHistory.map(h => {
+    const history = rawHistory.map((h: any) => {
       const displayWeight = isLbs ? Math.round(h.weightKg / 0.45359237) : Math.round(h.weightKg);
       const displayOneRM = isLbs ? Math.round(h.oneRM / 0.45359237) : Math.round(h.oneRM);
       return {

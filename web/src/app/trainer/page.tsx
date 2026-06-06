@@ -62,6 +62,7 @@ type Program = {
       targetWeight?: number | null;
       weightUnit?: string | null;
       exercise: { name: string };
+      isSuperSet?: boolean;
     }[];
   }[];
 };
