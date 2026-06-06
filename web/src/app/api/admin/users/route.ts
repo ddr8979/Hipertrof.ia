@@ -20,9 +20,11 @@ export async function GET(req: NextRequest) {
   let whereClause: any = {};
   if (onlyPending) {
     whereClause.isApproved = false;
-    whereClause.role = "ATHLETE";
     if (session.role === "TRAINER") {
+      whereClause.role = "ATHLETE";
       whereClause.trainerId = session.id;
+    } else if (session.role === "OWNER" || session.role === "ADMIN") {
+      whereClause.role = { in: ["ATHLETE", "TRAINER"] };
     }
   }
 

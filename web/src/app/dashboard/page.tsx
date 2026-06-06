@@ -337,9 +337,14 @@ export default function Dashboard() {
                   {(u.name ?? u.email)[0].toUpperCase()}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {u.name ?? u.email}
-                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                    <p style={{ margin: 0, fontWeight: 700, fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {u.name ?? u.email}
+                    </p>
+                    <span className={`badge ${u.role === "TRAINER" ? "badge-blue" : "badge-purple"}`} style={{ fontSize: "0.6rem", padding: "0 6px", height: 16 }}>
+                      {u.role === "TRAINER" ? "Trainer" : "Alumno"}
+                    </span>
+                  </div>
                   <p style={{ margin: 0, fontSize: "0.72rem", color: "var(--text2)" }}>{u.email}</p>
                 </div>
                 <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
