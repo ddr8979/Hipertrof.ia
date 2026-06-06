@@ -36,27 +36,51 @@ export default function Dashboard() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [attendances, setAttendances] = useState<{ date: string }[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [pendingUsers, setPendingUsers] = useState<any[]>([]);
+
+  const isTrainer = user?.role === "TRAINER" || user?.role === "ADMIN";
+
+  const loadData = async () => {
+    if (!user) return;
+    try {
+      if (isTrainer) {
+        const [pu, alumnos, progs] = await Promise.all([
+          fetch("/api/admin/users?pending=true").then(r => r.json()),
+          fetch("/api/trainer/alumnos").then(r => r.json()),
+          fetch("/api/trainer/programas").then(r => r.json()),
+        ]);
+        setPendingUsers(pu.users ?? []);
+        setStats({
+          routines: progs.programs?.length ?? 0,
+          logs: alumnos.athletes?.length ?? 0,
+          weeklyVolumeKg: pu.users?.length ?? 0,
+        });
+      } else {
+        const [p, logs, progs] = await Promise.all([
+          fetch("/api/profile").then(r => r.json()),
+          fetch("/api/rutinas/logs").then(r => r.json()),
+          fetch("/api/rutinas/programas").then(r => r.json()),
+        ]);
+        setProfile(p.user?.profile ?? null);
+        setAttendances(p.user?.attendances ?? []);
+        setStats({
+          routines: progs.programs?.length ?? 0,
+          logs: logs.logs?.length ?? 0,
+          weeklyVolumeKg: logs.weeklyVolumeKg ?? 0,
+        });
+      }
+    } catch (err) {
+      console.error("Error al cargar datos del dashboard:", err);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !user) router.replace("/auth");
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!user) return;
-    Promise.all([
-      fetch("/api/profile").then(r => r.json()),
-      fetch("/api/rutinas/logs").then(r => r.json()),
-      fetch("/api/rutinas/programas").then(r => r.json()),
-    ]).then(([p, logs, progs]) => {
-      setProfile(p.user?.profile ?? null);
-      setAttendances(p.user?.attendances ?? []);
-      setStats({
-        routines: progs.programs?.length ?? 0,
-        logs: logs.logs?.length ?? 0,
-        weeklyVolumeKg: logs.weeklyVolumeKg ?? 0,
-      });
-    });
-  }, [user]);
+    if (user) loadData();
+  }, [user, isTrainer]);
 
   const toggleAttendance = async (dayStr: string) => {
     try {
@@ -75,9 +99,23 @@ export default function Dashboard() {
     }
   };
 
+  const approveUser = async (userId: string, approved: boolean) => {
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ userId, approved }),
+      });
+      if (res.ok) {
+        await loadData();
+      }
+    } catch (err) {
+      console.error("Error al aprobar/rechazar usuario:", err);
+    }
+  };
+
   if (loading || !user) return <Loader />;
 
-  const isTrainer = user.role === "TRAINER" || user.role === "ADMIN";
   const firstName = user.name?.split(" ")[0] ?? (isTrainer ? "Trainer" : "Atleta");
 
   // Obtener días del mes actual para el calendario de asistencia
@@ -141,7 +179,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── Racha y Calendario de Bienvenida (Estilo TikTok) ── */}
-      {user.role === "ATHLETE" && (
+      {!isTrainer && (
         <div className="glass card" style={{
           background: "linear-gradient(135deg, rgba(255,94,58,0.1) 0%, rgba(0,255,135,0.03) 100%)",
           border: "1.5px solid rgba(255,94,58,0.22)",
@@ -229,139 +267,267 @@ export default function Dashboard() {
       {stats && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 24 }}>
           <div className="stat-card glass">
-            <span className="stat-label">Rutinas</span>
-            <span className="stat-value" style={{ color: "var(--brand)", fontSize: "1.7rem" }}>{stats.routines}</span>
+            <span className="stat-label">{isTrainer ? "Alumnos" : "Rutinas"}</span>
+            <span className="stat-value" style={{ color: "var(--brand)", fontSize: "1.7rem" }}>
+              {isTrainer ? stats.logs : stats.routines}
+            </span>
           </div>
           <div className="stat-card glass">
-            <span className="stat-label">Sesiones</span>
-            <span className="stat-value" style={{ color: "var(--brand2)", fontSize: "1.7rem" }}>{stats.logs}</span>
+            <span className="stat-label">{isTrainer ? "Rutinas" : "Sesiones"}</span>
+            <span className="stat-value" style={{ color: "var(--brand2)", fontSize: "1.7rem" }}>
+              {isTrainer ? stats.routines : stats.logs}
+            </span>
           </div>
           <div className="stat-card glass">
-            <span className="stat-label">Vol.sem.</span>
-            <span className="stat-value" style={{ color: "#a78bfa", fontSize: "1.2rem" }}>{stats.weeklyVolumeKg}<span style={{ fontSize: "0.7rem", fontWeight: 700 }}>kg</span></span>
+            <span className="stat-label">{isTrainer ? "Pendientes" : "Vol.sem."}</span>
+            <span className="stat-value" style={{ color: "#a78bfa", fontSize: isTrainer ? "1.7rem" : "1.2rem" }}>
+              {isTrainer ? (
+                stats.weeklyVolumeKg
+              ) : (
+                <>
+                  {stats.weeklyVolumeKg}
+                  <span style={{ fontSize: "0.7rem", fontWeight: 700 }}>kg</span>
+                </>
+              )}
+            </span>
           </div>
         </div>
       )}
 
-      {/* ── Metabolismo card ── */}
-      {profile?.tdeeKcal ? (
-        <div className="glass card section" style={{ marginBottom: 24, background: "linear-gradient(135deg, rgba(0,255,135,0.07), rgba(0,198,255,0.04))", border: "1px solid rgba(0,255,135,0.15)" }}>
-          <p className="section-title">Tu metabolismo diario</p>
-          <div style={{ display: "flex", gap: 0, alignItems: "stretch" }}>
-            <div style={{ flex: 1, textAlign: "center" }}>
-              <p style={{ margin: 0, fontSize: "0.7rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700 }}>Lo que necesitás comer</p>
-              <p style={{ margin: "6px 0 0", fontSize: "2.4rem", fontWeight: 900, color: "var(--brand)", lineHeight: 1, letterSpacing: "-0.04em" }}>
-                {profile.tdeeKcal.toLocaleString()}
-              </p>
-              <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--muted)", fontWeight: 600 }}>kcal / día</p>
-            </div>
-            <div style={{ width: 1, background: "var(--border)", margin: "0 16px" }} />
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ textAlign: "center" }}>
-                <p style={{ margin: 0, fontSize: "0.65rem", color: "var(--muted)", fontWeight: 700, textTransform: "uppercase" }}>Lo que quemás sin hacer nada</p>
-                <p style={{ margin: "2px 0 0", fontSize: "1.2rem", fontWeight: 800 }}>{profile.bmrKcal?.toLocaleString()}</p>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                <div style={{ textAlign: "center", padding: "6px 4px", borderRadius: 8, background: "rgba(255,71,87,0.08)", border: "1px solid rgba(255,71,87,0.15)" }}>
-                  <p style={{ margin: 0, fontSize: "0.6rem", color: "var(--danger)", fontWeight: 700 }}>DÉFICIT</p>
-                  <p style={{ margin: "2px 0 0", fontSize: "0.88rem", fontWeight: 800, color: "var(--danger)" }}>{Math.round((profile.tdeeKcal ?? 0) * 0.85).toLocaleString()}</p>
+      {/* ── Accesos pendientes de aprobación (Solo para Trainers) ── */}
+      {isTrainer && pendingUsers.length > 0 && (
+        <div className="glass card" style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          border: "1.5px solid rgba(255,179,0,0.3)",
+          background: "rgba(255,179,0,0.04)",
+          marginBottom: 24
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: "1.1rem" }}>⏳</span>
+            <p className="section-title" style={{ margin: 0, color: "#ffb300" }}>
+              Solicitudes de registro pendientes ({pendingUsers.length})
+            </p>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {pendingUsers.map(u => (
+              <div key={u.id} style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 12px",
+                background: "rgba(255,255,255,0.03)",
+                borderRadius: "var(--radius-xs)",
+                border: "1px solid var(--border)"
+              }}>
+                <div style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, #ffb300, #ff5e3a)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: 800,
+                  color: "#111",
+                  flexShrink: 0,
+                  fontSize: "0.85rem"
+                }}>
+                  {(u.name ?? u.email)[0].toUpperCase()}
                 </div>
-                <div style={{ textAlign: "center", padding: "6px 4px", borderRadius: 8, background: "rgba(0,198,255,0.08)", border: "1px solid rgba(0,198,255,0.15)" }}>
-                  <p style={{ margin: 0, fontSize: "0.6rem", color: "var(--brand2)", fontWeight: 700 }}>SUPERÁVIT</p>
-                  <p style={{ margin: "2px 0 0", fontSize: "0.88rem", fontWeight: 800, color: "var(--brand2)" }}>{Math.round((profile.tdeeKcal ?? 0) * 1.1).toLocaleString()}</p>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {u.name ?? u.email}
+                  </p>
+                  <p style={{ margin: 0, fontSize: "0.72rem", color: "var(--text2)" }}>{u.email}</p>
+                </div>
+                <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                  <button
+                    onClick={() => approveUser(u.id, true)}
+                    className="btn btn-xs"
+                    style={{ background: "rgba(0,255,135,0.15)", border: "1px solid rgba(0,255,135,0.4)", color: "var(--brand)", minWidth: 65, padding: "4px 8px", cursor: "pointer" }}
+                  >
+                    Aprobar
+                  </button>
+                  <button
+                    onClick={() => approveUser(u.id, false)}
+                    className="btn btn-xs"
+                    style={{ background: "rgba(255,71,87,0.1)", border: "1px solid rgba(255,71,87,0.3)", color: "var(--danger)", minWidth: 65, padding: "4px 8px", cursor: "pointer" }}
+                  >
+                    Rechazar
+                  </button>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
-      ) : (
-        <Link href="/perfil" style={{ textDecoration: "none" }}>
-          <div style={{
-            marginBottom: 24, padding: "22px 20px",
-            borderRadius: "var(--radius)", border: "2px dashed rgba(0,255,135,0.25)",
-            display: "flex", alignItems: "center", gap: 16, cursor: "pointer",
-            background: "rgba(0,255,135,0.03)"
-          }}>
-            <div style={{ width: 48, height: 48, borderRadius: 14, background: "rgba(0,255,135,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <BarChart2 size={24} color="var(--brand)" />
+      )}
+
+      {/* ── Metabolismo card (Solo para Atletas) ── */}
+      {!isTrainer && (
+        profile?.tdeeKcal ? (
+          <div className="glass card section" style={{ marginBottom: 24, background: "linear-gradient(135deg, rgba(0,255,135,0.07), rgba(0,198,255,0.04))", border: "1px solid rgba(0,255,135,0.15)" }}>
+            <p className="section-title">Tu metabolismo diario</p>
+            <div style={{ display: "flex", gap: 0, alignItems: "stretch" }}>
+              <div style={{ flex: 1, textAlign: "center" }}>
+                <p style={{ margin: 0, fontSize: "0.7rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700 }}>Lo que necesitás comer</p>
+                <p style={{ margin: "6px 0 0", fontSize: "2.4rem", fontWeight: 900, color: "var(--brand)", lineHeight: 1, letterSpacing: "-0.04em" }}>
+                  {profile.tdeeKcal.toLocaleString()}
+                </p>
+                <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--muted)", fontWeight: 600 }}>kcal / día</p>
+              </div>
+              <div style={{ width: 1, background: "var(--border)", margin: "0 16px" }} />
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ textAlign: "center" }}>
+                  <p style={{ margin: 0, fontSize: "0.65rem", color: "var(--muted)", fontWeight: 700, textTransform: "uppercase" }}>Lo que quemás sin hacer nada</p>
+                  <p style={{ margin: "2px 0 0", fontSize: "1.2rem", fontWeight: 800 }}>{profile.bmrKcal?.toLocaleString()}</p>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                  <div style={{ textAlign: "center", padding: "6px 4px", borderRadius: 8, background: "rgba(255,71,87,0.08)", border: "1px solid rgba(255,71,87,0.15)" }}>
+                    <p style={{ margin: 0, fontSize: "0.6rem", color: "var(--danger)", fontWeight: 700 }}>DÉFICIT</p>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.88rem", fontWeight: 800, color: "var(--danger)" }}>{Math.round((profile.tdeeKcal ?? 0) * 0.85).toLocaleString()}</p>
+                  </div>
+                  <div style={{ textAlign: "center", padding: "6px 4px", borderRadius: 8, background: "rgba(0,198,255,0.08)", border: "1px solid rgba(0,198,255,0.15)" }}>
+                    <p style={{ margin: 0, fontSize: "0.6rem", color: "var(--brand2)", fontWeight: 700 }}>SUPERÁVIT</p>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.88rem", fontWeight: 800, color: "var(--brand2)" }}>{Math.round((profile.tdeeKcal ?? 0) * 1.1).toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: "1rem" }}>Completá tu perfil</p>
-              <p style={{ margin: "4px 0 0", fontSize: "0.82rem", color: "var(--muted)", lineHeight: 1.4 }}>Calculamos tus calorías y macros automáticamente</p>
-            </div>
-            <div style={{ marginLeft: "auto", color: "var(--brand)", fontSize: "1.2rem" }}>→</div>
           </div>
-        </Link>
+        ) : (
+          <Link href="/perfil" style={{ textDecoration: "none" }}>
+            <div style={{
+              marginBottom: 24, padding: "22px 20px",
+              borderRadius: "var(--radius)", border: "2px dashed rgba(0,255,135,0.25)",
+              display: "flex", alignItems: "center", gap: 16, cursor: "pointer",
+              background: "rgba(0,255,135,0.03)"
+            }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: "rgba(0,255,135,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <BarChart2 size={24} color="var(--brand)" />
+              </div>
+              <div>
+                <p style={{ margin: 0, fontWeight: 800, fontSize: "1rem" }}>Completá tu perfil</p>
+                <p style={{ margin: "4px 0 0", fontSize: "0.82rem", color: "var(--muted)", lineHeight: 1.4 }}>Calculamos tus calorías y macros automáticamente</p>
+              </div>
+              <div style={{ marginLeft: "auto", color: "var(--brand)", fontSize: "1.2rem" }}>→</div>
+            </div>
+          </Link>
+        )
       )}
 
       {/* ── Quick Actions ── */}
       <p className="section-title">Acceso rápido</p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
-        <Link href="/rutinas" style={{ textDecoration: "none" }}>
-          <div className="action-tile" style={{
-            background: "linear-gradient(135deg, rgba(0,255,135,0.12), rgba(0,255,135,0.04))",
-            border: "1px solid rgba(0,255,135,0.2)",
-          }}>
-            <div className="tile-icon" style={{ background: "rgba(0,255,135,0.15)" }}>
-              <Dumbbell size={20} color="var(--brand)" />
-            </div>
-            <p className="tile-label">Registrar sesión</p>
-            <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Logueá tu entrenamiento</p>
-          </div>
-        </Link>
-
-        <Link href="/calculadora?tab=1rm" style={{ textDecoration: "none" }}>
-          <div className="action-tile" style={{
-            background: "linear-gradient(135deg, rgba(0,198,255,0.12), rgba(0,198,255,0.04))",
-            border: "1px solid rgba(0,198,255,0.2)",
-          }}>
-            <div className="tile-icon" style={{ background: "rgba(0,198,255,0.15)" }}>
-              <Zap size={20} color="var(--brand2)" />
-            </div>
-            <p className="tile-label">Calcular 1RM</p>
-            <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Fuerza máxima</p>
-          </div>
-        </Link>
-
-        <Link href="/calorias" style={{ textDecoration: "none" }}>
-          <div className="action-tile" style={{
-            background: "linear-gradient(135deg, rgba(255,165,2,0.1), rgba(255,165,2,0.03))",
-            border: "1px solid rgba(255,165,2,0.18)",
-          }}>
-            <div className="tile-icon" style={{ background: "rgba(255,165,2,0.12)" }}>
-              <Apple size={20} color="var(--warn)" />
-            </div>
-            <p className="tile-label">¿Cuánto comer?</p>
-            <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Tus calorías diarias</p>
-          </div>
-        </Link>
-
         {isTrainer ? (
-          <Link href="/trainer" style={{ textDecoration: "none" }}>
-            <div className="action-tile" style={{
-              background: "linear-gradient(135deg, rgba(124,58,237,0.12), rgba(124,58,237,0.04))",
-              border: "1px solid rgba(124,58,237,0.2)",
-            }}>
-              <div className="tile-icon" style={{ background: "rgba(124,58,237,0.15)" }}>
-                <Users size={20} color="var(--brand3)" />
+          <>
+            <Link href="/trainer" style={{ textDecoration: "none" }}>
+              <div className="action-tile" style={{
+                background: "linear-gradient(135deg, rgba(0,255,135,0.12), rgba(0,255,135,0.04))",
+                border: "1px solid rgba(0,255,135,0.2)",
+              }}>
+                <div className="tile-icon" style={{ background: "rgba(0,255,135,0.15)" }}>
+                  <Users size={20} color="var(--brand)" />
+                </div>
+                <p className="tile-label">Ver Alumnos</p>
+                <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Gestionar clientes activos</p>
               </div>
-              <p className="tile-label">Panel Trainer</p>
-              <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Gestioná alumnos</p>
-            </div>
-          </Link>
+            </Link>
+
+            <Link href="/trainer?tab=rutinas" style={{ textDecoration: "none" }}>
+              <div className="action-tile" style={{
+                background: "linear-gradient(135deg, rgba(0,198,255,0.12), rgba(0,198,255,0.04))",
+                border: "1px solid rgba(0,198,255,0.2)",
+              }}>
+                <div className="tile-icon" style={{ background: "rgba(0,198,255,0.15)" }}>
+                  <Dumbbell size={20} color="var(--brand2)" />
+                </div>
+                <p className="tile-label">Crear Rutina</p>
+                <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Diseñar rutinas y splits</p>
+              </div>
+            </Link>
+
+            <Link href="/perfil" style={{ textDecoration: "none" }}>
+              <div className="action-tile" style={{
+                background: "linear-gradient(135deg, rgba(168,85,247,0.1), rgba(168,85,247,0.03))",
+                border: "1px solid rgba(168,85,247,0.18)",
+              }}>
+                <div className="tile-icon" style={{ background: "rgba(168,85,247,0.12)" }}>
+                  <User size={20} color="#a855f7" />
+                </div>
+                <p className="tile-label">Mi perfil</p>
+                <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Detalles de mi cuenta</p>
+              </div>
+            </Link>
+
+            <Link href="/ejercicios" style={{ textDecoration: "none" }}>
+              <div className="action-tile" style={{
+                background: "linear-gradient(135deg, rgba(255,165,2,0.1), rgba(255,165,2,0.03))",
+                border: "1px solid rgba(255,165,2,0.18)",
+              }}>
+                <div className="tile-icon" style={{ background: "rgba(255,165,2,0.12)" }}>
+                  <BookOpen size={20} color="var(--warn)" />
+                </div>
+                <p className="tile-label">Glosario Fit</p>
+                <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Biblioteca de movimientos</p>
+              </div>
+            </Link>
+          </>
         ) : (
-          <Link href="/perfil" style={{ textDecoration: "none" }}>
-            <div className="action-tile" style={{
-              background: "linear-gradient(135deg, rgba(168,85,247,0.1), rgba(168,85,247,0.03))",
-              border: "1px solid rgba(168,85,247,0.18)",
-            }}>
-              <div className="tile-icon" style={{ background: "rgba(168,85,247,0.12)" }}>
-                <User size={20} color="#a855f7" />
+          <>
+            <Link href="/rutinas" style={{ textDecoration: "none" }}>
+              <div className="action-tile" style={{
+                background: "linear-gradient(135deg, rgba(0,255,135,0.12), rgba(0,255,135,0.04))",
+                border: "1px solid rgba(0,255,135,0.2)",
+              }}>
+                <div className="tile-icon" style={{ background: "rgba(0,255,135,0.15)" }}>
+                  <Dumbbell size={20} color="var(--brand)" />
+                </div>
+                <p className="tile-label">Registrar sesión</p>
+                <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Logueá tu entrenamiento</p>
               </div>
-              <p className="tile-label">Mi perfil</p>
-              <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Datos físicos</p>
-            </div>
-          </Link>
+            </Link>
+
+            <Link href="/calculadora?tab=1rm" style={{ textDecoration: "none" }}>
+              <div className="action-tile" style={{
+                background: "linear-gradient(135deg, rgba(0,198,255,0.12), rgba(0,198,255,0.04))",
+                border: "1px solid rgba(0,198,255,0.2)",
+              }}>
+                <div className="tile-icon" style={{ background: "rgba(0,198,255,0.15)" }}>
+                  <Zap size={20} color="var(--brand2)" />
+                </div>
+                <p className="tile-label">Calcular 1RM</p>
+                <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Fuerza máxima</p>
+              </div>
+            </Link>
+
+            <Link href="/calorias" style={{ textDecoration: "none" }}>
+              <div className="action-tile" style={{
+                background: "linear-gradient(135deg, rgba(255,165,2,0.1), rgba(255,165,2,0.03))",
+                border: "1px solid rgba(255,165,2,0.18)",
+              }}>
+                <div className="tile-icon" style={{ background: "rgba(255,165,2,0.12)" }}>
+                  <Apple size={20} color="var(--warn)" />
+                </div>
+                <p className="tile-label">¿Cuánto comer?</p>
+                <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Tus calorías diarias</p>
+              </div>
+            </Link>
+
+            <Link href="/perfil" style={{ textDecoration: "none" }}>
+              <div className="action-tile" style={{
+                background: "linear-gradient(135deg, rgba(168,85,247,0.1), rgba(168,85,247,0.03))",
+                border: "1px solid rgba(168,85,247,0.18)",
+              }}>
+                <div className="tile-icon" style={{ background: "rgba(168,85,247,0.12)" }}>
+                  <User size={20} color="#a855f7" />
+                </div>
+                <p className="tile-label">Mi perfil</p>
+                <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Datos físicos</p>
+              </div>
+            </Link>
+          </>
         )}
 
         <Link href="/ejercicios" style={{ textDecoration: "none", gridColumn: "span 2" }}>
@@ -381,28 +547,6 @@ export default function Dashboard() {
           </div>
         </Link>
       </div>
-
-      {/* ── Trainer shortcut hero ── */}
-      {isTrainer && (
-        <Link href="/trainer" style={{ textDecoration: "none" }}>
-          <div style={{
-            padding: "20px 22px",
-            borderRadius: "var(--radius)",
-            background: "linear-gradient(135deg, rgba(0,255,135,0.1), rgba(0,198,255,0.06))",
-            border: "1px solid rgba(0,255,135,0.18)",
-            display: "flex", alignItems: "center", gap: 16, cursor: "pointer"
-          }}>
-            <div style={{ width: 48, height: 48, borderRadius: 14, background: "linear-gradient(135deg,rgba(0,255,135,0.2),rgba(0,198,255,0.15))", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Users size={24} color="#00ff87" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: "1.05rem" }}>Panel Trainer</p>
-              <p style={{ margin: "3px 0 0", fontSize: "0.8rem", color: "var(--muted)" }}>Gestioná alumnos y asigná rutinas</p>
-            </div>
-            <span style={{ color: "var(--brand)", fontSize: "1.3rem" }}>→</span>
-          </div>
-        </Link>
-      )}
 
       {/* ── Mascota flotante ── */}
       <Mascota context="dashboard" />
