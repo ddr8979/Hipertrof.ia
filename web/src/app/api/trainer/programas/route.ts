@@ -86,3 +86,34 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ program });
 }
+
+// DELETE /api/trainer/programas — eliminar un programa de entrenamiento
+export async function DELETE(req: NextRequest) {
+  const session = await getSession();
+  if (!session || (session.role !== "TRAINER" && session.role !== "ADMIN" && session.role !== "OWNER"))
+    return NextResponse.json({ error: "Sin permiso" }, { status: 403 });
+
+  try {
+    const { programId } = await req.json();
+    if (!programId) return NextResponse.json({ error: "Falta programId" }, { status: 400 });
+
+    // Verificar si el programa pertenece al entrenador (si es TRAINER)
+    if (session.role === "TRAINER") {
+      const existing = await prisma.trainingProgram.findUnique({
+        where: { id: programId },
+        select: { trainerId: true }
+      });
+      if (existing && existing.trainerId !== session.id) {
+        return NextResponse.json({ error: "No tienes permiso para eliminar este programa" }, { status: 403 });
+      }
+    }
+
+    await prisma.trainingProgram.delete({
+      where: { id: programId }
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

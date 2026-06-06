@@ -136,6 +136,7 @@ export default function TrainerPage() {
   const [progDesc, setProgDesc] = useState("");
   const [workouts, setWorkouts] = useState<WorkoutInput[]>([]);
   const [busy, setBusy] = useState(false);
+  const [deletingProgramId, setDeletingProgramId] = useState<string | null>(null);
   const [wizardStep, setWizardStep] = useState(1);
   const [selectedDays, setSelectedDays] = useState<Record<string, string[]>>({});
 
@@ -796,7 +797,7 @@ export default function TrainerPage() {
                 
                 <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
                   <button type="button" onClick={() => setWizardStep(1)} className="btn btn-ghost" style={{ flex: 1, minHeight: 52 }}>
-                    ◀ Atrás
+                    Atrás
                   </button>
                   <button type="button" onClick={() => {
                     const activeDays = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].filter(d => selectedDays[d] !== undefined);
@@ -1024,7 +1025,7 @@ export default function TrainerPage() {
                         ))}
                         
                         <button type="button" onClick={() => addEx(wIdx)} className="btn btn-ghost" style={{ minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: "var(--radius-xs)" }}>
-                          <Plus size={16} /> ➕ Agregar ejercicio
+                          <Plus size={16} /> Agregar ejercicio
                         </button>
                       </div>
                     </div>
@@ -1034,10 +1035,10 @@ export default function TrainerPage() {
                 {/* Step 3 buttons */}
                 <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
                   <button type="button" onClick={() => setWizardStep(2)} className="btn btn-ghost" style={{ flex: 1, minHeight: 56 }}>
-                    ◀ Atrás
+                    Atrás
                   </button>
                   <button type="submit" className="btn btn-primary" style={{ flex: 2, minHeight: 56, fontWeight: 900, fontSize: "1.05rem" }} disabled={busy}>
-                    {busy ? "Guardando rutina..." : "💾 Crear rutina completa"}
+                    {busy ? "Guardando rutina..." : "Crear rutina"}
                   </button>
                 </div>
               </div>
@@ -1065,7 +1066,7 @@ export default function TrainerPage() {
                         <p style={{ margin: 0, fontWeight: 800, fontSize: "1rem", color: "var(--text)" }}>{p.name}</p>
                         {p.description && <p style={{ margin: "4px 0 0", fontSize: "0.82rem", color: "var(--text2)" }}>{p.description}</p>}
                       </div>
-                      <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                      <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
                         <button
                           onClick={() => toggleProgramExpand(p.id)}
                           className="btn btn-ghost btn-xs"
@@ -1084,6 +1085,47 @@ export default function TrainerPage() {
                         >
                           Asignar
                         </button>
+                        {deletingProgramId === p.id ? (
+                          <div style={{ display: "flex", gap: 4 }}>
+                            <button
+                              onClick={async () => {
+                                setBusy(true);
+                                try {
+                                  const res = await fetch("/api/trainer/programas", {
+                                    method: "DELETE",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ programId: p.id })
+                                  });
+                                  if (res.ok) {
+                                    setPrograms(prev => prev.filter(x => x.id !== p.id));
+                                    setToast({ msg: "Rutina eliminada", type: "success" });
+                                  } else {
+                                    setToast({ msg: "Error al eliminar", type: "error" });
+                                  }
+                                } finally {
+                                  setBusy(false);
+                                  setDeletingProgramId(null);
+                                }
+                              }}
+                              style={{ background: "var(--danger)", border: "none", borderRadius: 8, padding: "4px 8px", color: "#fff", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer", height: 32 }}
+                            >
+                              Eliminar
+                            </button>
+                            <button
+                              onClick={() => setDeletingProgramId(null)}
+                              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid var(--border)", borderRadius: 8, padding: "4px 8px", color: "var(--text2)", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer", height: 32 }}
+                            >
+                              No
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setDeletingProgramId(p.id)}
+                            style={{ background: "rgba(255,59,92,0.06)", border: "1px solid rgba(255,59,92,0.15)", borderRadius: 8, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--danger)", cursor: "pointer" }}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </div>
                     </div>
 

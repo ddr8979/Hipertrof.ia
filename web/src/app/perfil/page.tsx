@@ -313,7 +313,7 @@ export default function PerfilPage() {
           </div>
 
           <button onClick={save} className="btn btn-primary btn-full" disabled={busy} style={{ minHeight: 60, fontSize: "1.05rem", fontWeight: 800 }}>
-            {busy ? "Guardando..." : "✅ Guardar mis preferencias"}
+            {busy ? "Guardando..." : "Guardar preferencias"}
           </button>
         </div>
       )}
@@ -434,7 +434,7 @@ export default function PerfilPage() {
           </div>
 
           <button onClick={save} className="btn btn-primary btn-full" disabled={busy} style={{ minHeight: 60, fontSize: "1.05rem", fontWeight: 800 }}>
-            {busy ? "Guardando..." : "💾 Guardar datos"}
+            {busy ? "Guardando..." : "Guardar datos"}
           </button>
         </div>
       )}

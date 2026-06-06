@@ -222,7 +222,7 @@ export default function CaloriasPage() {
             className="btn btn-primary btn-full"
             style={{ marginTop: 6 }}
           >
-            {saveState === "saving" ? "Guardando..." : saveState === "saved" ? "¡Guardado! ✅" : "Guardar en mi perfil"}
+            {saveState === "saving" ? "Guardando..." : saveState === "saved" ? "¡Guardado!" : "Guardar en mi perfil"}
           </button>
         </form>
 

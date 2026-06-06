@@ -561,7 +561,7 @@ export default function NutricionPage() {
           </div>
 
           <button onClick={createRecipe} className="btn btn-primary btn-full" disabled={busy} style={{ minHeight: 56, fontSize: "1rem", fontWeight: 800, marginTop: 8 }}>
-            {busy ? "Guardando..." : "💾 Guardar mi receta"}
+            {busy ? "Guardando..." : "Guardar receta"}
           </button>
         </div>
       )}
