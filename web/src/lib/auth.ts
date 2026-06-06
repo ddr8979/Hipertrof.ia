@@ -40,7 +40,19 @@ export async function getSession(): Promise<SessionUser | null> {
     const token = cookieStore.get(COOKIE)?.value;
     if (!token) return null;
     const { payload } = await jwtVerify(token, SECRET);
-    return payload as unknown as SessionUser;
+    const base = payload as unknown as SessionUser;
+    // Always hydrate role & isApproved from DB so changes take effect without re-login
+    const fresh = await prisma.user.findUnique({
+      where: { id: base.id },
+      select: { role: true, isApproved: true, name: true },
+    });
+    if (!fresh) return null;
+    return {
+      ...base,
+      role: fresh.role as SessionUser["role"],
+      isApproved: fresh.isApproved,
+      name: fresh.name,
+    };
   } catch {
     return null;
   }
