@@ -294,9 +294,15 @@ const EXERCISES: {
 
 export async function GET() {
   try {
+    // Promocionar administrador si ya existe
+    await prisma.user.updateMany({
+      where: { email: "carrizoaxel67@gmail.com" },
+      data: { role: "ADMIN", isApproved: true }
+    });
+
     const total = await prisma.exercise.count();
     if (total > 0) {
-      return NextResponse.json({ ok: true, message: "Base de datos ya poblada", seeded: 0 });
+      return NextResponse.json({ ok: true, message: "Base de datos ya poblada y roles actualizados", seeded: 0 });
     }
 
     let count = 0;
