@@ -1,0 +1,316 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum UserRole {
+  ATHLETE
+  TRAINER
+  GYM_OWNER
+  ADMIN
+}
+
+enum MembershipStatus {
+  ACTIVE
+  PENDING
+  OVERDUE
+  BLOCKED
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  email        String   @unique
+  name         String?
+  passwordHash String?
+  role         UserRole @default(ATHLETE)
+
+  profile             Profile?
+  authoredPrograms    TrainingProgram[]    @relation("TrainerPrograms")
+  assignedPrograms    AthleteProgram[]
+  exerciseLogs        ExerciseLog[]
+  mealLogs            MealLog[]
+  trainerCourses      Course[]             @relation("TrainerCourses")
+  enrollments         CourseEnrollment[]
+  ownedGym            Gym?                 @relation("GymOwner")
+  gymMemberships      GymMembership[]
+  checkIns            GymCheckIn[]
+  whatsappNotifications WhatsappNotification[]
+  attendances         Attendance[]
+  oneRMRecords        OneRMRecord[]
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  sex      String?
+  ageYears Int?
+  heightCm Int?
+  weightKg Int?
+
+  activity        String?
+  bmrKcal         Int?
+  tdeeKcal        Int?
+  activityFactor  Float?
+
+  avatarUrl       String?
+  grade           String?
+  medals          String?
+  streak          Int      @default(0)
+  maxStreak       Int      @default(0)
+}
+
+model TrainingProgram {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String
+  description String?
+  isTemplate  Boolean  @default(false)
+
+  trainerId String?
+  trainer   User?   @relation("TrainerPrograms", fields: [trainerId], references: [id], onDelete: SetNull)
+
+  workouts Workout[]
+  athletes AthleteProgram[]
+}
+
+model AthleteProgram {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  athleteId String
+  athlete   User   @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  programId String
+  program   TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  startDate DateTime?
+  endDate   DateTime?
+  active    Boolean  @default(true)
+
+  @@unique([athleteId, programId])
+}
+
+model Workout {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  name       String
+  dayOfWeek  Int?
+  programId  String
+  program    TrainingProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  exercises  WorkoutExercise[]
+}
+
+model Exercise {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String   @unique
+  muscleGroup String?
+  instructions String?
+
+  workoutRefs WorkoutExercise[]
+  logs        ExerciseLog[]
+  oneRMRecords OneRMRecord[]
+
+  equipment   String?
+  gifUrl      String?
+  isCustom    Boolean  @default(false)
+  authorId    String?
+}
+
+model WorkoutExercise {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  workoutId  String
+  workout    Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  orderIndex Int      @default(0)
+  targetSets Int      @default(3)
+  targetReps String   @default("8-12")
+  restSec    Int      @default(90)
+  groupName  String?
+  color      String?
+  orderLabel String?
+  targetWeight Float?
+  weightUnit   String?  @default("kg")
+  isSuperSet   Boolean  @default(false)
+
+  @@unique([workoutId, exerciseId, orderIndex])
+}
+
+model ExerciseLog {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  athleteId  String
+  athlete    User     @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  sets        Int
+  reps        Int
+  weightKg    Float
+  volumeKg    Float
+  performedAt DateTime @default(now())
+  notes       String?
+}
+
+model Recipe {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String
+  description String?
+  calories    Int
+  proteinG    Int
+  carbsG      Int
+  fatsG       Int
+  countryCode String? @default("UY")
+
+  mealLogs MealLog[]
+}
+
+model MealLog {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  athleteId  String
+  athlete    User     @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  recipeId   String?
+  recipe     Recipe?  @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  calories   Int
+  proteinG   Int?
+  carbsG     Int?
+  fatsG      Int?
+  imageUrl   String?
+  notes      String?
+}
+
+model Course {
+  id          String       @id @default(cuid())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  title       String
+  description String?
+  priceUyu    Int
+  status      CourseStatus @default(DRAFT)
+  contentUrl  String?
+
+  trainerId String
+  trainer   User   @relation("TrainerCourses", fields: [trainerId], references: [id], onDelete: Cascade)
+
+  enrollments CourseEnrollment[]
+}
+
+model CourseEnrollment {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  athleteId  String
+  athlete    User     @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  paid       Boolean  @default(false)
+  paidAt     DateTime?
+
+  @@unique([courseId, athleteId])
+}
+
+model Gym {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String
+  city      String?
+
+  ownerId String @unique
+  owner   User   @relation("GymOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  memberships GymMembership[]
+  checkIns    GymCheckIn[]
+}
+
+model GymMembership {
+  id        String           @id @default(cuid())
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  gymId     String
+  gym       Gym              @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  athleteId String
+  athlete   User             @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  status    MembershipStatus @default(PENDING)
+  dueDate   DateTime?
+
+  @@unique([gymId, athleteId])
+}
+
+model GymCheckIn {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  gymId        String
+  gym          Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  athleteId    String
+  athlete      User     @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  allowed      Boolean
+  statusAtTime MembershipStatus
+}
+
+model WhatsappNotification {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone     String
+  message   String
+  sent      Boolean  @default(false)
+  sentAt    DateTime?
+  reason    String?
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  date      String   // Formato "YYYY-MM-DD"
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+}
+
+model OneRMRecord {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exerciseId  String
+  exercise    Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  weightKg    Float
+  reps        Int
+  oneRM       Float
+  unit        String   @default("kg")
+}
+

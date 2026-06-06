@@ -1,0 +1,365 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/components/auth-provider";
+import { Flame, Calendar } from "lucide-react";
+
+type Profile = {
+  bmrKcal: number | null;
+  tdeeKcal: number | null;
+  weightKg: number | null;
+  streak?: number;
+  maxStreak?: number;
+};
+type Stats = { routines: number; logs: number; weeklyVolumeKg: number };
+
+function Loader() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "80dvh" }}>
+      <div className="spinner" />
+    </div>
+  );
+}
+
+function GreetingTime() {
+  const h = new Date().getHours();
+  if (h < 12) return "☀️ Buenos días";
+  if (h < 18) return "🌤️ Buenas tardes";
+  return "🌙 Buenas noches";
+}
+
+export default function Dashboard() {
+  const { user, loading, logout } = useAuth();
+  const router = useRouter();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [attendances, setAttendances] = useState<{ date: string }[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+
+  useEffect(() => {
+    if (!loading && !user) router.replace("/auth");
+  }, [user, loading, router]);
+
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([
+      fetch("/api/profile").then(r => r.json()),
+      fetch("/api/rutinas/logs").then(r => r.json()),
+      fetch("/api/rutinas/programas").then(r => r.json()),
+    ]).then(([p, logs, progs]) => {
+      setProfile(p.user?.profile ?? null);
+      setAttendances(p.user?.attendances ?? []);
+      setStats({
+        routines: progs.programs?.length ?? 0,
+        logs: logs.logs?.length ?? 0,
+        weeklyVolumeKg: logs.weeklyVolumeKg ?? 0,
+      });
+    });
+  }, [user]);
+
+  if (loading || !user) return <Loader />;
+
+  const isTrainer = user.role === "TRAINER" || user.role === "ADMIN";
+  const firstName = user.name?.split(" ")[0] ?? (isTrainer ? "Trainer" : "Atleta");
+
+  // Obtener días del mes actual para el calendario de asistencia
+  const getCalendarDays = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const firstDayIndex = new Date(year, month, 1).getDay(); // 0 is Sunday, 1 is Monday...
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    // Ajustar para empezar en Lunes (0 = Lunes, ..., 6 = Domingo)
+    const offset = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+
+    const days = [];
+    // Espacios vacíos de relleno
+    for (let i = 0; i < offset; i++) {
+      days.push(null);
+    }
+    // Días del mes
+    for (let i = 1; i <= totalDays; i++) {
+      days.push(i);
+    }
+    return days;
+  };
+
+  const attendanceDates = new Set(attendances.map(a => a.date));
+  const currentMonthDays = getCalendarDays();
+  const monthName = new Date().toLocaleString("es-ES", { month: "long" });
+
+  return (
+    <main className="page" style={{ paddingTop: 24 }}>
+
+      {/* ── Header ── */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
+        <div>
+          <p style={{ fontSize: "0.82rem", color: "var(--muted)", fontWeight: 600, margin: "0 0 4px" }}>
+            <GreetingTime />
+          </p>
+          <h1 style={{ fontSize: "2rem", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1, margin: 0 }}>
+            {firstName}
+          </h1>
+          {isTrainer && (
+            <span className="badge badge-blue" style={{ marginTop: 6 }}>
+              {user.role === "ADMIN" ? "Admin" : "Trainer"}
+            </span>
+          )}
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={logout}
+            style={{
+              background: "rgba(255,255,255,0.06)", border: "1px solid var(--border2)",
+              borderRadius: 12, padding: "10px 14px", color: "var(--text2)",
+              fontSize: "0.8rem", fontWeight: 700, cursor: "pointer",
+              WebkitTapHighlightColor: "transparent"
+            }}
+          >
+            Salir
+          </button>
+        </div>
+      </div>
+
+      {/* ── Racha y Calendario de Bienvenida (Estilo TikTok) ── */}
+      {user.role === "ATHLETE" && (
+        <div className="glass card" style={{
+          background: "linear-gradient(135deg, rgba(255,94,58,0.1) 0%, rgba(0,255,135,0.03) 100%)",
+          border: "1.5px solid rgba(255,94,58,0.22)",
+          padding: "16px 14px",
+          marginBottom: 24,
+          display: "flex",
+          flexDirection: "column",
+          gap: 14
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ position: "relative" }}>
+                <Flame size={32} color="var(--warn)" style={{ fill: "var(--warn)", filter: "drop-shadow(0 0 6px var(--warn))" }} className="anim-pulse" />
+                <span style={{ position: "absolute", bottom: -2, right: -4, background: "rgba(0,0,0,0.6)", borderRadius: 99, padding: "1px 4px", fontSize: "0.55rem", fontWeight: 800 }}>🔥</span>
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: "1.05rem", fontWeight: 900, color: "var(--text)" }}>
+                  ¡Tu racha: {profile?.streak ?? 0} {profile?.streak === 1 ? "día" : "días"}! 🔥
+                </p>
+                <p style={{ margin: 0, fontSize: "0.7rem", color: "var(--muted)", fontWeight: 600 }}>
+                  Racha Máx: {profile?.maxStreak ?? 0} días
+                </p>
+              </div>
+            </div>
+            
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.04)", padding: "4px 8px", borderRadius: 8, border: "1px solid var(--border)" }}>
+              <Calendar size={13} color="var(--brand)" />
+              <span style={{ fontSize: "0.7rem", fontWeight: 800, textTransform: "capitalize", color: "var(--text)" }}>
+                {monthName}
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6, textAlign: "center" }}>
+            {["L", "M", "M", "J", "V", "S", "D"].map(d => (
+              <span key={d} style={{ fontSize: "0.68rem", fontWeight: 800, color: "var(--muted)" }}>{d}</span>
+            ))}
+            {currentMonthDays.map((day, idx) => {
+              if (day === null) return <div key={`empty-${idx}`} />;
+              
+              const dayStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+              const attended = attendanceDates.has(dayStr);
+              const isToday = new Date().getDate() === day && new Date().getMonth() === new Date().getMonth() && new Date().getFullYear() === new Date().getFullYear();
+              
+              return (
+                <div key={day} style={{
+                  aspectRatio: "1",
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "0.8rem",
+                  fontWeight: 700,
+                  position: "relative",
+                  background: attended 
+                    ? "linear-gradient(135deg, var(--brand) 0%, var(--brand2) 100%)" 
+                    : isToday 
+                      ? "rgba(255,255,255,0.08)" 
+                      : "rgba(255,255,255,0.02)",
+                  color: attended ? "#030508" : isToday ? "var(--brand)" : "var(--text2)",
+                  border: attended 
+                    ? "none" 
+                    : isToday 
+                      ? "1px dashed var(--brand)" 
+                      : "1px solid var(--border)",
+                  boxShadow: attended ? "0 0 10px rgba(0,255,135,0.25)" : "none"
+                }}>
+                  {day}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Stats row ── */}
+      {stats && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 24 }}>
+          <div className="stat-card glass">
+            <span className="stat-label">Rutinas</span>
+            <span className="stat-value" style={{ color: "var(--brand)", fontSize: "1.7rem" }}>{stats.routines}</span>
+          </div>
+          <div className="stat-card glass">
+            <span className="stat-label">Sesiones</span>
+            <span className="stat-value" style={{ color: "var(--brand2)", fontSize: "1.7rem" }}>{stats.logs}</span>
+          </div>
+          <div className="stat-card glass">
+            <span className="stat-label">Vol.sem.</span>
+            <span className="stat-value" style={{ color: "#a78bfa", fontSize: "1.2rem" }}>{stats.weeklyVolumeKg}<span style={{ fontSize: "0.7rem", fontWeight: 700 }}>kg</span></span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Metabolismo card ── */}
+      {profile?.tdeeKcal ? (
+        <div className="glass card section" style={{ marginBottom: 24, background: "linear-gradient(135deg, rgba(0,255,135,0.07), rgba(0,198,255,0.04))", border: "1px solid rgba(0,255,135,0.15)" }}>
+          <p className="section-title">Tu metabolismo diario</p>
+          <div style={{ display: "flex", gap: 0, alignItems: "stretch" }}>
+            <div style={{ flex: 1, textAlign: "center" }}>
+              <p style={{ margin: 0, fontSize: "0.7rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700 }}>Mantenimiento</p>
+              <p style={{ margin: "6px 0 0", fontSize: "2.4rem", fontWeight: 900, color: "var(--brand)", lineHeight: 1, letterSpacing: "-0.04em" }}>
+                {profile.tdeeKcal.toLocaleString()}
+              </p>
+              <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--muted)", fontWeight: 600 }}>kcal / día</p>
+            </div>
+            <div style={{ width: 1, background: "var(--border)", margin: "0 16px" }} />
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ textAlign: "center" }}>
+                <p style={{ margin: 0, fontSize: "0.65rem", color: "var(--muted)", fontWeight: 700, textTransform: "uppercase" }}>BMR Basal</p>
+                <p style={{ margin: "2px 0 0", fontSize: "1.2rem", fontWeight: 800 }}>{profile.bmrKcal?.toLocaleString()}</p>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                <div style={{ textAlign: "center", padding: "6px 4px", borderRadius: 8, background: "rgba(255,71,87,0.08)", border: "1px solid rgba(255,71,87,0.15)" }}>
+                  <p style={{ margin: 0, fontSize: "0.6rem", color: "var(--danger)", fontWeight: 700 }}>DÉFICIT</p>
+                  <p style={{ margin: "2px 0 0", fontSize: "0.88rem", fontWeight: 800, color: "var(--danger)" }}>{Math.round((profile.tdeeKcal ?? 0) * 0.85).toLocaleString()}</p>
+                </div>
+                <div style={{ textAlign: "center", padding: "6px 4px", borderRadius: 8, background: "rgba(0,198,255,0.08)", border: "1px solid rgba(0,198,255,0.15)" }}>
+                  <p style={{ margin: 0, fontSize: "0.6rem", color: "var(--brand2)", fontWeight: 700 }}>SUPERÁVIT</p>
+                  <p style={{ margin: "2px 0 0", fontSize: "0.88rem", fontWeight: 800, color: "var(--brand2)" }}>{Math.round((profile.tdeeKcal ?? 0) * 1.1).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <Link href="/perfil" style={{ textDecoration: "none" }}>
+          <div style={{
+            marginBottom: 24, padding: "22px 20px",
+            borderRadius: "var(--radius)", border: "2px dashed rgba(0,255,135,0.25)",
+            display: "flex", alignItems: "center", gap: 16, cursor: "pointer",
+            background: "rgba(0,255,135,0.03)"
+          }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: "rgba(0,255,135,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem", flexShrink: 0 }}>
+              📊
+            </div>
+            <div>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: "1rem" }}>Completá tu perfil</p>
+              <p style={{ margin: "4px 0 0", fontSize: "0.82rem", color: "var(--muted)", lineHeight: 1.4 }}>Calculamos tus calorías y macros automáticamente</p>
+            </div>
+            <div style={{ marginLeft: "auto", color: "var(--brand)", fontSize: "1.2rem" }}>→</div>
+          </div>
+        </Link>
+      )}
+
+      {/* ── Quick Actions ── */}
+      <p className="section-title">Acceso rápido</p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+        <Link href="/rutinas" style={{ textDecoration: "none" }}>
+          <div className="action-tile" style={{
+            background: "linear-gradient(135deg, rgba(0,255,135,0.12), rgba(0,255,135,0.04))",
+            border: "1px solid rgba(0,255,135,0.2)",
+          }}>
+            <div className="tile-icon" style={{ background: "rgba(0,255,135,0.15)" }}>
+              <span style={{ fontSize: "1.4rem" }}>🏋️</span>
+            </div>
+            <p className="tile-label">Registrar sesión</p>
+            <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Logueá tu entrenamiento</p>
+          </div>
+        </Link>
+
+        <Link href="/calculadora" style={{ textDecoration: "none" }}>
+          <div className="action-tile" style={{
+            background: "linear-gradient(135deg, rgba(0,198,255,0.12), rgba(0,198,255,0.04))",
+            border: "1px solid rgba(0,198,255,0.2)",
+          }}>
+            <div className="tile-icon" style={{ background: "rgba(0,198,255,0.15)" }}>
+              <span style={{ fontSize: "1.4rem" }}>⚡</span>
+            </div>
+            <p className="tile-label">Calcular 1RM</p>
+            <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Epley formula</p>
+          </div>
+        </Link>
+
+        <Link href="/calculadora?tab=calorias" style={{ textDecoration: "none" }}>
+          <div className="action-tile" style={{
+            background: "linear-gradient(135deg, rgba(255,165,2,0.1), rgba(255,165,2,0.03))",
+            border: "1px solid rgba(255,165,2,0.18)",
+          }}>
+            <div className="tile-icon" style={{ background: "rgba(255,165,2,0.12)" }}>
+              <span style={{ fontSize: "1.4rem" }}>🍎</span>
+            </div>
+            <p className="tile-label">Ver calorías</p>
+            <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Harris-Benedict</p>
+          </div>
+        </Link>
+
+        {isTrainer ? (
+          <Link href="/trainer" style={{ textDecoration: "none" }}>
+            <div className="action-tile" style={{
+              background: "linear-gradient(135deg, rgba(124,58,237,0.12), rgba(124,58,237,0.04))",
+              border: "1px solid rgba(124,58,237,0.2)",
+            }}>
+              <div className="tile-icon" style={{ background: "rgba(124,58,237,0.15)" }}>
+                <span style={{ fontSize: "1.4rem" }}>👥</span>
+              </div>
+              <p className="tile-label">Panel Trainer</p>
+              <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Gestioná alumnos</p>
+            </div>
+          </Link>
+        ) : (
+          <Link href="/perfil" style={{ textDecoration: "none" }}>
+            <div className="action-tile" style={{
+              background: "linear-gradient(135deg, rgba(168,85,247,0.1), rgba(168,85,247,0.03))",
+              border: "1px solid rgba(168,85,247,0.18)",
+            }}>
+              <div className="tile-icon" style={{ background: "rgba(168,85,247,0.12)" }}>
+                <span style={{ fontSize: "1.4rem" }}>👤</span>
+              </div>
+              <p className="tile-label">Mi perfil</p>
+              <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Datos físicos</p>
+            </div>
+          </Link>
+        )}
+      </div>
+
+      {/* ── Trainer shortcut hero ── */}
+      {isTrainer && (
+        <Link href="/trainer" style={{ textDecoration: "none" }}>
+          <div style={{
+            padding: "20px 22px",
+            borderRadius: "var(--radius)",
+            background: "linear-gradient(135deg, rgba(0,255,135,0.1), rgba(0,198,255,0.06))",
+            border: "1px solid rgba(0,255,135,0.18)",
+            display: "flex", alignItems: "center", gap: 16, cursor: "pointer"
+          }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: "linear-gradient(135deg,rgba(0,255,135,0.2),rgba(0,198,255,0.15))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }}>
+              👥
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: 0, fontWeight: 800, fontSize: "1.05rem" }}>Panel Trainer</p>
+              <p style={{ margin: "3px 0 0", fontSize: "0.8rem", color: "var(--muted)" }}>Gestioná alumnos y asigná rutinas</p>
+            </div>
+            <span style={{ color: "var(--brand)", fontSize: "1.3rem" }}>→</span>
+          </div>
+        </Link>
+      )}
+    </main>
+  );
+}
