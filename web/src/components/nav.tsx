@@ -24,7 +24,7 @@ export function BottomNav() {
         { href: "/dashboard", label: "Inicio", Icon: Home },
         { href: "/rutinas",   label: "Mi entreno", Icon: Dumbbell },
         { href: "/ejercicios", label: "Manual", Icon: BookOpen },
-        { href: "/calorias",  label: "¿Qué comer?", Icon: Apple },
+        { href: "/calorias",  label: "Nutrición", Icon: Apple },
         { href: "/perfil",    label: "Perfil", Icon: User },
       ];
 

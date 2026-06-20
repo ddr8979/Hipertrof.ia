@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { activityOptions, harrisBenedict, type ActivityLevel, type Sex } from "@/lib/harrisBenedict";
-import { Flame, Calculator } from "lucide-react";
+import { Flame, Calculator, TrendingDown, TrendingUp, Scale } from "lucide-react";
 import { Mascota } from "@/components/mascota";
 
 type FormState = {
@@ -121,9 +121,9 @@ export default function CaloriasPage() {
   }
 
   const goalOptions = [
-    { value: "deficit", label: "Perder peso", emoji: "📉", kcalDelta: "−300 kcal/día" },
-    { value: "maintain", label: "Mantenerme", emoji: "⚖️", kcalDelta: "Mantenimiento" },
-    { value: "surplus", label: "Ganar músculo", emoji: "📈", kcalDelta: "+300 kcal/día" },
+    { value: "deficit",  label: "Perder peso",   Icon: TrendingDown, kcalDelta: "−300 kcal/día", color: "#ff5e3a" },
+    { value: "maintain", label: "Mantenerme",    Icon: Scale,        kcalDelta: "Mantenimiento",  color: "var(--brand2)" },
+    { value: "surplus",  label: "Ganar músculo", Icon: TrendingUp,   kcalDelta: "+300 kcal/día",  color: "var(--brand)" },
   ] as const;
 
   return (
@@ -201,7 +201,7 @@ export default function CaloriasPage() {
                     boxShadow: form.goal === g.value ? "0 0 12px rgba(0,255,135,0.2)" : "none",
                   }}
                 >
-                  <span style={{ fontSize: "1.3rem" }}>{g.emoji}</span>
+                  <g.Icon size={22} color={g.color} strokeWidth={form.goal === g.value ? 2.4 : 1.8} />
                   <span style={{ fontSize: "0.72rem", fontWeight: 700, textAlign: "center", lineHeight: 1.2 }}>{g.label}</span>
                   <span style={{ fontSize: "0.65rem", color: "var(--muted)" }}>{g.kcalDelta}</span>
                 </button>
@@ -244,8 +244,8 @@ export default function CaloriasPage() {
               </div>
               <div style={{ textAlign: "right" }}>
                 <span style={{ fontSize: "0.68rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700 }}>Obj.</span>
-                <p style={{ fontSize: "1rem", fontWeight: 800, color: "var(--brand2)", margin: "2px 0 0" }}>
-                  {goalOptions.find(g => g.value === form.goal)?.emoji}
+                <p style={{ margin: "4px 0 0", display: "flex", justifyContent: "flex-end" }}>
+                  {(() => { const g = goalOptions.find(g => g.value === form.goal); return g ? <g.Icon size={18} color={g.color} /> : null; })()}
                 </p>
               </div>
             </div>
