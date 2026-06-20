@@ -1,9 +1,9 @@
 "use client";
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter as useNextRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { Toast } from "@/components/toast";
-import { Apple, Dumbbell, Beef, Flame, Target, Scale, History, Search } from "lucide-react";
+import { Apple, Dumbbell, Beef, Flame, Target, Scale, History } from "lucide-react";
 
 type ToastType = { msg: string; type: "success" | "error" };
 

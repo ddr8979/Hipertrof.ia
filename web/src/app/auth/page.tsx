@@ -3,7 +3,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { Toast } from "@/components/toast";
-import { Dumbbell, User, Users, ChevronLeft, Mail, Lock, UserCheck } from "lucide-react";
+import { Dumbbell, User, Users, ChevronLeft } from "lucide-react";
 
 type ToastType = { msg: string; type: "success" | "error" };
 
@@ -60,7 +60,7 @@ function AuthForm() {
       const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
       const body = mode === "login"
         ? { email, password }
-        : { email, password, name, role, trainerId: role === "ATHLETE" ? trainerId : undefined };
+        : { email, password, name, role, trainerId: (role === "ATHLETE" && trainerId) ? trainerId : undefined };
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -222,10 +222,10 @@ function AuthForm() {
 
               {mode === "register" && role === "ATHLETE" && (
                 <div className="field">
-                  <label className="label">Tu Personal Trainer</label>
+                  <label className="label">Tu Personal Trainer (Opcional)</label>
                   <select className="input" value={trainerId}
-                    onChange={e => setTrainerId(e.target.value)} required>
-                    <option value="">Seleccioná tu trainer...</option>
+                    onChange={e => setTrainerId(e.target.value)}>
+                    <option value="">Sin Personal Trainer (Entrenar solo)</option>
                     {trainers.map(t => (
                       <option key={t.id} value={t.id}>{t.name} ({t.email})</option>
                     ))}

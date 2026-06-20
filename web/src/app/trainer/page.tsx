@@ -9,7 +9,6 @@ import {
   Plus,
   Trash2,
   Dumbbell,
-  Calendar,
   Search,
   ShieldAlert,
   ChevronDown,
@@ -17,7 +16,6 @@ import {
   Star,
   Award,
   Flame,
-  Activity,
   Eye
 } from "lucide-react";
 
@@ -90,12 +88,7 @@ const parseWorkoutName = (fullName: string) => {
   return { color: null, cleanName: fullName };
 };
 
-const formatWorkoutName = (color: string | null, cleanName: string) => {
-  if (color) {
-    return `[${color}] ${cleanName}`;
-  }
-  return cleanName;
-};
+
 
 const MEDALS_TYPES = [
   { id: "Novato", title: "Novato" },
@@ -200,6 +193,7 @@ export default function TrainerPage() {
 
   useEffect(() => {
     if (user) load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // create athlete form state
@@ -238,7 +232,7 @@ export default function TrainerPage() {
         const d = await res.json();
         setToast({ msg: d.error || "Error al crear alumno", type: "error" });
       }
-    } catch (err) {
+    } catch {
       setToast({ msg: "Error de red", type: "error" });
     } finally {
       setBusy(false);
@@ -332,14 +326,6 @@ export default function TrainerPage() {
       prev.includes(medalId) ? prev.filter(m => m !== medalId) : [...prev, medalId]
     );
   };
-
-  const addDay = () => {
-    const nextIdx = workouts.length + 1;
-    const defaultColors = ["#7c3aed", "#00ff87", "#00c6ff", "#ff5e3a", "#ffb300", "#ff4757", "#ff75a0"];
-    const col = defaultColors[(nextIdx - 1) % defaultColors.length];
-    setWorkouts([...workouts, { name: `[${col}] Día ${nextIdx}`, exercises: [] }]);
-  };
-  const removeDay = (wIdx: number) => setWorkouts(workouts.filter((_, i) => i !== wIdx));
 
   const addEx = (wIdx: number) => {
     const ws = [...workouts];

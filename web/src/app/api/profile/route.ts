@@ -11,6 +11,9 @@ export async function GET() {
     where: { id: session.id },
     include: {
       profile: true,
+      gymMemberships: {
+        include: { gym: true }
+      },
       attendances: {
         select: { date: true },
         orderBy: { date: "asc" }

@@ -34,11 +34,7 @@ export default function Landing() {
         zIndex: -1
       }} />
 
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
-        <span className="badge badge-purple" style={{ textTransform: "none", height: 26, padding: "0 12px", display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--brand2)", display: "inline-block" }} /> Beta v1.0 · 2026
-        </span>
-      </div>
+
 
       {/* Logo */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 24 }}>
@@ -86,7 +82,7 @@ export default function Landing() {
         margin: "0 auto 36px",
         fontWeight: 500
       }}>
-        Rutinas premium con registro intuitivo, calculadora de 1RM, control de macros y panel para personal trainers. Todo en una app nativa para tu celular.
+        Registro de entrenamientos, calculadora de 1RM, control de macros y panel para personal trainers. Todo en una app nativa para tu celular.
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 320, width: "100%", margin: "0 auto" }}>
@@ -98,22 +94,7 @@ export default function Landing() {
         </Link>
       </div>
 
-      {/* Feature list tags */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 44, maxWidth: 440, marginLeft: "auto", marginRight: "auto" }}>
-        {["Rutinas Inteligentes", "Macros & Calorías", "Estimación de 1RM", "Gestión de Alumnos", "Progreso Semanal"].map(f => (
-          <span key={f} style={{
-            padding: "6px 14px",
-            borderRadius: 99,
-            border: "1.5px solid var(--border)",
-            fontSize: "0.78rem",
-            color: "var(--text2)",
-            background: "rgba(255,255,255,0.02)",
-            fontWeight: 600
-          }}>
-            {f}
-          </span>
-        ))}
-      </div>
+
     </main>
   );
 }

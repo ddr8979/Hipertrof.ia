@@ -5,7 +5,7 @@ import { useAuth } from "@/components/auth-provider";
 import { Toast } from "@/components/toast";
 import { Mascota } from "@/components/mascota";
 import { 
-  Play, Eye, ArrowUp, ArrowDown, Scale, Info, Sparkles, Plus, Trash2, Search, Dumbbell, Award, Edit3, ArrowLeftRight, GripVertical 
+  Eye, ArrowUp, ArrowDown, Sparkles, Plus, Dumbbell, ArrowLeftRight, GripVertical 
 } from "lucide-react";
 
 type ToastMsg = { msg: string; type: "success" | "error" };

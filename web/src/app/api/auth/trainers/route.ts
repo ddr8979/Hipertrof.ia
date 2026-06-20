@@ -17,7 +17,7 @@ export async function GET() {
       orderBy: { name: "asc" },
     });
     return NextResponse.json({ trainers });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Error al cargar trainers" }, { status: 500 });
   }
 }

@@ -3,17 +3,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import {
-  Shield,
   Search,
   Trash2,
   Check,
   X,
-  Users,
-  UserCheck,
-  UserX,
-  UserMinus,
   ArrowLeft,
-  Filter,
   RefreshCw
 } from "lucide-react";
 

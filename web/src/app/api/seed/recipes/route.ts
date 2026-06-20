@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+// seed/recipes route — seeding solo requiere Response global de Next.js
 import { prisma } from "@/server/db";
 
 const RECIPES = [

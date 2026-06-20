@@ -1,8 +1,8 @@
 "use client";
-/* eslint-disable react-hooks/set-state-in-effect */
 
 import { useEffect, useState } from "react";
-import { ShoppingBag, Plus, BookOpen, Star, Sparkles, Tag, Check, Award } from "lucide-react";
+import { ShoppingBag, Plus, BookOpen, Check, Award } from "lucide-react";
+
 
 type Course = {
   id: string;

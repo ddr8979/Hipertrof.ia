@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { MessageSquare, X } from "lucide-react";
+import { X } from "lucide-react";
 
 type MascotaProps = {
   context: "dashboard" | "rutinas" | "calorias" | "nutricion";

@@ -3,9 +3,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { 
-  BookOpen, Search, Dumbbell, ArrowLeft, Eye, EyeOff, Info, HelpCircle, ChevronDown, ChevronUp
+  Search, ArrowLeft, Eye, EyeOff, Info, HelpCircle, ChevronDown, ChevronUp
 } from "lucide-react";
-import { GLOSARIO_ITEMS, GlosarioItem } from "@/lib/glosario-data";
+import { GLOSARIO_ITEMS } from "@/lib/glosario-data";
 
 type ExerciseData = {
   id: string;

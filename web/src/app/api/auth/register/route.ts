@@ -23,9 +23,7 @@ export async function POST(req: NextRequest) {
     isApproved = true;
   }
 
-  if (resolvedRole === "ATHLETE" && !trainerId) {
-    return NextResponse.json({ error: "Debes seleccionar un Personal Trainer" }, { status: 400 });
-  }
+
 
   const user = await prisma.user.create({
     data: {
@@ -34,7 +32,7 @@ export async function POST(req: NextRequest) {
       passwordHash: hash,
       role: resolvedRole as any,
       isApproved,
-      trainerId: resolvedRole === "ATHLETE" ? trainerId : null,
+      trainerId: (resolvedRole === "ATHLETE" && trainerId) ? trainerId : null,
       profile: { create: {} },
     },
   });

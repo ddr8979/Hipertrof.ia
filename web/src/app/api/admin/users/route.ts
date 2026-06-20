@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/server/db";
 
-async function requireAdmin(req: NextRequest) {
+async function requireAdmin() {
   const session = await getSession();
   if (!session || (session.role !== "ADMIN" && session.role !== "TRAINER" && session.role !== "OWNER")) {
     return null;
@@ -12,7 +12,7 @@ async function requireAdmin(req: NextRequest) {
 
 // GET /api/admin/users?pending=true — lista usuarios (todos o solo pendientes)
 export async function GET(req: NextRequest) {
-  const session = await requireAdmin(req);
+  const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   const onlyPending = req.nextUrl.searchParams.get("pending") === "true";

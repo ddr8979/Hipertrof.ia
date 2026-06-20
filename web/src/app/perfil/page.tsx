@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { Toast } from "@/components/toast";
-import { LogOut, Activity, Award, Flame, Camera, Calendar, Star, ChevronRight, ChevronDown } from "lucide-react";
+import { LogOut, Activity, Camera, Calendar } from "lucide-react";
 
 type ToastType = { msg: string; type: "success" | "error" };
 type Profile = {

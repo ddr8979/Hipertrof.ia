@@ -14,8 +14,7 @@ type AuthCtx = {
 
 const Ctx = createContext<AuthCtx>({ user: null, loading: true, refresh: async () => {}, logout: async () => {} });
 
-const PUBLIC_PATHS = ["/", "/auth", "/pendiente"];
-const APPROVED_ONLY = (path: string) => !PUBLIC_PATHS.some((p) => path === p || path.startsWith("/api"));
+
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);

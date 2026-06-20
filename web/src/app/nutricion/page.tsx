@@ -1,11 +1,11 @@
 "use client";
-/* eslint-disable react-hooks/set-state-in-effect */
 
 import { useCallback, useEffect, useState } from "react";
 import { 
-  Plus, Search, Utensils, Egg, Flame, Beef, Sparkles, PlusCircle, 
-  Check, Filter, X, Info, Apple, Heart, ChevronRight, HelpCircle
+  Search, Egg, Sparkles, PlusCircle, 
+  Filter, X, Info, Apple, HelpCircle
 } from "lucide-react";
+
 import { Toast } from "@/components/toast";
 
 type Recipe = {

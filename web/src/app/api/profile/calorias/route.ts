@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
+import { getSession } from "@/lib/auth";
 import { harrisBenedict, type ActivityLevel, type Sex } from "@/lib/harrisBenedict";
 
 type Body = {
-  email: string;
   sex: Sex;
   ageYears: number;
   heightCm: number;
@@ -12,13 +12,17 @@ type Body = {
 };
 
 export async function POST(req: Request) {
-  const body = (await req.json()) as Partial<Body>;
-
-  if (!body.email || typeof body.email !== "string") {
-    return NextResponse.json({ error: "email is required" }, { status: 400 });
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
   }
 
   try {
+    const body = (await req.json()) as Partial<Body>;
+    if (!body.sex || !body.ageYears || !body.heightCm || !body.weightKg || !body.activity) {
+      return NextResponse.json({ error: "Faltan datos obligatorios" }, { status: 400 });
+    }
+
     const result = harrisBenedict({
       sex: body.sex as Sex,
       ageYears: Number(body.ageYears),
@@ -27,16 +31,10 @@ export async function POST(req: Request) {
       activity: body.activity as ActivityLevel,
     });
 
-    const user = await prisma.user.upsert({
-      where: { email: body.email },
-      create: { email: body.email },
-      update: {},
-    });
-
     const profile = await prisma.profile.upsert({
-      where: { userId: user.id },
+      where: { userId: session.id },
       create: {
-        userId: user.id,
+        userId: session.id,
         sex: body.sex,
         ageYears: Number(body.ageYears),
         heightCm: Number(body.heightCm),
