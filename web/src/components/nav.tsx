@@ -7,7 +7,7 @@ import { Home, Dumbbell, BookOpen, Apple, Users, User, Shield } from "lucide-rea
 export function BottomNav() {
   const path = usePathname();
   const { user } = useAuth();
-  if (!user) return null;
+  if (!user || !user.isApproved) return null;
 
   const isTrainer = user.role === "TRAINER" || user.role === "ADMIN" || user.role === "OWNER";
   const isOwnerOrAdmin = user.role === "ADMIN" || user.role === "OWNER";

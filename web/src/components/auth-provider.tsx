@@ -52,7 +52,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, loading, pathname, router]);
 
-  return <Ctx.Provider value={{ user, loading, refresh, logout }}>{children}</Ctx.Provider>;
+  const isPendingAthlete = user && !user.isApproved && user.role !== "ADMIN" && user.role !== "TRAINER" && user.role !== "OWNER";
+  const shouldShowLoader = loading || (isPendingAthlete && pathname !== "/pendiente");
+
+  return (
+    <Ctx.Provider value={{ user, loading, refresh, logout }}>
+      {shouldShowLoader ? (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100dvh" }}>
+          <div className="spinner" />
+        </div>
+      ) : (
+        children
+      )}
+    </Ctx.Provider>
+  );
 }
 
 export const useAuth = () => useContext(Ctx);

@@ -42,6 +42,7 @@ model User {
   passwordHash String?
   role         UserRole @default(ATHLETE)
   isApproved   Boolean  @default(false)
+  phone        String?
 
   profile             Profile?
   authoredPrograms    TrainingProgram[]    @relation("TrainerPrograms")

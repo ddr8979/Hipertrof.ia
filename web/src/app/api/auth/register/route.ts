@@ -4,7 +4,7 @@ import { prisma } from "@/server/db";
 import { createSession } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  const { email, password, name, role, trainerId } = await req.json();
+  const { email, password, name, role, trainerId, phone } = await req.json();
 
   if (!email || !password || !name)
     return NextResponse.json({ error: "Faltan campos" }, { status: 400 });
@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
       role: resolvedRole as any,
       isApproved,
       trainerId: (resolvedRole === "ATHLETE" && trainerId) ? trainerId : null,
+      phone,
       profile: { create: {} },
     },
   });

@@ -19,6 +19,7 @@ function AuthForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [role, setRole] = useState("ATHLETE");
   const [trainers, setTrainers] = useState<any[]>([]);
   const [trainerId, setTrainerId] = useState("");
@@ -60,7 +61,7 @@ function AuthForm() {
       const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
       const body = mode === "login"
         ? { email, password }
-        : { email, password, name, role, trainerId: (role === "ATHLETE" && trainerId) ? trainerId : undefined };
+        : { email, password, name, role, phone, trainerId: (role === "ATHLETE" && trainerId) ? trainerId : undefined };
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -219,6 +220,14 @@ function AuthForm() {
                 <input className="input" type="password" value={password}
                   onChange={e => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" required minLength={6} />
               </div>
+
+              {mode === "register" && (
+                <div className="field">
+                  <label className="label">Número de WhatsApp</label>
+                  <input className="input" type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+                    placeholder="Ej. +59899123456" required />
+                </div>
+              )}
 
               {mode === "register" && role === "ATHLETE" && (
                 <div className="field">
