@@ -394,8 +394,9 @@ export function WorkoutSessionTracker() {
             background: "rgba(0,0,0,0.75)",
             zIndex: 9990,
             display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "center"
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16
           }}
           onClick={() => setShowExercisePicker(false)}
         >
@@ -404,24 +405,25 @@ export function WorkoutSessionTracker() {
             style={{
               width: "100%",
               maxWidth: 520,
-              maxHeight: "85dvh",
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              padding: 20,
+              maxHeight: "80dvh",
+              borderRadius: 24,
+              padding: 24,
               display: "flex",
               flexDirection: "column",
               gap: 14,
-              background: "#ffffff"
+              background: "#ffffff",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.3)"
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, fontWeight: 900, fontSize: "1.15rem" }}>Seleccionar Ejercicio</h3>
+              <h3 style={{ margin: 0, fontWeight: 900, fontSize: "1.15rem", color: "var(--text)" }}>Seleccionar Ejercicio</h3>
               <button
                 type="button"
                 onClick={() => setShowExercisePicker(false)}
                 className="btn-icon-sm btn-ghost"
-                style={{ border: "none" }}
+                style={{ border: "1px solid var(--border2)", cursor: "pointer", background: "rgba(0,0,0,0.05)", borderRadius: "50%", minHeight: 36, width: 36, display: "flex", alignItems: "center", justifyContent: "center" }}
+                title="Cerrar modal"
               >
                 <X size={20} />
               </button>
