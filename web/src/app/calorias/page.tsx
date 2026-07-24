@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { activityOptions, harrisBenedict, type ActivityLevel, type Sex } from "@/lib/harrisBenedict";
+import { activityOptions, mifflinStJeor, type ActivityLevel, type Sex } from "@/shared/lib/mifflinStJeor";
 import { Flame, Calculator, TrendingDown, TrendingUp, Scale } from "lucide-react";
 import { Mascota } from "@/components/mascota";
 
@@ -69,7 +69,7 @@ export default function CaloriasPage() {
   const result = useMemo(() => {
     if (!parsed.ok) return null;
     try {
-      return harrisBenedict({
+      return mifflinStJeor({
         sex: form.sex,
         ageYears: parsed.ageYears!,
         heightCm: parsed.heightCm!,

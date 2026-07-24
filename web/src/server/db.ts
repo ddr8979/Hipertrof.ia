@@ -1,18 +1,19 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { PrismaLibSql } from "@prisma/adapter-libsql";
 
 declare global {
   var __prisma: PrismaClient | undefined;
 }
 
-const connectionString = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/postgres";
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
+const adapter = new PrismaLibSql({
+  url: process.env.DATABASE_URL || "file:prisma/dev.db",
+});
 
 export const prisma =
   globalThis.__prisma ??
   new PrismaClient({ adapter });
 
 if (process.env.NODE_ENV !== "production") globalThis.__prisma = prisma;
+
+
 

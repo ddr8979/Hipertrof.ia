@@ -41,7 +41,9 @@ export async function GET(req: NextRequest) {
       return true;
     });
 
-    return NextResponse.json({ exercises });
+    return NextResponse.json({ exercises }, {
+      headers: { "Cache-Control": "no-store" }
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

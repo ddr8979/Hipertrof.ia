@@ -4,18 +4,34 @@ import { prisma } from "@/server/db";
 import { createSession } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  const { email, password } = await req.json();
-  if (!email || !password)
-    return NextResponse.json({ error: "Faltan campos" }, { status: 400 });
+  try {
+    const { email, password } = await req.json();
+    if (!email || !password) {
+      return NextResponse.json({ error: "Faltan email o contraseña" }, { status: 400 });
+    }
 
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || !user.passwordHash)
-    return NextResponse.json({ error: "Credenciales inválidas" }, { status: 401 });
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user || !user.passwordHash) {
+      return NextResponse.json({ error: "Credenciales inválidas" }, { status: 401 });
+    }
 
-  const ok = await bcrypt.compare(password, user.passwordHash);
-  if (!ok)
-    return NextResponse.json({ error: "Credenciales inválidas" }, { status: 401 });
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) {
+      return NextResponse.json({ error: "Credenciales inválidas" }, { status: 401 });
+    }
 
-  await createSession({ id: user.id, email: user.email, name: user.name, role: user.role, isApproved: user.isApproved });
-  return NextResponse.json({ ok: true, role: user.role, isPending: !user.isApproved });
+    await createSession({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      isApproved: user.isApproved,
+    });
+
+    return NextResponse.json({ ok: true, role: user.role, isPending: !user.isApproved });
+  } catch (error) {
+    return NextResponse.json({ error: "Error en el servidor" }, { status: 500 });
+  }
 }
+
+

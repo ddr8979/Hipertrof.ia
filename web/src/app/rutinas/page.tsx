@@ -56,14 +56,18 @@ type Log = {
 };
 
 const MUSCLE_GROUPS = [
-  "Abdomen/Cintura", "Espalda", "Pecho", "Hombros", 
-  "Brazos (Bíceps/Tríceps)", "Antebrazos", 
-  "Piernas (Muslos)", "Piernas (Pantorrillas)", "Cardio"
+  "Pecho", "Espalda", "Hombros", 
+  "Brazos", "Antebrazos", 
+  "Piernas", "Abdomen", "Cardio", "Cuello"
 ];
 
 const EQUIPMENTS = [
-  "Peso Corporal", "Barra", "Mancuernas", "Polea", 
-  "Discos", "Bandas Elásticas", "Máquina", "Multipower (Smith)"
+  "Peso Corporal", "Barra", "Barra Olímpica", "Barra EZ", "Barra Hexagonal",
+  "Mancuernas", "Polea", "Multipower (Smith)", "Pesa Rusa (Kettlebell)", 
+  "Máquina de Palanca", "Asistido", "Bandas Elásticas", "Con Lastre", 
+  "Balón Medicinal", "Fitball", "Bosu", "Cuerda", "Trineo", 
+  "Rueda Abdominal", "Foam Roller", "Neumático", "Bicicleta Estática", 
+  "Elíptica", "Escaladora", "Ergómetro de Brazos", "SkiErg", "Martillo"
 ];
 
 function Stepper({ value, onChange, min = 0, step = 1, unit }: { value: number; onChange: (v: number) => void; min?: number; step?: number; unit?: string }) {
@@ -135,14 +139,14 @@ export default function RutinasPage() {
   const [newInstructions, setNewInstructions] = useState("");
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/auth");
+    if (!loading && !user) router.replace("/");
   }, [user, loading, router]);
 
   const load = async () => {
     const [lr, pr, er] = await Promise.all([
       fetch("/api/rutinas/logs").then(r => r.json()),
       fetch("/api/rutinas/programas").then(r => r.json()),
-      fetch("/api/exercises").then(r => r.json())
+      fetch("/api/exercises", { cache: "no-store" }).then(r => r.json())
     ]);
     setLogs(lr.logs ?? []);
     setWeeklyVol(lr.weeklyVolumeKg ?? 0);
@@ -895,17 +899,29 @@ export default function RutinasPage() {
           }} onClick={e => e.stopPropagation()}>
             <p style={{ fontWeight: 800, fontSize: "1.1rem", margin: "0 0 12px", color: "var(--brand)" }}>{previewName}</p>
             
-            {/* The Image/GIF */}
+            {/* The Image/GIF/Video */}
             <div style={{ background: "#000", borderRadius: 14, overflow: "hidden", minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <img 
-                src={previewGif} 
-                alt={previewName} 
-                style={{ width: "100%", height: "auto", display: "block" }}
-                onError={(e) => {
-                  // Fallback fallback if gif link fails
-                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400";
-                }}
-              />
+              {previewGif.endsWith('.webm') ? (
+                <video
+                  src={previewGif}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="metadata"
+                  style={{ width: "100%", height: "auto", display: "block" }}
+                />
+              ) : (
+                <img 
+                  src={previewGif} 
+                  alt={previewName} 
+                  style={{ width: "100%", height: "auto", display: "block" }}
+                  onError={(e) => {
+                    // Fallback fallback if gif link fails
+                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400";
+                  }}
+                />
+              )}
             </div>
 
             <button onClick={() => setPreviewGif(null)} className="btn btn-ghost btn-sm btn-full" style={{ marginTop: 14 }}>

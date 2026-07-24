@@ -98,14 +98,18 @@ const MEDALS_TYPES = [
 ];
 
 const MUSCLE_GROUPS = [
-  "Abdomen/Cintura", "Espalda", "Pecho", "Hombros", 
-  "Brazos (Bíceps/Tríceps)", "Antebrazos", 
-  "Piernas (Muslos)", "Piernas (Pantorrillas)", "Cardio"
+  "Pecho", "Espalda", "Hombros", 
+  "Brazos", "Antebrazos", 
+  "Piernas", "Abdomen", "Cardio", "Cuello"
 ];
 
 const EQUIPMENTS = [
-  "Peso Corporal", "Barra", "Mancuernas", "Polea", 
-  "Discos", "Bandas Elásticas", "Máquina", "Multipower (Smith)"
+  "Peso Corporal", "Barra", "Barra Olímpica", "Barra EZ", "Barra Hexagonal",
+  "Mancuernas", "Polea", "Multipower (Smith)", "Pesa Rusa (Kettlebell)", 
+  "Máquina de Palanca", "Asistido", "Bandas Elásticas", "Con Lastre", 
+  "Balón Medicinal", "Fitball", "Bosu", "Cuerda", "Trineo", 
+  "Rueda Abdominal", "Foam Roller", "Neumático", "Bicicleta Estática", 
+  "Elíptica", "Escaladora", "Ergómetro de Brazos", "SkiErg", "Martillo"
 ];
 
 type PendingUser = { id: string; name: string | null; email: string; role: string; createdAt: string };
@@ -156,7 +160,7 @@ export default function TrainerPage() {
   };
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/auth");
+    if (!loading && !user) router.replace("/");
   }, [user, loading, router]);
 
   const load = async () => {
@@ -1403,14 +1407,26 @@ export default function TrainerPage() {
             <p style={{ fontWeight: 800, fontSize: "1.1rem", margin: "0 0 12px", color: "var(--brand)" }}>{previewName}</p>
             
             <div style={{ background: "#000", borderRadius: 14, overflow: "hidden", minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <img 
-                src={previewGif} 
-                alt={previewName} 
-                style={{ width: "100%", height: "auto", display: "block" }}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400";
-                }}
-              />
+              {previewGif.endsWith('.webm') ? (
+                <video
+                  src={previewGif}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="metadata"
+                  style={{ width: "100%", height: "auto", display: "block" }}
+                />
+              ) : (
+                <img 
+                  src={previewGif} 
+                  alt={previewName} 
+                  style={{ width: "100%", height: "auto", display: "block" }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400";
+                  }}
+                />
+              )}
             </div>
 
             <button onClick={() => setPreviewGif(null)} className="btn btn-ghost btn-sm btn-full" style={{ marginTop: 14 }}>

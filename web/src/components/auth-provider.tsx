@@ -1,30 +1,37 @@
 "use client";
-// Auth context — manages session state client-side
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
-type SessionUser = { id: string; email: string; name: string | null; role: string; isApproved: boolean };
+interface User {
+  id: string;
+  email: string;
+  name?: string | null;
+  role: string;
+  isApproved: boolean;
+}
 
-type AuthCtx = {
-  user: SessionUser | null;
+interface AuthContextType {
+  user: User | null;
   loading: boolean;
-  refresh: () => Promise<void>;
   logout: () => Promise<void>;
-};
+  refresh: () => Promise<void>;
+}
 
-const Ctx = createContext<AuthCtx>({ user: null, loading: true, refresh: async () => {}, logout: async () => {} });
-
-
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  logout: async () => {},
+  refresh: async () => {},
+});
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<SessionUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
 
   const refresh = async () => {
     try {
-      const res = await fetch("/api/auth/session");
+      const res = await fetch("/api/auth/session", { cache: "no-store" });
       const data = await res.json();
       setUser(data.user ?? null);
     } catch {
@@ -34,38 +41,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  useEffect(() => {
+    refresh();
+  }, []);
+
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
-    router.replace("/auth");
+    router.replace("/");
   };
 
-  useEffect(() => { refresh(); }, []);
-
-  // Redirect pending users away from protected pages
-  useEffect(() => {
-    if (loading) return;
-    if (!user) return;
-    if (user.role === "ADMIN" || user.role === "TRAINER" || user.role === "OWNER") return;
-    if (!user.isApproved && pathname !== "/pendiente") {
-      router.replace("/pendiente");
-    }
-  }, [user, loading, pathname, router]);
-
-  const isPendingAthlete = user && !user.isApproved && user.role !== "ADMIN" && user.role !== "TRAINER" && user.role !== "OWNER";
-  const shouldShowLoader = loading || (isPendingAthlete && pathname !== "/pendiente");
-
   return (
-    <Ctx.Provider value={{ user, loading, refresh, logout }}>
-      {shouldShowLoader ? (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100dvh" }}>
-          <div className="spinner" />
-        </div>
-      ) : (
-        children
-      )}
-    </Ctx.Provider>
+    <AuthContext.Provider value={{ user, loading, logout, refresh }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 
-export const useAuth = () => useContext(Ctx);
+export function useAuth() {
+  return useContext(AuthContext);
+}

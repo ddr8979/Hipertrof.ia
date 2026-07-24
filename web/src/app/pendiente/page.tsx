@@ -8,7 +8,7 @@ export default function PendientePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/auth");
+    if (!loading && !user) router.replace("/");
   }, [user, loading, router]);
 
   return (

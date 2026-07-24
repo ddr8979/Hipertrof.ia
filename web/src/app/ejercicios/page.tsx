@@ -5,7 +5,7 @@ import { useAuth } from "@/components/auth-provider";
 import { 
   Search, ArrowLeft, Eye, EyeOff, Info, HelpCircle, ChevronDown, ChevronUp
 } from "lucide-react";
-import { GLOSARIO_ITEMS } from "@/lib/glosario-data";
+import { GLOSARIO_ITEMS } from "@/shared/data/glosario-data";
 
 type ExerciseData = {
   id: string;
@@ -18,13 +18,17 @@ type ExerciseData = {
 
 const MUSCLE_GROUPS = [
   "Pecho", "Espalda", "Hombros", 
-  "Brazos (Bíceps/Tríceps)", "Antebrazos", 
-  "Piernas (Muslos)", "Piernas (Pantorrillas)", "Abdomen/Cintura", "Cardio"
+  "Brazos", "Antebrazos", 
+  "Piernas", "Abdomen", "Cardio", "Cuello"
 ];
 
 const EQUIPMENTS = [
-  "Peso Corporal", "Barra", "Mancuernas", "Polea", 
-  "Discos", "Bandas Elásticas", "Máquina", "Multipower (Smith)", "Pesa Rusa (Kettlebell)", "Balón Medicinal", "Otro"
+  "Peso Corporal", "Barra", "Barra Olímpica", "Barra EZ", "Barra Hexagonal",
+  "Mancuernas", "Polea", "Multipower (Smith)", "Pesa Rusa (Kettlebell)", 
+  "Máquina de Palanca", "Asistido", "Bandas Elásticas", "Con Lastre", 
+  "Balón Medicinal", "Fitball", "Bosu", "Cuerda", "Trineo", 
+  "Rueda Abdominal", "Foam Roller", "Neumático", "Bicicleta Estática", 
+  "Elíptica", "Escaladora", "Ergómetro de Brazos", "SkiErg", "Martillo"
 ];
 
 const GLOSARIO_CATEGORIES = ["Todos", "Entrenamiento", "Músculos", "Nutrición", "Equipamiento"];
@@ -50,14 +54,14 @@ export default function EjerciciosPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.replace("/auth");
+      router.replace("/");
     }
   }, [user, authLoading, router]);
 
   useEffect(() => {
     const fetchExercises = async () => {
       try {
-        const res = await fetch("/api/exercises");
+        const res = await fetch("/api/exercises", { cache: "no-store" });
         const data = await res.json();
         setExercises(data.exercises ?? []);
       } catch (err) {
@@ -205,23 +209,61 @@ export default function EjerciciosPage() {
                     <div className="anim-fade" style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
                       {ex.gifUrl && (
                         <div style={{ background: "#000", borderRadius: 12, overflow: "hidden", minHeight: 180, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-                          <img 
-                            src={ex.gifUrl} 
-                            alt={ex.name} 
-                            style={{ width: "100%", height: "auto", display: "block" }}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400";
-                            }}
-                          />
+                          {ex.gifUrl.endsWith('.webm') ? (
+                            <video 
+                              src={ex.gifUrl} 
+                              autoPlay 
+                              loop 
+                              muted 
+                              playsInline 
+                              preload="metadata"
+                              style={{ width: "100%", height: "auto", display: "block" }}
+                            />
+                          ) : (
+                            <img 
+                              src={ex.gifUrl} 
+                              alt={ex.name} 
+                              style={{ width: "100%", height: "auto", display: "block" }}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400";
+                              }}
+                            />
+                          )}
                         </div>
                       )}
                       <div>
                         <h4 style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--muted)", fontWeight: 800, marginBottom: 6, display: "flex", alignItems: "center", gap: 4 }}>
                           <Info size={12} /> Instrucciones de Ejecución
                         </h4>
-                        <p style={{ fontSize: "0.82rem", lineHeight: 1.5, color: "var(--text2)", margin: 0 }}>
-                          {ex.instructions || "No hay instrucciones cargadas para este ejercicio."}
-                        </p>
+                        {(() => {
+                          const instructionsStr = ex.instructions;
+                          if (!instructionsStr) {
+                            return (
+                              <p style={{ fontSize: "0.82rem", lineHeight: 1.5, color: "var(--text2)", margin: 0 }}>
+                                No hay instrucciones cargadas para este ejercicio.
+                              </p>
+                            );
+                          }
+                          if (instructionsStr.trim().startsWith("[")) {
+                            try {
+                              const steps = JSON.parse(instructionsStr) as string[];
+                              return (
+                                <ol style={{ paddingLeft: 16, margin: 0, fontSize: "0.82rem", lineHeight: 1.6, color: "var(--text2)" }}>
+                                  {steps.map((step, idx) => (
+                                    <li key={idx} style={{ marginBottom: 4 }}>{step}</li>
+                                  ))}
+                                </ol>
+                              );
+                            } catch (e) {
+                              // Fallback on parsing error
+                            }
+                          }
+                          return (
+                            <p style={{ fontSize: "0.82rem", lineHeight: 1.5, color: "var(--text2)", margin: 0 }}>
+                              {instructionsStr}
+                            </p>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}

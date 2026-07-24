@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { harrisBenedict, activityOptions } from "@/lib/harrisBenedict";
-import type { Sex, ActivityLevel } from "@/lib/harrisBenedict";
+import { mifflinStJeor, activityOptions } from "@/shared/lib/mifflinStJeor";
+import type { Sex, ActivityLevel } from "@/shared/lib/mifflinStJeor";
 import { prisma } from "@/server/db";
 
 // Epley formula: 1RM = weight * (1 + reps/30)
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     if (!sex || !ageYears || !heightCm || !weightKg || !activity)
       return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
 
-    const result = harrisBenedict({
+    const result = mifflinStJeor({
       sex: sex as Sex,
       ageYears: Number(ageYears),
       heightCm: Number(heightCm),

@@ -31,13 +31,13 @@ export function BottomNav() {
   return (
     <nav className="bottom-nav">
       {links.map((l) => {
-        const active = path === l.href || (l.href !== "/dashboard" && path.startsWith(l.href));
+        const active = path ? (path === l.href || (l.href !== "/dashboard" && path.startsWith(l.href))) : false;
         return (
           <Link key={l.href} href={l.href} className={`nav-link${active ? " active" : ""}`}>
             <span className="nav-icon">
-              <l.Icon size={20} strokeWidth={active ? 2.4 : 1.8} />
+              <l.Icon size={21} strokeWidth={active ? 2.0 : 1.5} />
             </span>
-            <span className="nav-label">{l.label}</span>
+            <span className="nav-label" style={{ marginTop: 2, fontSize: "0.65rem", fontWeight: 700 }}>{l.label}</span>
           </Link>
         );
       })}
@@ -45,5 +45,4 @@ export function BottomNav() {
   );
 }
 
-// TopBar se elimina — app 100% mobile sin barra superior
 export function TopBar() { return null; }

@@ -17,24 +17,24 @@ type Attendance = { date: string };
 
 const ACTIVITIES = [
   { value: "sedentary", label: "🛋️ Poco o nada", desc: "Trabajo de escritorio, sin deporte" },
-  { value: "light",     label: "🚶 1-3 veces por semana", desc: "Caminatas o ejercicio liviano" },
-  { value: "moderate",  label: "🏃 3-5 veces por semana", desc: "Entreno regular moderado" },
-  { value: "very",      label: "⚡ 6-7 veces por semana", desc: "Entreno intenso casi todos los días" },
-  { value: "extra",     label: "🔥 Doble sesión / físico duro", desc: "Atleta o trabajo físico intenso" },
+  { value: "light", label: "🚶 1-3 veces por semana", desc: "Caminatas o ejercicio liviano" },
+  { value: "moderate", label: "🏃 3-5 veces por semana", desc: "Entreno regular moderado" },
+  { value: "very", label: "⚡ 6-7 veces por semana", desc: "Entreno intenso casi todos los días" },
+  { value: "extra", label: "🔥 Doble sesión / físico duro", desc: "Atleta o trabajo físico intenso" },
 ];
 
 const DIET_TYPES = [
-  { value: "omnivoro",    emoji: "🥩", label: "Como de todo" },
+  { value: "omnivoro", emoji: "🥩", label: "Como de todo" },
   { value: "vegetariano", emoji: "🥗", label: "Vegetariano" },
-  { value: "vegano",      emoji: "🌱", label: "Vegano" },
-  { value: "sin_gluten",  emoji: "🌾", label: "Sin gluten" },
+  { value: "vegano", emoji: "🌱", label: "Vegano" },
+  { value: "sin_gluten", emoji: "🌾", label: "Sin gluten" },
 ];
 
 const DIET_GOALS = [
-  { value: "volumen",        emoji: "💪", label: "Ganar músculo" },
-  { value: "definicion",     emoji: "🔥", label: "Bajar peso / definir" },
-  { value: "mantenimiento",  emoji: "⚖️", label: "Mantenerme" },
-  { value: "salud",          emoji: "❤️", label: "Estar más saludable" },
+  { value: "volumen", emoji: "💪", label: "Ganar músculo" },
+  { value: "definicion", emoji: "🔥", label: "Bajar peso / definir" },
+  { value: "mantenimiento", emoji: "⚖️", label: "Mantenerme" },
+  { value: "salud", emoji: "❤️", label: "Estar más saludable" },
 ];
 
 const FOOD_OPTIONS = [
@@ -46,10 +46,10 @@ const FOOD_OPTIONS = [
 ];
 
 const MEDALS_LIST = [
-  { id: "Novato",        title: "Novato",        desc: "Registró su primera serie", icon: "🌱", color: "#2ed573" },
-  { id: "Constante",     title: "Constante",     desc: "Racha de 5+ días",          icon: "⚡", color: "#00c6ff" },
-  { id: "Fuerza Brutal", title: "Fuerza Brutal", desc: "1RM estimado > 100 kg",     icon: "💪", color: "#ffa502" },
-  { id: "Superacion",    title: "Superación",    desc: "Otorgada por el entrenador", icon: "👑", color: "#7c3aed" },
+  { id: "Novato", title: "Novato", desc: "Registró su primera serie", icon: "🌱", color: "#2ed573" },
+  { id: "Constante", title: "Constante", desc: "Racha de 5+ días", icon: "⚡", color: "#00c6ff" },
+  { id: "Fuerza Brutal", title: "Fuerza Brutal", desc: "1RM estimado > 100 kg", icon: "💪", color: "#ffa502" },
+  { id: "Superacion", title: "Superación", desc: "Otorgada por el entrenador", icon: "👑", color: "#7c3aed" },
 ];
 
 export default function PerfilPage() {
@@ -62,9 +62,9 @@ export default function PerfilPage() {
   // Datos físicos
   const [name, setName] = useState("");
   const [sex, setSex] = useState("male");
-  const [age, setAge] = useState("");
-  const [height, setHeight] = useState("");
-  const [weight, setWeight] = useState("");
+  const [age, setAge] = useState(25);
+  const [height, setHeight] = useState(175);
+  const [weight, setWeight] = useState(75);
   const [activity, setActivity] = useState("moderate");
 
   // Preferencias alimentarias
@@ -77,7 +77,7 @@ export default function PerfilPage() {
   const [profile, setProfile] = useState<Profile>({});
   const [attendances, setAttendances] = useState<Attendance[]>([]);
 
-  useEffect(() => { if (!loading && !user) router.replace("/auth"); }, [user, loading, router]);
+  useEffect(() => { if (!loading && !user) router.replace("/"); }, [user, loading, router]);
 
   const loadProfile = async () => {
     const res = await fetch("/api/profile");
@@ -86,15 +86,15 @@ export default function PerfilPage() {
     setProfile(p);
     setAttendances(d.user?.attendances ?? []);
     if (p.sex) setSex(p.sex);
-    if (p.ageYears) setAge(String(p.ageYears));
-    if (p.heightCm) setHeight(String(p.heightCm));
-    if (p.weightKg) setWeight(String(p.weightKg));
+    if (p.ageYears) setAge(p.ageYears);
+    if (p.heightCm) setHeight(p.heightCm);
+    if (p.weightKg) setWeight(p.weightKg);
     if (p.activity) setActivity(p.activity);
     if (p.dietType) setDietType(p.dietType);
     if (p.dietGoal) setDietGoal(p.dietGoal);
-    if (p.foodLikes) { try { setFoodLikes(JSON.parse(p.foodLikes)); } catch {} }
-    if (p.foodDislikes) { try { setFoodDislikes(JSON.parse(p.foodDislikes)); } catch {} }
-    if (p.favoriteMeals) { try { const fm = JSON.parse(p.favoriteMeals); setFavMeal(fm[0] ?? ""); } catch {} }
+    if (p.foodLikes) { try { setFoodLikes(JSON.parse(p.foodLikes)); } catch { } }
+    if (p.foodDislikes) { try { setFoodDislikes(JSON.parse(p.foodDislikes)); } catch { } }
+    if (p.favoriteMeals) { try { const fm = JSON.parse(p.favoriteMeals); setFavMeal(fm[0] ?? ""); } catch { } }
   };
 
   useEffect(() => { if (!user) return; setName(user.name ?? ""); loadProfile(); }, [user]);
@@ -209,7 +209,7 @@ export default function PerfilPage() {
             <span style={{ fontSize: "0.75rem", color: "var(--warn)", fontWeight: 800 }}>🔥 {profile.streak} días de racha</span>
           ) : null}
         </div>
-        <button onClick={() => { logout(); router.replace("/auth"); }} className="btn btn-ghost btn-sm" style={{ color: "var(--danger)", borderColor: "rgba(255,71,87,0.2)", height: 36, minHeight: 36 }}>
+        <button onClick={() => { logout(); router.replace("/"); }} className="btn btn-ghost btn-sm" style={{ color: "var(--danger)", borderColor: "rgba(255,71,87,0.2)", height: 36, minHeight: 36 }}>
           <LogOut size={15} /> Salir
         </button>
       </div>
@@ -361,7 +361,7 @@ export default function PerfilPage() {
                 Asistencia — <span style={{ textTransform: "capitalize" }}>{monthName}</span>
               </p>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 5, textAlign: "center" }}>
-                {["L","M","M","J","V","S","D"].map((d, i) => (
+                {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => (
                   <span key={i} style={{ fontSize: "0.65rem", fontWeight: 800, color: "var(--muted)" }}>{d}</span>
                 ))}
                 {[...Array(firstDayOffset)].map((_, i) => <div key={`e-${i}`} />)}
@@ -400,17 +400,33 @@ export default function PerfilPage() {
               ))}
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-              {[
-                { label: "Edad", placeholder: "25", value: age, set: setAge, min: "10", max: "100" },
-                { label: "Altura (cm)", placeholder: "175", value: height, set: setHeight, min: "100", max: "250" },
-                { label: "Peso (kg)", placeholder: "75", value: weight, set: setWeight, min: "30", max: "300" },
-              ].map(f => (
-                <div key={f.label} className="field">
-                  <label className="label" style={{ fontSize: "0.65rem" }}>{f.label}</label>
-                  <input className="input" type="number" min={f.min} max={f.max} value={f.value} onChange={e => f.set(e.target.value)} placeholder={f.placeholder} style={{ minHeight: 52, textAlign: "center", fontSize: "1.1rem", fontWeight: 800 }} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div className="field">
+                <label className="label">Edad</label>
+                <div className="stepper">
+                  <button type="button" className="stepper-btn" onClick={() => setAge(prev => Math.max(10, prev - 1))} style={{ userSelect: "none" }}>−</button>
+                  <span className="stepper-val">{age}<span className="stepper-unit" style={{ marginLeft: 6 }}>años</span></span>
+                  <button type="button" className="stepper-btn" onClick={() => setAge(prev => Math.min(100, prev + 1))} style={{ userSelect: "none" }}>+</button>
                 </div>
-              ))}
+              </div>
+
+              <div className="field">
+                <label className="label">Altura</label>
+                <div className="stepper">
+                  <button type="button" className="stepper-btn" onClick={() => setHeight(prev => Math.max(100, prev - 1))} style={{ userSelect: "none" }}>−</button>
+                  <span className="stepper-val">{height}<span className="stepper-unit" style={{ marginLeft: 6 }}>cm</span></span>
+                  <button type="button" className="stepper-btn" onClick={() => setHeight(prev => Math.min(250, prev + 1))} style={{ userSelect: "none" }}>+</button>
+                </div>
+              </div>
+
+              <div className="field">
+                <label className="label">Peso</label>
+                <div className="stepper">
+                  <button type="button" className="stepper-btn" onClick={() => setWeight(prev => Math.max(30, prev - 1))} style={{ userSelect: "none" }}>−</button>
+                  <span className="stepper-val">{weight}<span className="stepper-unit" style={{ marginLeft: 6 }}>kg</span></span>
+                  <button type="button" className="stepper-btn" onClick={() => setWeight(prev => Math.min(300, prev + 1))} style={{ userSelect: "none" }}>+</button>
+                </div>
+              </div>
             </div>
 
             <div className="field">

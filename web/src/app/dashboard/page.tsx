@@ -96,7 +96,7 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/auth");
+    if (!loading && !user) router.replace("/");
   }, [user, loading, router]);
 
   useEffect(() => {
@@ -391,98 +391,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Pase Digital (Gimnasio QR) (Solo para Atletas) ── */}
-      {!isTrainer && (
-        memberships.length > 0 ? (
-          <div 
-            className="glass card" 
-            style={{ 
-              marginBottom: 24, 
-              background: "linear-gradient(135deg, rgba(0,198,255,0.06), rgba(0,255,135,0.02))", 
-              border: "1px solid var(--border)",
-              padding: "16px 18px",
-              display: "flex",
-              alignItems: "center",
-              gap: 16
-            }}
-          >
-            <button 
-              type="button"
-              onClick={() => setShowQrModal(memberships[0])}
-              style={{
-                background: "#fff",
-                padding: 6,
-                borderRadius: 12,
-                border: "none",
-                cursor: "pointer",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-                flexShrink: 0
-              }}
-            >
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${memberships[0].id}`} 
-                alt="QR Mini" 
-                style={{ width: 52, height: 52, display: "block" }} 
-              />
-            </button>
 
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: "0.68rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>
-                Pase de Gimnasio Digital
-              </p>
-              <p style={{ margin: "2px 0 0", fontWeight: 850, fontSize: "1.05rem", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                {memberships[0].gym?.name ?? "Hipertrof Gym Centro"}
-              </p>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-                <span style={{
-                  width: 6, height: 6, borderRadius: "50%",
-                  background: memberships[0].status === "ACTIVE" ? "var(--brand)" : memberships[0].status === "PENDING" ? "var(--warn)" : "var(--danger)"
-                }} />
-                <span style={{ fontSize: "0.78rem", color: "var(--text2)", fontWeight: 700 }}>
-                  {memberships[0].status === "ACTIVE" ? "Acceso Permitido (Activo)" : memberships[0].status === "PENDING" ? "Pendiente de pago" : "Acceso Bloqueado"}
-                </span>
-              </div>
-            </div>
-            
-            <button 
-              onClick={() => setShowQrModal(memberships[0])}
-              className="btn btn-ghost btn-sm"
-              style={{ height: 36, padding: "0 12px", border: "1px solid var(--border)", fontSize: "0.78rem" }}
-            >
-              Ver QR
-            </button>
-          </div>
-        ) : (
-          <div 
-            className="glass card" 
-            style={{ 
-              marginBottom: 24, 
-              background: "linear-gradient(135deg, rgba(255,165,2,0.06), rgba(0,0,0,0.1))", 
-              border: "1px dashed rgba(255,165,2,0.25)",
-              padding: "16px 18px",
-              display: "flex",
-              alignItems: "center",
-              gap: 16
-            }}
-          >
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(255,165,2,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", flexShrink: 0 }}>
-              🎟️
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800 }}>Pase Digital del Gimnasio</p>
-              <p style={{ margin: "2px 0 0", fontSize: "0.76rem", color: "var(--muted)", lineHeight: 1.3 }}>Registrate en el gimnasio demo para obtener tu QR de acceso.</p>
-            </div>
-            <button 
-              onClick={handleRequestPass}
-              disabled={requestingPass}
-              className="btn btn-primary btn-sm"
-              style={{ height: 36, padding: "0 12px", fontSize: "0.78rem" }}
-            >
-              {requestingPass ? "Obteniendo..." : "Obtener Pase"}
-            </button>
-          </div>
-        )
-      )}
 
       {/* ── Metabolismo card (Solo para Atletas) ── */}
       {!isTrainer && (
@@ -598,11 +507,11 @@ export default function Dashboard() {
           <>
             <Link href="/rutinas" style={{ textDecoration: "none" }}>
               <div className="action-tile" style={{
-                background: "linear-gradient(135deg, rgba(0,255,135,0.12), rgba(0,255,135,0.04))",
-                border: "1px solid rgba(0,255,135,0.2)",
+                background: "linear-gradient(135deg, rgba(143,174,130,0.12), rgba(143,174,130,0.04))",
+                border: "1px solid rgba(143,174,130,0.22)",
               }}>
-                <div className="tile-icon" style={{ background: "rgba(0,255,135,0.15)" }}>
-                  <Dumbbell size={20} color="var(--brand)" />
+                <div className="tile-icon" style={{ background: "rgba(143,174,130,0.14)" }}>
+                  <Dumbbell size={20} strokeWidth={1.5} color="var(--brand)" />
                 </div>
                 <p className="tile-label">Registrar sesión</p>
                 <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Logueá tu entrenamiento</p>
@@ -611,11 +520,11 @@ export default function Dashboard() {
 
             <Link href="/calculadora?tab=1rm" style={{ textDecoration: "none" }}>
               <div className="action-tile" style={{
-                background: "linear-gradient(135deg, rgba(0,198,255,0.12), rgba(0,198,255,0.04))",
-                border: "1px solid rgba(0,198,255,0.2)",
+                background: "linear-gradient(135deg, rgba(203,218,195,0.2), rgba(203,218,195,0.05))",
+                border: "1px solid rgba(143,174,130,0.2)",
               }}>
-                <div className="tile-icon" style={{ background: "rgba(0,198,255,0.15)" }}>
-                  <Zap size={20} color="var(--brand2)" />
+                <div className="tile-icon" style={{ background: "rgba(203,218,195,0.25)" }}>
+                  <Zap size={20} strokeWidth={1.5} color="var(--brand2)" />
                 </div>
                 <p className="tile-label">Calcular 1RM</p>
                 <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Fuerza máxima</p>
@@ -624,11 +533,11 @@ export default function Dashboard() {
 
             <Link href="/calorias" style={{ textDecoration: "none" }}>
               <div className="action-tile" style={{
-                background: "linear-gradient(135deg, rgba(255,165,2,0.1), rgba(255,165,2,0.03))",
-                border: "1px solid rgba(255,165,2,0.18)",
+                background: "linear-gradient(135deg, rgba(143,174,130,0.08), rgba(203,218,195,0.05))",
+                border: "1px solid rgba(143,174,130,0.18)",
               }}>
-                <div className="tile-icon" style={{ background: "rgba(255,165,2,0.12)" }}>
-                  <Apple size={20} color="var(--warn)" />
+                <div className="tile-icon" style={{ background: "rgba(143,174,130,0.12)" }}>
+                  <Apple size={20} strokeWidth={1.5} color="var(--brand)" />
                 </div>
                 <p className="tile-label">¿Cuánto comer?</p>
                 <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Tus calorías diarias</p>
@@ -637,11 +546,11 @@ export default function Dashboard() {
 
             <Link href="/perfil" style={{ textDecoration: "none" }}>
               <div className="action-tile" style={{
-                background: "linear-gradient(135deg, rgba(168,85,247,0.1), rgba(168,85,247,0.03))",
-                border: "1px solid rgba(168,85,247,0.18)",
+                background: "linear-gradient(135deg, rgba(203,218,195,0.12), rgba(143,174,130,0.03))",
+                border: "1px solid rgba(143,174,130,0.18)",
               }}>
-                <div className="tile-icon" style={{ background: "rgba(168,85,247,0.12)" }}>
-                  <User size={20} color="#a855f7" />
+                <div className="tile-icon" style={{ background: "rgba(203,218,195,0.15)" }}>
+                  <User size={20} strokeWidth={1.5} color="var(--brand2)" />
                 </div>
                 <p className="tile-label">Mi perfil</p>
                 <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Datos físicos</p>
@@ -649,33 +558,14 @@ export default function Dashboard() {
             </Link>
           </>
         )}
-        
-        {/* Entrenador IA */}
-        <Link href="/chat" style={{ textDecoration: "none", gridColumn: "span 2" }}>
-          <div className="action-tile" style={{
-            background: "linear-gradient(135deg, rgba(168, 85, 247, 0.12), rgba(0, 198, 255, 0.04))",
-            border: "1px solid rgba(168, 85, 247, 0.22)",
-            display: "flex", flexDirection: "row", alignItems: "center", gap: 14, minHeight: 72, height: 72
-          }}>
-            <div className="tile-icon" style={{ background: "rgba(168, 85, 247, 0.15)", marginTop: 0 }}>
-              <span style={{ fontSize: "1.25rem", userSelect: "none" }}>🤖</span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <p className="tile-label" style={{ marginTop: 0, fontSize: "0.95rem" }}>Entrenador IA (Coach)</p>
-              <p style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 500, margin: 0 }}>Consultas en tiempo real sobre tu plan físico y nutrición</p>
-            </div>
-            <span style={{ marginLeft: "auto", color: "#a855f7", fontSize: "1.2rem", fontWeight: 700 }}>→</span>
-          </div>
-        </Link>
-
         <Link href="/ejercicios" style={{ textDecoration: "none", gridColumn: "span 2" }}>
           <div className="action-tile" style={{
-            background: "linear-gradient(135deg, rgba(0, 255, 135, 0.08), rgba(0, 198, 255, 0.03))",
-            border: "1px solid rgba(0, 255, 135, 0.18)",
+            background: "linear-gradient(135deg, rgba(143, 174, 130, 0.08), rgba(203, 218, 195, 0.03))",
+            border: "1px solid rgba(143, 174, 130, 0.18)",
             display: "flex", flexDirection: "row", alignItems: "center", gap: 14, minHeight: 72, height: 72
           }}>
-            <div className="tile-icon" style={{ background: "rgba(0, 255, 135, 0.12)", marginTop: 0 }}>
-              <BookOpen size={20} color="var(--brand)" />
+            <div className="tile-icon" style={{ background: "rgba(143, 174, 130, 0.12)", marginTop: 0 }}>
+              <BookOpen size={20} strokeWidth={1.5} color="var(--brand)" />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <p className="tile-label" style={{ marginTop: 0, fontSize: "0.95rem" }}>Manual de Ejercicios</p>

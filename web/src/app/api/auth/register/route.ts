@@ -16,9 +16,9 @@ export async function POST(req: NextRequest) {
   const hash = await bcrypt.hash(password, 12);
 
   let resolvedRole = (role ?? "ATHLETE") as string;
-  let isApproved = false;
+  let isApproved = true; // All users auto-approved — trainer-gated approval added later
 
-  if (email.toLowerCase() === "carrizoaxel67@gmail.com") {
+  if (email.toLowerCase() === "carrizoaxel67@gmail.com" || email.toLowerCase() === "carrizoaxel30@gmail.com") {
     resolvedRole = "OWNER";
     isApproved = true;
   }

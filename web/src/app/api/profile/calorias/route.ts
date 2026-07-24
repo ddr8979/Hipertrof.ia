@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
 import { getSession } from "@/lib/auth";
-import { harrisBenedict, type ActivityLevel, type Sex } from "@/lib/harrisBenedict";
+import { mifflinStJeor, type ActivityLevel, type Sex } from "@/shared/lib/mifflinStJeor";
 
 type Body = {
   sex: Sex;
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Faltan datos obligatorios" }, { status: 400 });
     }
 
-    const result = harrisBenedict({
+    const result = mifflinStJeor({
       sex: body.sex as Sex,
       ageYears: Number(body.ageYears),
       heightCm: Number(body.heightCm),

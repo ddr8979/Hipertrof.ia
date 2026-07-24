@@ -59,7 +59,7 @@ const EQUIPMENTS = [
 function CalcContent() {
   const params = useSearchParams();
   const [tab, setTab] = useState<"calorias" | "1rm">(
-    params.get("tab") === "1rm" ? "1rm" : "calorias"
+    params?.get("tab") === "1rm" ? "1rm" : "calorias"
   );
   const { user, loading } = useAuth();
   const router = useNextRouter();
@@ -91,7 +91,7 @@ function CalcContent() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/auth");
+    if (!loading && !user) router.replace("/");
   }, [user, loading, router]);
 
   // Cargar ejercicios para filtros rápidos

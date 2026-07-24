@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/server/db";
+import { mifflinStJeor } from "@/shared/lib/mifflinStJeor";
 
 // GET /api/profile — devuelve perfil del usuario en sesión con asistencias
 export async function GET() {
@@ -11,9 +12,6 @@ export async function GET() {
     where: { id: session.id },
     include: {
       profile: true,
-      gymMemberships: {
-        include: { gym: true }
-      },
       attendances: {
         select: { date: true },
         orderBy: { date: "asc" }
@@ -34,27 +32,45 @@ export async function PATCH(req: NextRequest) {
     dietType, dietGoal, foodLikes, foodDislikes, favoriteMeals,
   } = await req.json();
 
+  // Fetch existing profile to merge and avoid overwriting with zeros
+  const existingProfile = await prisma.profile.findUnique({
+    where: { userId: session.id }
+  });
+
+  const finalSex = sex !== undefined ? sex : existingProfile?.sex;
+  const finalAge = (ageYears !== undefined && ageYears !== null && ageYears !== 0) ? Number(ageYears) : existingProfile?.ageYears;
+  const finalHeight = (heightCm !== undefined && heightCm !== null && heightCm !== 0) ? Number(heightCm) : existingProfile?.heightCm;
+  const finalWeight = (weightKg !== undefined && weightKg !== null && weightKg !== 0) ? Number(weightKg) : existingProfile?.weightKg;
+  const finalActivity = activity !== undefined ? activity : existingProfile?.activity;
+
   let bmrKcal: number | undefined;
   let tdeeKcal: number | undefined;
   let activityFactor: number | undefined;
 
-  const FACTORS: Record<string, number> = {
-    sedentary: 1.2, light: 1.375, moderate: 1.55, very: 1.725, extra: 1.9,
-  };
-
-  if (sex && ageYears && heightCm && weightKg && activity) {
-    const bmr = sex === "male"
-      ? 88.362 + 13.397 * weightKg + 4.799 * heightCm - 5.677 * ageYears
-      : 447.593 + 9.247 * weightKg + 3.098 * heightCm - 4.33 * ageYears;
-    activityFactor = FACTORS[activity] ?? 1.2;
-    bmrKcal = Math.round(bmr);
-    tdeeKcal = Math.round(bmr * activityFactor);
+  if (finalSex && finalAge && finalHeight && finalWeight && finalActivity) {
+    const result = mifflinStJeor({
+      sex: finalSex as any,
+      ageYears: finalAge,
+      heightCm: finalHeight,
+      weightKg: finalWeight,
+      activity: finalActivity as any,
+    });
+    bmrKcal = result.bmrKcal;
+    tdeeKcal = result.tdeeKcal;
+    activityFactor = result.activityFactor;
   }
 
-  const profileData: Record<string, any> = {
-    sex, ageYears, heightCm, weightKg, activity,
-    bmrKcal, tdeeKcal, activityFactor,
-  };
+  const profileData: Record<string, any> = {};
+  if (sex !== undefined) profileData.sex = sex;
+  if (ageYears !== undefined && ageYears !== null && ageYears !== 0) profileData.ageYears = Number(ageYears);
+  if (heightCm !== undefined && heightCm !== null && heightCm !== 0) profileData.heightCm = Number(heightCm);
+  if (weightKg !== undefined && weightKg !== null && weightKg !== 0) profileData.weightKg = Number(weightKg);
+  if (activity !== undefined) profileData.activity = activity;
+
+  if (bmrKcal !== undefined) profileData.bmrKcal = bmrKcal;
+  if (tdeeKcal !== undefined) profileData.tdeeKcal = tdeeKcal;
+  if (activityFactor !== undefined) profileData.activityFactor = activityFactor;
+
   if (dietType !== undefined)    profileData.dietType    = dietType;
   if (dietGoal !== undefined)    profileData.dietGoal    = dietGoal;
   if (foodLikes !== undefined)   profileData.foodLikes   = typeof foodLikes === "string" ? foodLikes : JSON.stringify(foodLikes);
