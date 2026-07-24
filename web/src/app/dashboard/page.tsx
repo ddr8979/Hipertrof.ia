@@ -234,7 +234,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6, textAlign: "center" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6, textAlign: "center", maxWidth: 420, margin: "0 auto", width: "100%" }}>
             {["L", "M", "M", "J", "V", "S", "D"].map(d => (
               <span key={d} style={{ fontSize: "0.68rem", fontWeight: 800, color: "var(--muted)" }}>{d}</span>
             ))}
@@ -251,7 +251,10 @@ export default function Dashboard() {
                   type="button"
                   onClick={() => toggleAttendance(dayStr)}
                   style={{
-                    aspectRatio: "1",
+                    width: "100%",
+                    maxWidth: 38,
+                    height: 38,
+                    margin: "0 auto",
                     borderRadius: "50%",
                     display: "flex",
                     alignItems: "center",
@@ -265,13 +268,13 @@ export default function Dashboard() {
                       : isToday 
                         ? "rgba(255,255,255,0.08)" 
                         : "rgba(255,255,255,0.02)",
-                    color: attended ? "#030508" : isToday ? "var(--brand)" : "var(--text2)",
+                    color: attended ? "#ffffff" : isToday ? "var(--brand)" : "var(--text2)",
                     border: attended 
                       ? "none" 
                       : isToday 
                         ? "1.5px dashed var(--brand)" 
                         : "1px solid var(--border)",
-                    boxShadow: attended ? "0 0 10px rgba(0,255,135,0.35)" : "none",
+                    boxShadow: attended ? "0 0 10px rgba(143,174,130,0.35)" : "none",
                     outline: "none",
                     transition: "all 150ms ease",
                     padding: 0

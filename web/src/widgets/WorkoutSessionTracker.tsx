@@ -38,6 +38,9 @@ export function WorkoutSessionTracker() {
   const [previewGif, setPreviewGif] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState("");
 
+  const [isFinishing, setIsFinishing] = useState(false);
+  const [previousLogsMap, setPreviousLogsMap] = useState<Record<string, string>>({});
+
   // Timer tick
   useEffect(() => {
     if (!isActive || !startTime) return;
@@ -49,12 +52,60 @@ export function WorkoutSessionTracker() {
     return () => clearInterval(interval);
   }, [isActive, startTime]);
 
-  // Load exercises catalog for picker
+  // Fetch exercises catalog & recent logs for previous values
   useEffect(() => {
-    fetch("/api/exercises")
-      .then((r) => r.json())
-      .then((d) => setDbExercises(d.exercises ?? []));
+    Promise.all([
+      fetch("/api/exercises").then((r) => r.json()),
+      fetch("/api/rutinas/logs").then((r) => r.json())
+    ]).then(([exData, logData]) => {
+      setDbExercises(exData.exercises ?? []);
+      const map: Record<string, string> = {};
+      if (logData.logs && Array.isArray(logData.logs)) {
+        logData.logs.forEach((l: any) => {
+          const key = l.exercise?.name?.toLowerCase();
+          if (key && !map[key]) {
+            map[key] = `${l.weightKg}kg × ${l.reps}`;
+          }
+        });
+      }
+      setPreviousLogsMap(map);
+    }).catch((err) => console.error("Error loading data:", err));
   }, []);
+
+  const handleFinishWorkout = async () => {
+    if (isFinishing) return;
+    setIsFinishing(true);
+    try {
+      // Save all completed sets to DB
+      for (const ex of exercises) {
+        const completedSets = ex.sets.filter((s) => s.completed || (s.weight > 0 && s.reps > 0));
+        if (completedSets.length > 0) {
+          const avgWeight = Math.round(
+            completedSets.reduce((acc, s) => acc + (s.weight || 0), 0) / completedSets.length
+          );
+          const avgReps = Math.round(
+            completedSets.reduce((acc, s) => acc + (s.reps || 0), 0) / completedSets.length
+          );
+          await fetch("/api/rutinas/logs", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              exerciseName: ex.name,
+              sets: completedSets.length,
+              reps: avgReps || 10,
+              weightKg: avgWeight || 20,
+              unit: "kg"
+            })
+          });
+        }
+      }
+      await endWorkout();
+    } catch (err) {
+      console.error("Error al finalizar entrenamiento:", err);
+    } finally {
+      setIsFinishing(false);
+    }
+  };
 
   const formatTimer = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -168,11 +219,12 @@ export function WorkoutSessionTracker() {
             Cancelar
           </button>
           <button
-            onClick={() => endWorkout()}
+            onClick={handleFinishWorkout}
+            disabled={isFinishing}
             className="btn btn-primary btn-xs"
             style={{ background: "#007aff", color: "#fff", fontWeight: 900, padding: "0 16px" }}
           >
-            Terminar
+            {isFinishing ? "Guardando..." : "Terminar"}
           </button>
         </div>
       </div>
@@ -296,7 +348,7 @@ export function WorkoutSessionTracker() {
 
                     {/* ANTERIOR */}
                     <span style={{ fontSize: "0.78rem", color: "var(--muted)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {set.previous || "—"}
+                      {set.previous || previousLogsMap[ex.name.toLowerCase()] || "—"}
                     </span>
 
                     {/* KG INPUT */}

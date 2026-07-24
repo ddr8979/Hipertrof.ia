@@ -187,9 +187,18 @@ export default function EjerciciosPage() {
                   }}
                 >
                   <div 
-                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", gap: 12 }}
                     onClick={() => setExpandedId(isExpanded ? null : ex.id)}
                   >
+                    {ex.gifUrl && (
+                      <div style={{ width: 48, height: 48, borderRadius: 10, overflow: "hidden", background: "#000", flexShrink: 0 }}>
+                        {ex.gifUrl.endsWith('.webm') ? (
+                          <video src={ex.gifUrl} autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                          <img src={ex.gifUrl} alt={ex.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        )}
+                      </div>
+                    )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <h3 style={{ margin: 0, fontWeight: 800, fontSize: "0.95rem", color: isExpanded ? "var(--brand)" : "var(--text)" }}>{ex.name}</h3>
                       <div style={{ display: "flex", gap: 6, marginTop: 4, flexWrap: "wrap" }}>
