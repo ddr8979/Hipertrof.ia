@@ -72,32 +72,27 @@ export default function Landing() {
 
   async function handleSocialLogin(provider: string) {
     setIsSubmitting(true);
-    setToast({ msg: `Conectando con ${provider}...`, type: "success" });
+    setToast({ msg: `Iniciando sesión con ${provider}...`, type: "success" });
     try {
-      await new Promise(r => setTimeout(r, 600));
-      const mockEmail = `${provider.toLowerCase()}-user@hypertrof.ia`;
-      const mockPassword = "social-login-bypass-2026";
+      const email = `${provider.toLowerCase()}.user@hypertrof.ia`;
+      const name = `${provider} Atleta`;
 
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch("/api/auth/social", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: mockEmail, password: mockPassword, name: `${provider} Atleta`, role: "ATHLETE" }),
+        body: JSON.stringify({ provider, email, name }),
       });
+
+      const data = await res.json();
       if (!res.ok) {
-        const loginRes = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ email: mockEmail, password: mockPassword }),
-        });
-        if (!loginRes.ok) {
-          setToast({ msg: `Error al conectar con ${provider}`, type: "error" });
-          return;
-        }
+        setToast({ msg: data.error || `Error al conectar con ${provider}`, type: "error" });
+        return;
       }
+
       await refresh();
       router.replace("/dashboard");
     } catch {
-      setToast({ msg: "Error de conexión social", type: "error" });
+      setToast({ msg: `Error de conexión al autenticar con ${provider}`, type: "error" });
     } finally {
       setIsSubmitting(false);
     }
