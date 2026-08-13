@@ -5,6 +5,8 @@ const config: CapacitorConfig = {
   appName: 'HipertrofIA',
   webDir: 'out',
   server: {
+    url: 'http://192.168.1.12:3001',
+    cleartext: true,
     androidScheme: 'https'
   }
 };

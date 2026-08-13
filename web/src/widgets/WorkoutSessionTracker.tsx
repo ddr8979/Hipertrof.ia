@@ -1,9 +1,10 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useWorkoutStore, SetType } from "@/entities/workout/model/workoutStore";
 import { 
-  Check, Plus, Trash2, Clock, Dumbbell, MoreVertical, Eye, Search, X 
+  Check, Plus, Trash2, Clock, Dumbbell, Eye, Search, X, TimerReset
 } from "lucide-react";
+import { Toast } from "@/components/toast";
 
 type ExerciseItem = {
   id: string;
@@ -12,6 +13,10 @@ type ExerciseItem = {
   muscleGroup: string | null;
   equipment: string | null;
 };
+
+type ToastType = { msg: string; type: "success" | "error" };
+
+const DEFAULT_REST_SEC = 90;
 
 export function WorkoutSessionTracker() {
   const {
@@ -22,7 +27,6 @@ export function WorkoutSessionTracker() {
     addExercise,
     removeExercise,
     addSet,
-    removeSet,
     toggleSet,
     cycleSetType,
     updateSet,
@@ -37,17 +41,25 @@ export function WorkoutSessionTracker() {
   const [searchQuery, setSearchQuery] = useState("");
   const [previewGif, setPreviewGif] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState("");
+  const [toast, setToast] = useState<ToastType | null>(null);
 
   const [isFinishing, setIsFinishing] = useState(false);
   const [previousLogsMap, setPreviousLogsMap] = useState<Record<string, string>>({});
+
+  // Rest timer: timestamp (ms) when the rest countdown ends
+  const [restEndAt, setRestEndAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  const remainingRestSec = restEndAt ? Math.max(0, Math.ceil((restEndAt - now) / 1000)) : 0;
 
   // Timer tick
   useEffect(() => {
     if (!isActive || !startTime) return;
     const interval = setInterval(() => {
       const start = new Date(startTime).getTime();
-      const now = new Date().getTime();
-      setElapsedSec(Math.floor((now - start) / 1000));
+      const current = new Date().getTime();
+      setElapsedSec(Math.floor((current - start) / 1000));
+      setNow(Date.now());
     }, 1000);
     return () => clearInterval(interval);
   }, [isActive, startTime]);
@@ -72,40 +84,87 @@ export function WorkoutSessionTracker() {
     }).catch((err) => console.error("Error loading data:", err));
   }, []);
 
+  // When a set is marked as completed, start the rest countdown
+  const handleToggleSet = (exerciseId: string, setId: string) => {
+    const ex = exercises.find((e) => e.exerciseId === exerciseId);
+    const set = ex?.sets.find((s) => s.id === setId);
+    if (set && !set.completed) {
+      setRestEndAt(Date.now() + DEFAULT_REST_SEC * 1000);
+    }
+    toggleSet(exerciseId, setId);
+  };
+
+  const skipRest = () => setRestEndAt(null);
+
   const handleFinishWorkout = async () => {
     if (isFinishing) return;
     setIsFinishing(true);
     try {
-      // Save all completed sets to DB
+      let savedAny = false;
+      let failedAny = false;
+
       for (const ex of exercises) {
         const completedSets = ex.sets.filter((s) => s.completed || (s.weight > 0 && s.reps > 0));
-        if (completedSets.length > 0) {
-          const avgWeight = Math.round(
-            completedSets.reduce((acc, s) => acc + (s.weight || 0), 0) / completedSets.length
-          );
-          const avgReps = Math.round(
-            completedSets.reduce((acc, s) => acc + (s.reps || 0), 0) / completedSets.length
-          );
-          await fetch("/api/rutinas/logs", {
+        if (completedSets.length === 0) continue;
+
+        const avgWeight = Math.round(
+          completedSets.reduce((acc, s) => acc + (s.weight || 0), 0) / completedSets.length
+        );
+        const avgReps = Math.round(
+          completedSets.reduce((acc, s) => acc + (s.reps || 0), 0) / completedSets.length
+        );
+
+        try {
+          const res = await fetch("/api/rutinas/logs", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({
+              exerciseId: ex.exerciseId,
               exerciseName: ex.name,
+              notes: ex.notes || undefined,
               sets: completedSets.length,
               reps: avgReps || 10,
               weightKg: avgWeight || 20,
               unit: "kg"
             })
           });
+          if (res.ok) {
+            savedAny = true;
+          } else {
+            failedAny = true;
+            console.error("Error guardando ejercicio:", ex.name, await res.text());
+          }
+        } catch (err) {
+          failedAny = true;
+          console.error("Error de red al guardar ejercicio:", ex.name, err);
         }
       }
+
+      if (!savedAny && failedAny) {
+        // Everything failed: keep the session so no data is lost
+        setToast({ msg: "No se pudo guardar: revisá tu conexión e intentá de nuevo", type: "error" });
+        return;
+      }
+
       await endWorkout();
-    } catch (err) {
-      console.error("Error al finalizar entrenamiento:", err);
+      if (failedAny) {
+        setToast({ msg: "Algunos ejercicios no se guardaron", type: "error" });
+      } else if (savedAny) {
+        setToast({ msg: "Entrenamiento guardado", type: "success" });
+      } else {
+        setToast({ msg: "No había series completas para guardar", type: "error" });
+        await endWorkout();
+      }
     } finally {
       setIsFinishing(false);
     }
   };
+
+  const handleCancelWorkout = useCallback(() => {
+    if (window.confirm("¿Cancelar la sesión? Se perderán las series registradas.")) {
+      cancelWorkout();
+    }
+  }, [cancelWorkout]);
 
   const formatTimer = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -118,12 +177,17 @@ export function WorkoutSessionTracker() {
     return `${mins}m ${secs < 10 ? "0" : ""}${secs}s`;
   };
 
+  const formatRest = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
+
   // Calculate total volume and completed sets
   let totalVolumeKg = 0;
   let completedSetsCount = 0;
 
   exercises.forEach((ex) => {
-    let normalIndex = 1;
     ex.sets.forEach((set) => {
       if (set.completed) {
         completedSetsCount++;
@@ -132,11 +196,11 @@ export function WorkoutSessionTracker() {
     });
   });
 
-  const getSetBadgeLabel = (set: { type: SetType }, indexInExercise: number, normalCounter: number) => {
-    if (set.type === "W") return { label: "W", bg: "rgba(255, 149, 0, 0.18)", color: "#ff9500", border: "rgba(255, 149, 0, 0.4)" };
-    if (set.type === "F") return { label: "F", bg: "rgba(255, 59, 48, 0.18)", color: "#ff3b30", border: "rgba(255, 59, 48, 0.4)" };
-    if (set.type === "D") return { label: "D", bg: "rgba(175, 82, 222, 0.18)", color: "#af52de", border: "rgba(175, 82, 222, 0.4)" };
-    return { label: String(normalCounter), bg: "rgba(255, 255, 255, 0.08)", color: "var(--text)", border: "var(--border)" };
+  const getSetBadgeLabel = (set: { type: SetType }, normalCounter: number) => {
+    if (set.type === "W") return { label: "W", bg: "rgba(255,183,3,0.16)", color: "var(--warn)", border: "rgba(255,183,3,0.4)" };
+    if (set.type === "F") return { label: "F", bg: "rgba(255,77,109,0.14)", color: "var(--danger)", border: "rgba(255,77,109,0.35)" };
+    if (set.type === "D") return { label: "D", bg: "rgba(92,114,84,0.14)", color: "var(--brand2)", border: "rgba(92,114,84,0.35)" };
+    return { label: String(normalCounter), bg: "rgba(143,174,130,0.1)", color: "var(--text)", border: "var(--border)" };
   };
 
   const filteredPickerExercises = dbExercises.filter((ex) => {
@@ -181,6 +245,8 @@ export function WorkoutSessionTracker() {
 
   return (
     <div className="anim-fade" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {toast && <Toast message={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
+
       {/* ── TOP ACTION HEADER BAR ────────────────────────────────────── */}
       <div 
         className="glass"
@@ -193,28 +259,28 @@ export function WorkoutSessionTracker() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.06)",
-          background: "rgba(255, 255, 255, 0.95)",
+          boxShadow: "0 8px 32px rgba(92,114,84,0.12)",
+          background: "rgba(255,255,255,0.95)",
           border: "1px solid var(--border2)"
         }}
       >
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#34c759", boxShadow: "0 0 8px #34c759" }} />
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--brand)", boxShadow: "0 0 8px var(--brand)" }} />
             <h2 style={{ margin: 0, fontWeight: 900, fontSize: "1.1rem" }}>Entreno en Vivo</h2>
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 4, fontSize: "0.76rem", color: "var(--text2)", fontWeight: 700 }}>
-            <span>⏱ {formatTimer(elapsedSec)}</span>
-            <span>🏋️ {totalVolumeKg.toLocaleString()} kg</span>
-            <span>✅ {completedSetsCount} series</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Clock size={12} /> {formatTimer(elapsedSec)}</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Dumbbell size={12} /> {totalVolumeKg.toLocaleString()} kg</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Check size={12} /> {completedSetsCount} series</span>
           </div>
         </div>
 
         <div style={{ display: "flex", gap: 8 }}>
           <button
-            onClick={cancelWorkout}
+            onClick={handleCancelWorkout}
             className="btn btn-ghost btn-xs"
-            style={{ color: "var(--danger)", border: "1px solid rgba(255,59,48,0.2)" }}
+            style={{ color: "var(--danger)", border: "1px solid rgba(255,77,109,0.25)" }}
           >
             Cancelar
           </button>
@@ -222,7 +288,7 @@ export function WorkoutSessionTracker() {
             onClick={handleFinishWorkout}
             disabled={isFinishing}
             className="btn btn-primary btn-xs"
-            style={{ background: "#007aff", color: "#fff", fontWeight: 900, padding: "0 16px" }}
+            style={{ background: "var(--brand)", color: "#fff", fontWeight: 900, padding: "0 16px" }}
           >
             {isFinishing ? "Guardando..." : "Terminar"}
           </button>
@@ -254,6 +320,7 @@ export function WorkoutSessionTracker() {
                     type="button"
                     onClick={() => { setPreviewGif(ex.gifUrl!); setPreviewName(ex.name); }}
                     style={{ background: "rgba(143,174,130,0.15)", border: "none", borderRadius: 10, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                    title="Ver demo"
                   >
                     <Eye size={18} color="var(--brand2)" />
                   </button>
@@ -277,17 +344,27 @@ export function WorkoutSessionTracker() {
             {/* Notes Input */}
             <input
               className="input"
-              style={{ minHeight: 38, height: 38, fontSize: "0.82rem", background: "rgba(0,0,0,0.02)", border: "1px solid var(--border)" }}
+              style={{ minHeight: 38, height: 38, fontSize: "0.82rem", background: "rgba(143,174,130,0.04)", border: "1px solid var(--border)" }}
               placeholder="Agregar notas aquí..."
               value={ex.notes || ""}
               onChange={(e) => updateNotes(ex.exerciseId, e.target.value)}
             />
 
-            {/* Rest Timer Banner */}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.76rem", color: "#007aff", fontWeight: 700 }}>
-              <Clock size={14} />
-              <span>Descanso: 1min 30s</span>
-            </div>
+            {/* Rest Timer */}
+            {remainingRestSec > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.78rem", color: "var(--brand2)", fontWeight: 800, padding: "8px 12px", borderRadius: "var(--radius-xs)", background: "rgba(143,174,130,0.1)", border: "1px solid rgba(143,174,130,0.2)" }}>
+                <Clock size={14} />
+                <span>Descanso: {formatRest(remainingRestSec)}</span>
+                <button
+                  type="button"
+                  onClick={skipRest}
+                  className="btn btn-ghost btn-xs"
+                  style={{ marginLeft: "auto", minHeight: 28, height: 28, fontSize: "0.72rem" }}
+                >
+                  <TimerReset size={12} /> Saltar
+                </button>
+              </div>
+            )}
 
             {/* Sets Table */}
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -297,15 +374,15 @@ export function WorkoutSessionTracker() {
                 <span>ANTERIOR</span>
                 <span style={{ textAlign: "center" }}>KG</span>
                 <span style={{ textAlign: "center" }}>REPS</span>
-                <span style={{ textAlign: "center" }}>✓</span>
+                <span style={{ textAlign: "center" }}>OK</span>
               </div>
 
               {/* Table Rows */}
-              {ex.sets.map((set, setIdx) => {
+              {ex.sets.map((set) => {
                 if (set.type === "N") {
                   normalCounter++;
                 }
-                const badge = getSetBadgeLabel(set, setIdx, normalCounter);
+                const badge = getSetBadgeLabel(set, normalCounter);
 
                 return (
                   <div
@@ -317,8 +394,8 @@ export function WorkoutSessionTracker() {
                       alignItems: "center",
                       padding: "6px",
                       borderRadius: 12,
-                      background: set.completed ? "rgba(52, 199, 89, 0.12)" : "rgba(0,0,0,0.02)",
-                      border: set.completed ? "1px solid rgba(52, 199, 89, 0.3)" : "1px solid var(--border)",
+                      background: set.completed ? "rgba(143,174,130,0.12)" : "rgba(143,174,130,0.03)",
+                      border: set.completed ? "1px solid rgba(143,174,130,0.3)" : "1px solid var(--border)",
                       transition: "all 150ms ease"
                     }}
                   >
@@ -356,6 +433,7 @@ export function WorkoutSessionTracker() {
                       type="number"
                       min="0"
                       step="0.5"
+                      inputMode="decimal"
                       className="input"
                       style={{
                         minHeight: 36,
@@ -364,7 +442,7 @@ export function WorkoutSessionTracker() {
                         textAlign: "center",
                         fontSize: "0.9rem",
                         fontWeight: 800,
-                        background: set.completed ? "rgba(255,255,255,0.9)" : "#ffffff"
+                        background: "#ffffff"
                       }}
                       value={set.weight || ""}
                       onChange={(e) => updateSet(ex.exerciseId, set.id, { weight: Number(e.target.value) })}
@@ -374,6 +452,7 @@ export function WorkoutSessionTracker() {
                     <input
                       type="number"
                       min="0"
+                      inputMode="numeric"
                       className="input"
                       style={{
                         minHeight: 36,
@@ -382,7 +461,7 @@ export function WorkoutSessionTracker() {
                         textAlign: "center",
                         fontSize: "0.9rem",
                         fontWeight: 800,
-                        background: set.completed ? "rgba(255,255,255,0.9)" : "#ffffff"
+                        background: "#ffffff"
                       }}
                       value={set.reps || ""}
                       onChange={(e) => updateSet(ex.exerciseId, set.id, { reps: Number(e.target.value) })}
@@ -391,19 +470,19 @@ export function WorkoutSessionTracker() {
                     {/* CHECKBOX OK BUTTON */}
                     <button
                       type="button"
-                      onClick={() => toggleSet(ex.exerciseId, set.id)}
+                      onClick={() => handleToggleSet(ex.exerciseId, set.id)}
                       style={{
                         width: 36,
                         height: 36,
                         borderRadius: 10,
                         border: "none",
-                        background: set.completed ? "#34c759" : "rgba(0,0,0,0.08)",
+                        background: set.completed ? "var(--brand)" : "rgba(143,174,130,0.15)",
                         color: set.completed ? "#ffffff" : "var(--muted)",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        boxShadow: set.completed ? "0 2px 10px rgba(52,199,89,0.35)" : "none",
+                        boxShadow: set.completed ? "0 2px 10px rgba(143,174,130,0.4)" : "none",
                         transition: "all 150ms ease"
                       }}
                     >
@@ -463,8 +542,8 @@ export function WorkoutSessionTracker() {
               display: "flex",
               flexDirection: "column",
               gap: 14,
-              background: "#ffffff",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.3)"
+              background: "var(--surface2)",
+              boxShadow: "0 20px 60px rgba(92,114,84,0.25)"
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -474,7 +553,7 @@ export function WorkoutSessionTracker() {
                 type="button"
                 onClick={() => setShowExercisePicker(false)}
                 className="btn-icon-sm btn-ghost"
-                style={{ border: "1px solid var(--border2)", cursor: "pointer", background: "rgba(0,0,0,0.05)", borderRadius: "50%", minHeight: 36, width: 36, display: "flex", alignItems: "center", justifyContent: "center" }}
+                style={{ border: "1px solid var(--border2)", cursor: "pointer", background: "rgba(143,174,130,0.1)", borderRadius: "50%", minHeight: 36, width: 36, display: "flex", alignItems: "center", justifyContent: "center" }}
                 title="Cerrar modal"
               >
                 <X size={20} />
@@ -504,7 +583,7 @@ export function WorkoutSessionTracker() {
                     padding: "12px 14px",
                     borderRadius: 14,
                     border: "1px solid var(--border)",
-                    background: "rgba(0,0,0,0.02)",
+                    background: "rgba(143,174,130,0.04)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
@@ -532,7 +611,7 @@ export function WorkoutSessionTracker() {
           }}
           onClick={() => setPreviewGif(null)}
         >
-          <div className="glass card" style={{ width: "100%", maxWidth: 360, background: "#ffffff", padding: 20 }} onClick={(e) => e.stopPropagation()}>
+          <div className="glass card" style={{ width: "100%", maxWidth: 360, background: "var(--surface2)", padding: 20 }} onClick={(e) => e.stopPropagation()}>
             <p style={{ fontWeight: 900, fontSize: "1.1rem", margin: "0 0 12px", color: "var(--text)" }}>{previewName}</p>
             <div style={{ background: "#000", borderRadius: 14, overflow: "hidden", minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
               {previewGif.endsWith(".webm") ? (

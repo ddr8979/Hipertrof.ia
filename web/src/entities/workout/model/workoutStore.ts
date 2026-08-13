@@ -42,7 +42,7 @@ const generateId = () => typeof crypto !== 'undefined' && crypto.randomUUID ? cr
 
 export const useWorkoutStore = create<WorkoutState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       isActive: false,
       startTime: null,
       exercises: [],
