@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'hypertrof.ia',
   webDir: 'out',
   server: {
-    url: 'https://answering-chef-producer-reservation.trycloudflare.com',
+    url: 'https://hypertrofia.vercel.app',
     cleartext: true,
     androidScheme: 'https',
   },
