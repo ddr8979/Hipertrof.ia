@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'hypertrof.ia',
   webDir: 'out',
   server: {
-    url: 'https://hypertrofia.vercel.app',
+    url: 'https://defensive-trades-operations-craig.trycloudflare.com',
     cleartext: true,
     androidScheme: 'https',
   },
