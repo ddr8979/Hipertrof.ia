@@ -1,14 +1,17 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'ia.hypertrof.app',
-  appName: 'HipertrofIA',
+  appId: 'com.hypertrofia.app',
+  appName: 'hypertrof.ia',
   webDir: 'out',
   server: {
-    url: 'http://192.168.1.12:3001',
+    url: 'https://answering-chef-producer-reservation.trycloudflare.com',
     cleartext: true,
-    androidScheme: 'https'
-  }
+    androidScheme: 'https',
+  },
+  android: {
+    allowMixedContent: true,
+  },
 };
 
 export default config;
