@@ -14,15 +14,18 @@ export function vibrate(ms = 8) {
   }
 }
 
-const EMOJI_CHAR = /\p{Extended_Pictographic}|\p{Regional_Indicator}|\uFE0F|\u200D/u;
+const EMOJI_CLUSTER = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u;
 
 export function splitEmojiRuns(name: string): { text: string; emoji: boolean }[] {
   const out: { text: string; emoji: boolean }[] = [];
+  const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+  const clusters: string[] = [];
+  for (const seg of segmenter.segment(name)) clusters.push(seg.segment);
   let buf = "";
   let bufEmoji = false;
   let started = false;
-  for (const ch of name) {
-    const isEmoji = EMOJI_CHAR.test(ch);
+  for (const cluster of clusters) {
+    const isEmoji = EMOJI_CLUSTER.test(cluster);
     if (!started) {
       started = true;
       bufEmoji = isEmoji;
@@ -31,7 +34,7 @@ export function splitEmojiRuns(name: string): { text: string; emoji: boolean }[]
       buf = "";
       bufEmoji = isEmoji;
     }
-    buf += ch;
+    buf += cluster;
   }
   if (started) out.push({ text: buf, emoji: bufEmoji });
   return out;

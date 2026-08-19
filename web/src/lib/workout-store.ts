@@ -59,6 +59,7 @@ type WorkoutState = {
   ) => void;
   startRest: (exerciseKey: string, seconds: number) => void;
   stopRest: () => void;
+  adjustRest: (deltaSeconds: number) => void;
 };
 
 const uid = () => crypto.randomUUID();
@@ -223,6 +224,16 @@ export const useWorkoutStore = create<WorkoutState>()(
         }),
 
       stopRest: () => set({ restEndsAt: null, restExerciseKey: null, restTotal: null }),
+
+      adjustRest: (deltaSeconds) =>
+        set((s) => {
+          if (s.restEndsAt === null || s.restTotal === null) return {};
+          const next = Math.max(10, s.restTotal + deltaSeconds);
+          return {
+            restTotal: next,
+            restEndsAt: Date.now() + next * 1000,
+          };
+        }),
     }),
     { name: "hypertrofia-workout-draft" }
   )

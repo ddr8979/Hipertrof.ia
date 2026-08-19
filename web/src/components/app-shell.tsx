@@ -27,6 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { DmNotifications } from "@/components/dm-notifications";
+import { RestTimer } from "@/components/rest-timer";
 import { useSpotifyNow } from "@/components/spotify-now";
 import { Music4 } from "lucide-react";
 
@@ -258,6 +259,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <DmNotifications />
+      <RestTimer />
 
       <Dialog open={moreOpen} onClose={() => setMoreOpen(false)} title="Más">
         <div className="flex flex-col gap-1">

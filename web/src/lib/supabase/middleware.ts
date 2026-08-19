@@ -52,7 +52,7 @@ export async function updateSession(request: NextRequest) {
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com data:",
-        "img-src 'self' blob: data: https://*.supabase.co http://127.0.0.1:54321 https://i.scdn.co https://image-cdn-ak.spotifycdn.com https://i.ytimg.com https://img.youtube.com https://*.spotifycdn.com https://static.exercisedb.dev",
+        "img-src 'self' blob: data: https://*.supabase.co http://127.0.0.1:54321 https://i.scdn.co https://*.scdn.co https://image-cdn-ak.spotifycdn.com https://i.ytimg.com https://img.youtube.com https://*.spotifycdn.com https://static.exercisedb.dev",
         "media-src 'self' blob: data:",
         "connect-src 'self' https://*.supabase.co wss://*.supabase.co ws://localhost:54321 http://127.0.0.1:54321 wss://127.0.0.1:54321",
         "frame-ancestors 'none'",

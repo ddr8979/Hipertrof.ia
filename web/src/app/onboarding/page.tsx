@@ -242,7 +242,7 @@ export default function OnboardingPage() {
                 <Input
                   value={form.displayName}
                   onChange={(e) => set("displayName", e.target.value)}
-                  placeholder="Ej: Axel Carrizo"
+                  placeholder="Ej: María Fernández"
                   autoFocus
                 />
               </Field>
@@ -265,7 +265,7 @@ export default function OnboardingPage() {
                           .slice(0, 20)
                       )
                     }
-                    placeholder="axelfit"
+                    placeholder="mariafit"
                     className="pl-8"
                   />
                 </div>

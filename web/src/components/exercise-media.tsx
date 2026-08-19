@@ -35,7 +35,7 @@ export function ExerciseMedia({
         onCanPlay={() => setVideoOk(true)}
         onError={() => setFailed(true)}
         className={cn(
-          "size-full object-contain transition-opacity duration-300",
+          "size-full object-cover transition-opacity duration-300",
           videoOk ? "opacity-100" : "opacity-0",
           videoClassName
         )}
@@ -52,7 +52,7 @@ export function ExerciseMedia({
         loading={eager ? "eager" : "lazy"}
         decoding="async"
         onError={() => setFailed(true)}
-        className={cn("size-full object-contain", imgClassName)}
+        className={cn("size-full object-cover", imgClassName)}
       />
     );
   }

@@ -20,11 +20,13 @@ import {
   Cpu,
   Weight,
   ShieldCheck,
+  Play,
 } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { playlistThumb } from "@/lib/utils";
 import { SpotifyNowCard, SpotifyConnectCard } from "@/components/spotify-now";
+import { ProfileTrackPlayer, SocialCircles, VerifiedBadge } from "@/components/profile-bits";
 import { NetDialog } from "@/components/net-dialog";
 import { Skeleton } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/data";
@@ -65,6 +67,14 @@ export default function PerfilPage() {
   const [showHeight, setShowHeight] = useState(profile?.show_height !== false);
   const [showFollowers, setShowFollowers] = useState(profile?.show_followers !== false);
   const [showPersonal, setShowPersonal] = useState(profile?.show_personal !== false);
+  const [igHandle, setIgHandle] = useState((profile?.instagram_handle as string) ?? "");
+  const [ttHandle, setTtHandle] = useState((profile?.tiktok_handle as string) ?? "");
+  const [twHandle, setTwHandle] = useState((profile?.twitter_handle as string) ?? "");
+  const [spHandle, setSpHandle] = useState((profile?.spotify_handle as string) ?? "");
+  const [trackName, setTrackName] = useState((profile?.profile_track_name as string) ?? "");
+  const [trackArtist, setTrackArtist] = useState((profile?.profile_track_artist as string) ?? "");
+  const [trackPreview, setTrackPreview] = useState((profile?.profile_track_preview as string) ?? "");
+  const [trackId, setTrackId] = useState((profile?.profile_track_id as string) ?? "");
   const [netOpen, setNetOpen] = useState(false);
 
   const avatarInput = useRef<HTMLInputElement>(null);
@@ -150,6 +160,14 @@ export default function PerfilPage() {
           show_height: showHeight,
           show_followers: showFollowers,
           show_personal: showPersonal,
+          instagram_handle: igHandle.trim().replace(/^@/, "") || null,
+          tiktok_handle: ttHandle.trim().replace(/^@/, "") || null,
+          twitter_handle: twHandle.trim().replace(/^@/, "") || null,
+          spotify_handle: spHandle.trim().replace(/^@/, "") || null,
+          profile_track_id: trackId || null,
+          profile_track_name: trackName || null,
+          profile_track_artist: trackArtist || null,
+          profile_track_preview: trackPreview || null,
         })
         .eq("id", profile!.id);
       if (error) throw new Error(error.message);
@@ -259,7 +277,7 @@ export default function PerfilPage() {
         <div className="px-5 pb-5">
           <div className="-mt-10 flex items-end justify-between">
             <div className="relative">
-              <span className="flex size-20 items-center justify-center overflow-hidden rounded-2xl border-4 border-[var(--surface)] bg-[var(--surface-3)] font-display text-2xl font-bold">
+              <span className="flex size-20 items-center justify-center overflow-hidden rounded-full border-4 border-[var(--surface)] bg-[var(--surface-3)] font-display text-2xl font-bold">
                 {profile.avatar_url ? (
                   <img src={String(profile.avatar_url)} alt="" className="size-full object-cover" />
                 ) : (
@@ -297,10 +315,11 @@ export default function PerfilPage() {
               </Button>
             </div>
           </div>
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
             <h1 className="font-display text-2xl font-bold tracking-tight">
               {profile.display_name ?? profile.username ?? "Sin nombre"}
             </h1>
+            {(profile as { is_verified?: boolean }).is_verified && <VerifiedBadge size={18} />}
             {profile.username && (
               <span className="text-sm font-semibold text-[var(--muted)]">@{profile.username}</span>
             )}
@@ -308,55 +327,83 @@ export default function PerfilPage() {
           {Boolean(profile.bio) && (
             <p className="mt-2 max-w-xl text-sm text-[var(--text-2)]">{String(profile.bio)}</p>
           )}
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              { label: "Racha", value: `${profile.streak_count ?? 0} días` },
-              ...(profile.show_weight !== false
-                ? [
-                    {
-                      label: "Peso",
-                      value: profile.weight_kg ? `${profile.weight_kg} kg` : "—",
-                    },
-                  ]
-                : []),
-              { label: "TDEE", value: profile.tdee_kcal ? `${profile.tdee_kcal} kcal` : "—" },
-            ].map((s) => (
-              <div key={s.label} className="rounded-xl bg-[var(--surface-2)] p-3 text-center">
-                <p className="font-display text-sm font-bold">{s.value}</p>
-                <p className="mt-0.5 text-[10px] uppercase tracking-wider text-[var(--muted)]">
-                  {s.label}
-                </p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 flex gap-2">
+          <SocialCircles
+            handles={profile as never}
+            className="mt-3"
+          />
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm">
             <button
               onClick={() => setNetOpen(true)}
-              className="flex-1 rounded-xl bg-[var(--surface-2)] px-3 py-2.5 text-center transition-colors hover:bg-[var(--surface-3)]"
+              className="text-left transition-opacity hover:opacity-70"
             >
-              <p className="font-display text-base font-bold">
+              <strong className="font-display text-base font-bold">
+                {profile.streak_count ?? 0}
+              </strong>{" "}
+              <span className="text-[var(--muted)]">días de racha</span>
+            </button>
+            <span className="text-[var(--muted)]">·</span>
+            {profile.show_weight !== false && (
+              <>
+                <span>
+                  <strong className="font-display text-base font-bold">
+                    {profile.weight_kg ? `${profile.weight_kg}` : "—"}
+                  </strong>{" "}
+                  <span className="text-[var(--muted)]">kg</span>
+                </span>
+                <span className="text-[var(--muted)]">·</span>
+              </>
+            )}
+            <button
+              onClick={() => setNetOpen(true)}
+              className="text-left transition-opacity hover:opacity-70"
+            >
+              <strong className="font-display text-base font-bold">
                 {netCounts?.followers ?? 0}
-              </p>
-              <p className="text-[10px] uppercase tracking-wider text-[var(--muted)]">
-                Seguidores
-              </p>
+              </strong>{" "}
+              <span className="text-[var(--muted)]">seguidores</span>
             </button>
+            <span className="text-[var(--muted)]">·</span>
             <button
               onClick={() => setNetOpen(true)}
-              className="flex-1 rounded-xl bg-[var(--surface-2)] px-3 py-2.5 text-center transition-colors hover:bg-[var(--surface-3)]"
+              className="text-left transition-opacity hover:opacity-70"
             >
-              <p className="font-display text-base font-bold">
+              <strong className="font-display text-base font-bold">
                 {netCounts?.following ?? 0}
-              </p>
-              <p className="text-[10px] uppercase tracking-wider text-[var(--muted)]">
-                Seguidos
-              </p>
+              </strong>{" "}
+              <span className="text-[var(--muted)]">seguidos</span>
             </button>
+            <span className="text-[var(--muted)]">·</span>
+            <span>
+              <strong className="font-display text-base font-bold">
+                {profile.tdee_kcal ? `${profile.tdee_kcal}` : "—"}
+              </strong>{" "}
+              <span className="text-[var(--muted)]">kcal TDEE</span>
+            </span>
           </div>
         </div>
       </div>
 
 
+
+      {/* Tema del perfil */}
+      {Boolean(profile.profile_track_name && profile.profile_track_preview) && (
+        <section className="card p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Music4 className="size-5 text-[var(--accent)]" />
+              <h2 className="font-display text-lg font-bold tracking-tight">Tema del perfil</h2>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+              <Pencil className="size-4" /> Cambiar
+            </Button>
+          </div>
+          <ProfileTrackPlayer
+            name={profile.profile_track_name as string}
+            artist={profile.profile_track_artist as string}
+            previewUrl={profile.profile_track_preview as string}
+          />
+        </section>
+      )}
 
       {/* Playlists */}
       <section className="card p-5">
@@ -478,6 +525,63 @@ export default function PerfilPage() {
                 <span className="text-sm font-mono text-[var(--text-2)]">{accent}</span>
               </div>
             </Field>
+          </div>
+
+          <div className="rounded-xl bg-[var(--surface-2)]/60 p-4">
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+              Redes sociales
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Instagram">
+                <Input
+                  value={igHandle}
+                  onChange={(e) => setIgHandle(e.target.value)}
+                  placeholder="@usuario"
+                />
+              </Field>
+              <Field label="TikTok">
+                <Input
+                  value={ttHandle}
+                  onChange={(e) => setTtHandle(e.target.value)}
+                  placeholder="@usuario"
+                />
+              </Field>
+              <Field label="X / Twitter">
+                <Input
+                  value={twHandle}
+                  onChange={(e) => setTwHandle(e.target.value)}
+                  placeholder="@usuario"
+                />
+              </Field>
+              <Field label="Spotify">
+                <Input
+                  value={spHandle}
+                  onChange={(e) => setSpHandle(e.target.value)}
+                  placeholder="usuario o ID"
+                />
+              </Field>
+            </div>
+          </div>
+
+          <div className="rounded-xl bg-[var(--surface-2)]/60 p-4">
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
+              Tema del perfil
+            </p>
+            <TrackPicker
+              value={{ name: trackName, artist: trackArtist, preview: trackPreview }}
+              onChange={(t) => {
+                setTrackId(t.id);
+                setTrackName(t.name);
+                setTrackArtist(t.artist);
+                setTrackPreview(t.preview);
+              }}
+              onClear={() => {
+                setTrackId("");
+                setTrackName("");
+                setTrackArtist("");
+                setTrackPreview("");
+              }}
+            />
           </div>
 
           <div className="rounded-xl bg-[var(--surface-2)]/60 p-4">
@@ -728,5 +832,98 @@ function PlaylistThumb({ src, meta }: { src: string; meta?: { color: string } })
       alt=""
       className="size-11 shrink-0 rounded-lg object-cover"
     />
+  );
+}
+
+type TrackPick = { id: string; name: string; artist: string; preview: string };
+
+function TrackPicker({
+  value,
+  onChange,
+  onClear,
+}: {
+  value: { name: string; artist: string; preview: string };
+  onChange: (t: TrackPick) => void;
+  onClear: () => void;
+}) {
+  const [q, setQ] = useState("");
+  const [results, setResults] = useState<TrackPick[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (timer.current) clearTimeout(timer.current);
+    if (!q.trim()) {
+      setResults(null);
+      return;
+    }
+    timer.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(`/api/spotify/search?q=${encodeURIComponent(q.trim())}`);
+        const data = (await res.json()) as { tracks?: TrackPick[] };
+        setResults(data.tracks ?? []);
+      } catch {
+        setResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 450);
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [q]);
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      {value.name ? (
+        <div className="flex items-center gap-2.5">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-ink)]">
+            <Music4 className="size-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold">{value.name}</p>
+            {value.artist && <p className="truncate text-xs text-[var(--muted)]">{value.artist}</p>}
+          </div>
+          <Button variant="ghost" size="sm" onClick={onClear}>
+            Quitar
+          </Button>
+        </div>
+      ) : (
+        <p className="text-xs text-[var(--muted)]">
+          Elegí una canción para que suene en tu perfil (30 segundos).
+        </p>
+      )}
+      <Input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Buscar tema en Spotify…"
+      />
+      {searching && <p className="text-xs text-[var(--muted)]">Buscando…</p>}
+      {results && !searching && results.length === 0 && (
+        <p className="text-xs text-[var(--muted)]">Sin resultados con preview.</p>
+      )}
+      {results && results.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          {results.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => {
+                onChange(t);
+                setQ("");
+                setResults(null);
+              }}
+              className="flex items-center gap-2.5 rounded-lg bg-[var(--surface)] px-2.5 py-2 text-left transition-colors hover:bg-[var(--surface-3)]"
+            >
+              <Play className="size-4 shrink-0 text-[var(--accent)]" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{t.name}</p>
+                <p className="truncate text-xs text-[var(--muted)]">{t.artist}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

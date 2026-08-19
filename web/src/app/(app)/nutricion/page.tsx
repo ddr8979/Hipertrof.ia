@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Check,
   BookOpen,
+  BookOpenText,
   ImagePlus,
   Pencil,
   Share2,
@@ -97,6 +98,47 @@ function weekdayLabel(date: string): string {
   return WEEKDAYS[new Date(`${date}T12:00:00`).getDay()]?.label ?? "Día";
 }
 
+const MACRO_COLORS = {
+  protein: "text-[#ef4444]",
+  carbs: "text-[#eab308]",
+  fats: "text-[#22c55e]",
+} as const;
+
+function MacroText({
+  p,
+  c,
+  g,
+  className,
+}: {
+  p?: number | null;
+  c?: number | null;
+  g?: number | null;
+  className?: string;
+}) {
+  return (
+    <span className={cn("inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] font-semibold", className)}>
+      {p != null && (
+        <span className={cn("flex items-center gap-0.5", MACRO_COLORS.protein)}>
+          <span className="opacity-80">Proteína</span>
+          <span className="tabular-nums">{Math.round(p)}g</span>
+        </span>
+      )}
+      {c != null && (
+        <span className={cn("flex items-center gap-0.5", MACRO_COLORS.carbs)}>
+          <span className="opacity-80">Carbohidratos</span>
+          <span className="tabular-nums">{Math.round(c)}g</span>
+        </span>
+      )}
+      {g != null && (
+        <span className={cn("flex items-center gap-0.5", MACRO_COLORS.fats)}>
+          <span className="opacity-80">Grasas</span>
+          <span className="tabular-nums">{Math.round(g)}g</span>
+        </span>
+      )}
+    </span>
+  );
+}
+
 function lastOccurrence(weekdayIndex: number, ref: Date) {
   const diff = (ref.getDay() - weekdayIndex + 7) % 7;
   return format(addDays(ref, -diff), "yyyy-MM-dd");
@@ -116,12 +158,14 @@ export default function NutricionPage() {
     { id: "almuerzo", label: "Almuerzo" },
     { id: "cena", label: "Cena" },
     { id: "snack", label: "Snack" },
+    { id: "postre", label: "Postre" },
   ] as const;
   const [day, setDay] = useState(() => format(new Date(), "yyyy-MM-dd"));
   const dayDate = new Date(`${day}T12:00:00`);
   const [recipeFormOpen, setRecipeFormOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [addDayOpen, setAddDayOpen] = useState(false);
+  const [viewCookbookRecipe, setViewCookbookRecipe] = useState<Recipe | null>(null);
 
   const { data: myRecipes } = useQuery({
     queryKey: ["my_recipes"],
@@ -173,6 +217,32 @@ export default function NutricionPage() {
         .order("name")
         .limit(500);
       return (data ?? []) as Recipe[];
+    },
+  });
+
+  const { data: trainerRecipes } = useQuery({
+    queryKey: ["assigned_recipes"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return [] as {
+        id: string;
+        recipe: Recipe | null;
+        trainer: { display_name: string | null } | null;
+      }[];
+      const { data } = await supabase
+        .from("assigned_recipes")
+        .select("id, recipe:recipes(id, name, calories, protein_g, carbs_g, fats_g, category, steps, step_titles, photos), trainer:profiles!assigned_recipes_trainer_id_fkey(display_name)")
+        .eq("athlete_id", user.id)
+        .eq("active", true)
+        .order("created_at", { ascending: false });
+      return (data ?? []) as unknown as {
+        id: string;
+        recipe: Recipe | null;
+        trainer: { display_name: string | null } | null;
+      }[];
     },
   });
 
@@ -402,8 +472,7 @@ export default function NutricionPage() {
     const cat = recipeCat;
     return allowed
       .filter((r) => r.category === cat)
-      .sort((a, b) => b.protein_g - a.protein_g)
-      .slice(0, 4);
+      .sort((a, b) => b.protein_g - a.protein_g);
   }, [allowed, recipeCat]);
 
   const filtered = useMemo(() => {
@@ -515,7 +584,7 @@ export default function NutricionPage() {
       {/* Días del diario */}
       <section className="card p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display font-bold tracking-tight">Mis días</h2>
+          <h2 className="font-display font-bold tracking-tight">Mi semana</h2>
           <button
             onClick={() => setAddDayOpen(true)}
             className="text-xs font-bold text-[var(--accent)] hover:underline"
@@ -533,11 +602,14 @@ export default function NutricionPage() {
               const sums = logsByDate.get(e.entry_date);
               const isSel = e.entry_date === day;
               return (
-                <button
+                <div
                   key={e.entry_date}
                   onClick={() => setDay(e.entry_date)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(ev) => ev.key === "Enter" && setDay(e.entry_date)}
                   className={cn(
-                    "flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left transition-colors",
+                    "flex cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left transition-colors",
                     isSel
                       ? "bg-[var(--accent)] text-[var(--accent-ink)]"
                       : "bg-[var(--surface-2)]/60 hover:bg-[var(--surface-2)]"
@@ -556,11 +628,12 @@ export default function NutricionPage() {
                       <p className={cn("font-display text-sm font-bold", isSel && "text-[var(--accent-ink)]")}>
                         {sums?.calories ?? 0} kcal
                       </p>
-                      <p className={cn("text-[11px]", isSel ? "text-[var(--accent-ink)]/70" : "text-[var(--muted)]")}>
-                        P {sums?.protein ?? 0} g
-                      </p>
+                      {sums?.protein ? (
+                        <MacroText p={sums.protein} className={cn(isSel && "!text-[var(--accent-ink)]/80")} />
+                      ) : null}
                     </div>
                     <button
+                      type="button"
                       onClick={(ev) => {
                         ev.stopPropagation();
                         deleteDay.mutate(e.entry_date);
@@ -577,7 +650,7 @@ export default function NutricionPage() {
                       <Trash2 className="size-4" />
                     </button>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -644,29 +717,53 @@ export default function NutricionPage() {
         </div>
         <div className="mt-4 grid grid-cols-3 gap-3">
           {[
-            { icon: Beef, label: "Proteína", value: totals.protein, target: targets.protein },
-            { icon: Wheat, label: "Carbos", value: totals.carbs, target: targets.carbs },
-            { icon: Droplet, label: "Grasas", value: totals.fats, target: targets.fats },
+            {
+              icon: Beef,
+              label: "Proteína",
+              value: totals.protein,
+              target: targets.protein,
+              color: "text-[#ef4444]",
+              bar: "bg-[#ef4444]",
+            },
+            {
+              icon: Wheat,
+              label: "Carbohidratos",
+              value: totals.carbs,
+              target: targets.carbs,
+              color: "text-[#eab308]",
+              bar: "bg-[#eab308]",
+            },
+            {
+              icon: Droplet,
+              label: "Grasas",
+              value: totals.fats,
+              target: targets.fats,
+              color: "text-[#22c55e]",
+              bar: "bg-[#22c55e]",
+            },
           ].map((m) => (
-            <div key={m.label} className="rounded-xl bg-[var(--surface-2)] p-3">
-              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
-                <m.icon className="size-3.5 text-[var(--accent)]" />
-                {m.label}
+            <div
+              key={m.label}
+              className="flex flex-col items-center rounded-xl bg-[var(--surface-2)] p-3 text-center"
+            >
+              <div className="flex w-full items-center justify-center gap-1.5 text-[10px] font-semibold uppercase leading-tight tracking-wide">
+                <m.icon className={cn("size-3.5 shrink-0", m.color)} />
+                <span className={cn("leading-tight", m.color)}>{m.label}</span>
               </div>
-              <p className="mt-1 font-display text-lg font-bold tabular-nums">
+              <p className="mt-1.5 font-display text-lg font-bold tabular-nums">
                 {m.value}
                 <span className="text-xs text-[var(--text-2)]"> / {m.target} g</span>
               </p>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--surface-3)]">
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-3)]">
                 <div
-                  className="h-full rounded-full bg-[var(--accent)]"
+                  className={cn("h-full rounded-full", m.bar)}
                   style={{ width: `${progress(m.value, m.target)}%` }}
                 />
               </div>
             </div>
           ))}
         </div>
-        <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-4">
+        <div className="mt-4 flex flex-col items-stretch gap-3 border-t border-[var(--border)] pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-[var(--text-2)]">
             {closedToday
               ? "Día culminado: quedó guardado en tu historial"
@@ -679,6 +776,7 @@ export default function NutricionPage() {
               closeDay.mutate({ date: day, close: !closedToday })
             }
             disabled={closeDay.isPending}
+            className="shrink-0 whitespace-nowrap"
           >
             <Check className="size-4" />
             {closedToday ? "Reabrir día" : "Culminar día"}
@@ -725,9 +823,7 @@ export default function NutricionPage() {
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold">{m.name}</p>
-                        <p className="text-xs text-[var(--muted)]">
-                          P {m.protein_g} · C {m.carbs_g} · G {m.fats_g}
-                        </p>
+                        <MacroText p={m.protein_g} c={m.carbs_g} g={m.fats_g} />
                       </div>
                       <span className="text-sm font-bold tabular-nums">{m.calories} kcal</span>
                       <button
@@ -778,9 +874,7 @@ export default function NutricionPage() {
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{r.name}</p>
-                  <p className="text-xs text-[var(--muted)]">
-                    {r.calories} kcal · P {r.protein_g} C {r.carbs_g} G {r.fats_g}
-                  </p>
+                  <MacroText p={r.protein_g} c={r.carbs_g} g={r.fats_g} />
                 </div>
                 <Plus className="size-4 shrink-0 text-[var(--accent)]" />
               </button>
@@ -869,58 +963,212 @@ export default function NutricionPage() {
       {/* Recetario */}
       <section className="card p-4">
         <div className="mb-3 flex items-center gap-2">
-          <BookOpen className="size-4 text-[var(--accent)]" />
+          <BookOpenText className="size-4 text-[var(--accent)]" />
           <h2 className="font-display font-bold tracking-tight">Recetario</h2>
         </div>
+        {(trainerRecipes ?? []).length > 0 && (
+          <div className="mb-4 flex flex-col gap-2 rounded-xl bg-[var(--accent-soft)]/40 p-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--accent)]">
+              Recetas de tu entrenador
+            </p>
+            {trainerRecipes?.map((t) =>
+              t.recipe ? (
+                <div key={t.id} className="flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{t.recipe.name}</p>
+                    <p className="text-xs text-[var(--muted)]">
+                      {t.recipe.calories} kcal · por {t.trainer?.display_name ?? "tu entrenador"}
+                    </p>
+                    <MacroText
+                      p={t.recipe.protein_g}
+                      c={t.recipe.carbs_g}
+                      g={t.recipe.fats_g}
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setViewCookbookRecipe(t.recipe!)}
+                  >
+                    Ver receta
+                  </Button>
+                  <button
+                    onClick={() =>
+                      addMeal.mutate({
+                        recipe_id: t.recipe!.id,
+                        name: t.recipe!.name,
+                        calories: t.recipe!.calories,
+                        protein_g: t.recipe!.protein_g,
+                        carbs_g: t.recipe!.carbs_g,
+                        fats_g: t.recipe!.fats_g,
+                      })
+                    }
+                    aria-label={`Agregar ${t.recipe.name} a la comida`}
+                    className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-ink)] transition-transform active:scale-90"
+                  >
+                    <Plus className="size-4" />
+                  </button>
+                </div>
+              ) : null
+            )}
+          </div>
+        )}
         <div className="mb-3 flex flex-wrap gap-1.5">
-          {RECIPE_CATS.map((k) => (
-            <button
-              key={k.id}
-              onClick={() => setRecipeCat(k.id)}
-              className={cn(
-                "rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors",
-                recipeCat === k.id
-                  ? "bg-[var(--accent)] text-[var(--accent-ink)]"
-                  : "bg-[var(--surface-2)] text-[var(--text-2)] hover:text-[var(--text)]"
-              )}
-            >
-              {k.label}
-            </button>
-          ))}
+          {RECIPE_CATS.map((k) => {
+            const count = allowed.filter((r) => r.category === k.id).length;
+            return (
+              <button
+                key={k.id}
+                onClick={() => setRecipeCat(k.id)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors",
+                  recipeCat === k.id
+                    ? "bg-[var(--accent)] text-[var(--accent-ink)]"
+                    : "bg-[var(--surface-2)] text-[var(--text-2)] hover:text-[var(--text)]"
+                )}
+              >
+                {k.label}
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 text-[10px] font-bold tabular-nums",
+                    recipeCat === k.id
+                      ? "bg-[var(--accent-ink)]/15"
+                      : "bg-[var(--surface-3)]"
+                  )}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
         {cookbook.length === 0 ? (
           <p className="text-sm text-[var(--muted)]">
             Sin recetas de {recipeCat} que puedas comer.
           </p>
         ) : (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="flex flex-col gap-2">
             {cookbook.map((r) => (
-              <button
+              <div
                 key={r.id}
-                onClick={() =>
-                  addMeal.mutate({
-                    recipe_id: r.id,
-                    name: r.name,
-                    calories: r.calories,
-                    protein_g: r.protein_g,
-                    carbs_g: r.carbs_g,
-                    fats_g: r.fats_g,
-                  })
-                }
-                className="flex items-center gap-3 rounded-xl bg-[var(--surface-2)]/60 px-3 py-2.5 text-left transition-colors hover:bg-[var(--surface-2)]"
+                className="rounded-xl bg-[var(--surface-2)]/60 px-3 py-2.5"
               >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{r.name}</p>
-                  <p className="text-xs text-[var(--muted)]">
-                    {r.calories} kcal · P {r.protein_g} C {r.carbs_g} G {r.fats_g}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{r.name}</p>
+                    <p className="text-xs text-[var(--muted)]">
+                      {r.calories} kcal
+                      {r.prep_minutes ? ` · ${r.prep_minutes} min` : ""}
+                      {r.steps?.length ? ` · ${r.steps.length} pasos` : ""}
+                    </p>
+                    <MacroText p={r.protein_g} c={r.carbs_g} g={r.fats_g} />
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setViewCookbookRecipe(r)}
+                  >
+                    Ver receta
+                  </Button>
+                  <button
+                    onClick={() =>
+                      addMeal.mutate({
+                        recipe_id: r.id,
+                        name: r.name,
+                        calories: r.calories,
+                        protein_g: r.protein_g,
+                        carbs_g: r.carbs_g,
+                        fats_g: r.fats_g,
+                      })
+                    }
+                    aria-label={`Agregar ${r.name} a la comida`}
+                    className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-ink)] transition-transform active:scale-90"
+                  >
+                    <Plus className="size-4" />
+                  </button>
                 </div>
-                <Plus className="size-4 shrink-0 text-[var(--accent)]" />
-              </button>
+              </div>
             ))}
           </div>
         )}
       </section>
+
+      {/* Ver receta del recetario */}
+      <Dialog
+        open={!!viewCookbookRecipe}
+        onClose={() => setViewCookbookRecipe(null)}
+        title={viewCookbookRecipe?.name ?? ""}
+      >
+        {viewCookbookRecipe && (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between rounded-xl bg-[var(--surface-2)] px-4 py-3">
+              <p className="text-sm font-semibold text-[var(--text-2)]">Macros</p>
+              <div className="text-right">
+                <p className="text-sm font-bold tabular-nums">
+                  {viewCookbookRecipe.calories} kcal
+                </p>
+                <MacroText
+                  p={viewCookbookRecipe.protein_g}
+                  c={viewCookbookRecipe.carbs_g}
+                  g={viewCookbookRecipe.fats_g}
+                />
+              </div>
+            </div>
+            {viewCookbookRecipe.steps?.length ? (
+              <ol className="flex flex-col gap-2">
+                {viewCookbookRecipe.steps.map((s, i) => {
+                  const photo = viewCookbookRecipe.photos?.[i];
+                  return (
+                    <li
+                      key={i}
+                      className="flex gap-2.5 rounded-xl bg-[var(--surface-2)]/60 px-3 py-2.5 text-sm"
+                    >
+                      <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[11px] font-bold text-[var(--accent-ink)]">
+                        {i + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        {viewCookbookRecipe.step_titles?.[i] && (
+                          <p className="text-sm font-bold">
+                            {viewCookbookRecipe.step_titles[i]}
+                          </p>
+                        )}
+                        <span className="whitespace-pre-wrap text-[var(--text-2)]">{s}</span>
+                        {photo && (
+                          <img
+                            src={photo}
+                            alt=""
+                            className="mt-2 max-h-44 w-full rounded-xl object-cover"
+                          />
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            ) : (
+              <p className="text-sm text-[var(--muted)]">
+                Esta receta no tiene pasos documentados.
+              </p>
+            )}
+            <Button
+              variant="accent"
+              onClick={() => {
+                addMeal.mutate({
+                  recipe_id: viewCookbookRecipe.id,
+                  name: viewCookbookRecipe.name,
+                  calories: viewCookbookRecipe.calories,
+                  protein_g: viewCookbookRecipe.protein_g,
+                  carbs_g: viewCookbookRecipe.carbs_g,
+                  fats_g: viewCookbookRecipe.fats_g,
+                });
+                setViewCookbookRecipe(null);
+              }}
+            >
+              <Plus className="size-4" /> Agregar a mi comida
+            </Button>
+          </div>
+        )}
+      </Dialog>
 
       {/* Historial de días culminados */}
       {entryDates.length > 0 && (
@@ -944,8 +1192,9 @@ export default function NutricionPage() {
                       {format(new Date(`${d}T12:00:00`), "EEEE d 'de' MMMM")}
                     </p>
                     <p className="text-xs text-[var(--muted)]">
-                      {meals.length} comidas · P {Math.round(protein)} g
+                      {meals.length} comidas
                     </p>
+                    <MacroText p={protein} />
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="font-display text-lg font-bold tabular-nums">
@@ -968,10 +1217,8 @@ export default function NutricionPage() {
                       >
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold">{m.name}</p>
-                          <p className="text-xs text-[var(--muted)]">
-                            {m.notes ?? "Snack"} · P {m.protein_g} C {m.carbs_g} G{" "}
-                            {m.fats_g}
-                          </p>
+                          <p className="text-xs text-[var(--muted)]">{m.notes ?? "Snack"}</p>
+                          <MacroText p={m.protein_g} c={m.carbs_g} g={m.fats_g} />
                         </div>
                         <span className="text-sm font-bold tabular-nums">
                           {m.calories} kcal
@@ -1045,9 +1292,9 @@ export default function NutricionPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{r.name}</p>
                   <p className="text-xs text-[var(--muted)]">
-                    {r.calories} kcal · P {r.protein_g} C {r.carbs_g} G {r.fats_g}
-                    {r.category ? ` · ${r.category}` : ""}
+                    {r.calories} kcal{r.category ? ` · ${r.category}` : ""}
                   </p>
+                  <MacroText p={r.protein_g} c={r.carbs_g} g={r.fats_g} />
                 </div>
                 <Plus className="size-4 shrink-0 text-[var(--accent)]" />
               </button>
@@ -1236,6 +1483,7 @@ function MyRecipeForm({
     { id: "almuerzo", label: "Almuerzo" },
     { id: "cena", label: "Cena" },
     { id: "snack", label: "Snack" },
+    { id: "postre", label: "Postre" },
   ];
 
   async function handleStepPhoto(i: number, file: File | null) {

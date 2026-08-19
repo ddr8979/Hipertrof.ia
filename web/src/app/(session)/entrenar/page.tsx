@@ -9,7 +9,6 @@ import {
   X,
   Check,
   Play,
-  SkipForward,
   Timer,
   Pencil,
   Square,
@@ -28,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ExercisePicker } from "@/components/exercise-picker";
+import { RestTimer } from "@/components/rest-timer";
 import { toast } from "@/components/ui/toast";
 import { formatDuration } from "@/lib/utils";
 import { cn, vibrate, exerciseGif } from "@/lib/utils";
@@ -46,121 +46,6 @@ const TYPE_COLORS: Record<SetType, string> = {
   D: "bg-[var(--danger-soft)] text-[var(--danger)]",
 };
 
-function playRestAlarm() {
-  try {
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new Ctx();
-    [0, 0.35, 0.7].forEach((at, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = i === 2 ? 1174.66 : 880;
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime + at);
-      gain.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + at + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + at + 0.18);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(ctx.currentTime + at);
-      osc.stop(ctx.currentTime + at + 0.2);
-    });
-    setTimeout(() => void ctx.close(), 1500);
-  } catch {
-    /* audio no disponible */
-  }
-}
-
-function RestOverlay() {
-  const restEndsAt = useWorkoutStore((s) => s.restEndsAt);
-  const restExerciseKey = useWorkoutStore((s) => s.restExerciseKey);
-  const restTotal = useWorkoutStore((s) => s.restTotal);
-  const stopRest = useWorkoutStore((s) => s.stopRest);
-  const draft = useWorkoutStore((s) => s.draft);
-  const [now, setNow] = useState(() => Date.now());
-  const alarmedAt = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (restEndsAt === null) return;
-    const t = setInterval(() => setNow(Date.now()), 250);
-    return () => clearInterval(t);
-  }, [restEndsAt]);
-
-  useEffect(() => {
-    if (restEndsAt !== null && now >= restEndsAt && alarmedAt.current !== restEndsAt) {
-      alarmedAt.current = restEndsAt;
-      playRestAlarm();
-      navigator.vibrate?.([400, 150, 400]);
-    }
-  }, [now, restEndsAt]);
-
-  if (restEndsAt === null) return null;
-
-  const remainingMs = Math.max(0, restEndsAt - now);
-  const remaining = Math.ceil(remainingMs / 1000);
-  const done = remainingMs <= 0;
-  const total = restTotal ?? 90;
-  const C = 2 * Math.PI * 34;
-  const exerciseName = draft?.exercises.find((e) => e.key === restExerciseKey)?.name;
-
-  return (
-    <div
-      className={cn(
-        "fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/95 p-4 backdrop-blur animate-[slide-up_0.25s_cubic-bezier(0.16,1,0.3,1)_both]",
-        done && "animate-[rest-done_0.8s_ease-in-out_2]"
-      )}
-    >
-      <div className="mx-auto flex max-w-2xl items-center gap-4">
-        <div className="relative flex size-24 shrink-0 items-center justify-center">
-          <svg className="absolute inset-0 -rotate-90" viewBox="0 0 80 80">
-            <circle
-              cx="40"
-              cy="40"
-              r="34"
-              fill="none"
-              stroke="var(--surface-3)"
-              strokeWidth="6"
-            />
-            <circle
-              cx="40"
-              cy="40"
-              r="34"
-              fill="none"
-              stroke={done ? "var(--accent)" : "var(--accent)"}
-              strokeWidth="6"
-              strokeLinecap="round"
-              strokeDasharray={C}
-              strokeDashoffset={done ? 0 : C * (remaining / total)}
-              className="transition-all duration-300"
-            />
-          </svg>
-          <span
-            className={cn(
-              "font-display font-bold tabular-nums text-[var(--text)]",
-              done ? "text-xl text-[var(--accent)]" : "text-base"
-            )}
-          >
-            {done ? "¡Listo!" : formatDuration(remaining)}
-          </span>
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">
-            {done ? "Descanso terminado" : "Descanso"}
-          </p>
-          <p className="truncate text-sm font-semibold text-[var(--text-2)]">
-            {done
-              ? "Arrancá la próxima serie"
-              : exerciseName
-                ? `Tras ${exerciseName}`
-                : "Descansá entre series"}
-          </p>
-        </div>
-        <Button variant={done ? "accent" : "outline"} size="sm" onClick={stopRest}>
-          {done ? <Play className="size-4" /> : <SkipForward className="size-4" />}
-          {done ? "Comenzar" : "Saltar"}
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 function ExerciseCard({
   exercise,
@@ -972,7 +857,7 @@ export default function EntrenarPage() {
         }
       />
 
-      <RestOverlay />
+      <RestTimer />
     </main>
   );
 }

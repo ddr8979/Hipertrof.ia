@@ -12,6 +12,8 @@ import {
   CalendarDays,
   ChevronRight,
   Music4,
+  BookOpenText,
+  Calculator,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/components/providers";
@@ -241,20 +243,38 @@ export default function DashboardPage() {
         )}
       </section>
 
-      {/* Accesos rápidos */}
-      <section className="grid grid-cols-3 gap-3">
-        <Link href="/nutricion" className="card card-hover flex flex-col items-center gap-2 p-4 text-center">
-          <Utensils className="size-5 text-[var(--accent)]" />
-          <span className="text-xs font-semibold">Nutrición</span>
-        </Link>
-        <Link href="/progreso" className="card card-hover flex flex-col items-center gap-2 p-4 text-center">
-          <ChartLine className="size-5 text-[var(--accent)]" />
-          <span className="text-xs font-semibold">Progreso</span>
-        </Link>
-        <Link href="/perfil" className="card card-hover flex flex-col items-center gap-2 p-4 text-center">
-          <Music4 className="size-5 text-[var(--accent)]" />
-          <span className="text-xs font-semibold">Perfil</span>
-        </Link>
+      {/* Hub de opciones */}
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-display text-lg font-bold tracking-tight">Explorar</h3>
+          <span className="text-xs text-[var(--muted)]">todas las herramientas</span>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <Link href="/ejercicios" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+            <Dumbbell className="size-5 text-[var(--accent)]" />
+            <span className="w-full truncate text-xs font-semibold">Ejercicios</span>
+          </Link>
+          <Link href="/glosario" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+            <BookOpenText className="size-5 text-[var(--accent)]" />
+            <span className="w-full truncate text-xs font-semibold">Diccionario</span>
+          </Link>
+          <Link href="/calculadora" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+            <Calculator className="size-5 text-[var(--accent)]" />
+            <span className="w-full truncate text-xs font-semibold">Calculadora</span>
+          </Link>
+          <Link href="/nutricion" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+            <Utensils className="size-5 text-[var(--accent)]" />
+            <span className="w-full truncate text-xs font-semibold">Nutrición</span>
+          </Link>
+          <Link href="/progreso" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+            <ChartLine className="size-5 text-[var(--accent)]" />
+            <span className="w-full truncate text-xs font-semibold">Progreso</span>
+          </Link>
+          <Link href="/perfil" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+            <Music4 className="size-5 text-[var(--accent)]" />
+            <span className="w-full truncate text-xs font-semibold">Perfil</span>
+          </Link>
+        </div>
       </section>
     </div>
   );

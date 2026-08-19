@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Dumbbell, Search, X } from "lucide-react";
+import { Dumbbell, Search, X, SlidersHorizontal, Wrench } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/primitives";
 import { Dialog } from "@/components/ui/dialog";
@@ -25,6 +25,8 @@ export default function EjerciciosPage() {
   const [muscle, setMuscle] = useState<string | null>(null);
   const [equipment, setEquipment] = useState<string | null>(null);
   const [selected, setSelected] = useState<Exercise | null>(null);
+  const [muscleOpen, setMuscleOpen] = useState(false);
+  const [equipmentOpen, setEquipmentOpen] = useState(false);
 
   const { data: exercises, isLoading } = useQuery({
     queryKey: ["exercise_library"],
@@ -97,77 +99,64 @@ export default function EjerciciosPage() {
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Buscar por nombre, músculo o equipo…"
+          placeholder="Buscar ejercicios…"
           className="h-11 rounded-2xl pl-10 text-sm shadow-sm"
         />
       </div>
 
-      <div className="flex w-full flex-wrap items-center justify-center gap-1.5">
+      <div className="flex w-full flex-wrap items-center gap-2">
         <button
           onClick={() => {
             vibrate(4);
-            setMuscle(null);
+            setMuscleOpen(true);
           }}
           className={cn(
-            "rounded-full border px-3.5 py-1.5 text-[11px] font-semibold transition-all",
-            muscle === null
+            "flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all",
+            muscle
               ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_2px_8px_-2px_var(--accent-soft)]"
               : "border-[var(--border)] bg-[var(--surface-2)]/60 text-[var(--text-2)] hover:border-[var(--accent)]/40 hover:text-[var(--text)]"
           )}
         >
-          Todos
+          <SlidersHorizontal className="size-3.5" />
+          {muscle ? `Músculo: ${muscle}` : "Filtrar por músculo"}
+          {muscle && (
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                setMuscle(null);
+              }}
+              className="ml-0.5 rounded-full bg-[var(--accent-ink)]/15 p-0.5"
+            >
+              <X className="size-3" />
+            </span>
+          )}
         </button>
-        {muscles.map((m) => (
-          <button
-            key={m}
-            onClick={() => {
-              vibrate(4);
-              setMuscle(muscle === m ? null : m);
-            }}
-            className={cn(
-              "rounded-full border px-3.5 py-1.5 text-[11px] font-semibold transition-all",
-              muscle === m
-                ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_2px_8px_-2px_var(--accent-soft)]"
-                : "border-[var(--border)] bg-[var(--surface-2)]/60 text-[var(--text-2)] hover:border-[var(--accent)]/40 hover:text-[var(--text)]"
-            )}
-          >
-            {m}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex w-full flex-wrap items-center justify-center gap-1.5">
         <button
           onClick={() => {
             vibrate(4);
-            setEquipment(null);
+            setEquipmentOpen(true);
           }}
           className={cn(
-            "rounded-full border px-3.5 py-1.5 text-[11px] font-semibold transition-all",
-            equipment === null
+            "flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all",
+            equipment
               ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_2px_8px_-2px_var(--accent-soft)]"
               : "border-[var(--border)] bg-[var(--surface-2)]/60 text-[var(--text-2)] hover:border-[var(--accent)]/40 hover:text-[var(--text)]"
           )}
         >
-          Cualquier equipo
+          <Wrench className="size-3.5" />
+          {equipment ? `Equipo: ${equipment}` : "Filtrar por equipamiento"}
+          {equipment && (
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                setEquipment(null);
+              }}
+              className="ml-0.5 rounded-full bg-[var(--accent-ink)]/15 p-0.5"
+            >
+              <X className="size-3" />
+            </span>
+          )}
         </button>
-        {equipments.map((e) => (
-          <button
-            key={e}
-            onClick={() => {
-              vibrate(4);
-              setEquipment(equipment === e ? null : e);
-            }}
-            className={cn(
-              "rounded-full border px-3.5 py-1.5 text-[11px] font-semibold transition-all",
-              equipment === e
-                ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_2px_8px_-2px_var(--accent-soft)]"
-                : "border-[var(--border)] bg-[var(--surface-2)]/60 text-[var(--text-2)] hover:border-[var(--accent)]/40 hover:text-[var(--text)]"
-            )}
-          >
-            {e}
-          </button>
-        ))}
       </div>
 
       {activeCount > 0 && (
@@ -182,6 +171,60 @@ export default function EjerciciosPage() {
           Limpiar filtros ({activeCount})
         </button>
       )}
+
+      <Dialog
+        open={muscleOpen}
+        onClose={() => setMuscleOpen(false)}
+        title="Filtrar por músculo"
+      >
+        <div className="flex flex-wrap gap-2">
+          {muscles.map((m) => (
+            <button
+              key={m}
+              onClick={() => {
+                vibrate(4);
+                setMuscle(muscle === m ? null : m);
+                setMuscleOpen(false);
+              }}
+              className={cn(
+                "rounded-full border px-3.5 py-2 text-xs font-semibold transition-all",
+                muscle === m
+                  ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-ink)]"
+                  : "border-[var(--border)] bg-[var(--surface-2)]/60 text-[var(--text-2)] hover:border-[var(--accent)]/40"
+              )}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={equipmentOpen}
+        onClose={() => setEquipmentOpen(false)}
+        title="Filtrar por equipamiento"
+      >
+        <div className="flex flex-wrap gap-2">
+          {equipments.map((e) => (
+            <button
+              key={e}
+              onClick={() => {
+                vibrate(4);
+                setEquipment(equipment === e ? null : e);
+                setEquipmentOpen(false);
+              }}
+              className={cn(
+                "rounded-full border px-3.5 py-2 text-xs font-semibold transition-all",
+                equipment === e
+                  ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-ink)]"
+                  : "border-[var(--border)] bg-[var(--surface-2)]/60 text-[var(--text-2)] hover:border-[var(--accent)]/40"
+              )}
+            >
+              {e}
+            </button>
+          ))}
+        </div>
+      </Dialog>
 
       {isLoading ? (
         <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3">

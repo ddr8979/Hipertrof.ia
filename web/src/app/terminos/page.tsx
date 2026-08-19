@@ -37,15 +37,27 @@ export default function TerminosPage() {
           </p>
         </section>
         <section>
-          <h2 className="mb-2 font-display text-lg font-bold text-[var(--text)]">4. Entrenadores y cursos</h2>
+          <h2 className="mb-2 font-display text-lg font-bold text-[var(--text)]">4. Fotos y mensajes</h2>
           <p>
-            Los cursos y programas del marketplace son creados por entrenadores independientes.
-            hypertrof.ia facilita la transacción pero no garantiza resultados ni es responsable
-            por el contenido de los cursos.
+            Las fotos que subís (avatar, portada, recetas, imágenes de mensajes directos) y los
+            mensajes que enviás se almacenan de forma privada y solo son visibles para vos y las
+            personas con las que interactuás. No publicamos ni compartimos tus fotos ni tus
+            mensajes con terceros. Podés eliminar tus fotos y mensajes en cualquier momento
+            desde la propia conversación o eliminando tu cuenta.
           </p>
         </section>
         <section>
-          <h2 className="mb-2 font-display text-lg font-bold text-[var(--text)]">5. Riesgo y salud</h2>
+          <h2 className="mb-2 font-display text-lg font-bold text-[var(--text)]">5. Entrenadores y cursos</h2>
+          <p>
+            Los cursos y programas del marketplace son creados por entrenadores independientes.
+            hypertrof.ia facilita la transacción pero no garantiza resultados ni es responsable
+            por el contenido de los cursos. Los personal trainers pueden asignar rutinas y
+            recetas a sus alumnos y enviarles mensajes de felicitación; esa asignación queda
+            visible únicamente para el alumno y su entrenador.
+          </p>
+        </section>
+        <section>
+          <h2 className="mb-2 font-display text-lg font-bold text-[var(--text)]">6. Riesgo y salud</h2>
           <p>
             Los cálculos de calorías, macros y 1RM son estimaciones orientativas. Antes de
             comenzar un programa de entrenamiento o nutrición, consultá a un profesional de la
@@ -53,7 +65,7 @@ export default function TerminosPage() {
           </p>
         </section>
         <section>
-          <h2 className="mb-2 font-display text-lg font-bold text-[var(--text)]">6. Baja del servicio</h2>
+          <h2 className="mb-2 font-display text-lg font-bold text-[var(--text)]">7. Baja del servicio</h2>
           <p>
             Podés dejar de usar la app cuando quieras y eliminar tu cuenta desde Ajustes. El
             borrado es irreversible: se eliminan todos tus datos de forma permanente.

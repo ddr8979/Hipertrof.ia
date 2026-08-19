@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +44,7 @@ export function Dialog({
     full: "max-w-full sm:max-w-2xl",
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-[fade-in_0.2s_ease]"
@@ -79,6 +80,7 @@ export function Dialog({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

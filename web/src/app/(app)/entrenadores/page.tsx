@@ -10,26 +10,44 @@ import {
   Plus,
   Dumbbell,
   GraduationCap,
+  BookOpenText,
+  Calculator,
+  Utensils,
+  PartyPopper,
+  Search,
+  UserPlus,
+  Trash2,
 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Skeleton } from "@/components/ui/primitives";
+import { Skeleton, Avatar } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/data";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 import { useProfile } from "@/components/providers";
+import { cn } from "@/lib/utils";
 
 type ClientRow = {
   id: string;
   status: string;
-  athlete: { id: string; display_name: string | null; username: string | null } | null;
+  created_at: string;
+  athlete: {
+    id: string;
+    display_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+    streak_count: number | null;
+  } | null;
 };
 
 type RoutineRow = {
   id: string;
   name: string;
   user_id: string;
+  is_template: boolean;
 };
 
 type TrainerRow = {
@@ -40,20 +58,39 @@ type TrainerRow = {
 
 type AssignedRow = {
   id: string;
+  active: boolean;
   routine: { id: string; name: string } | null;
   trainer: { id: string; display_name: string | null } | null;
 };
 
+type AssignedRecipeRow = {
+  id: string;
+  active: boolean;
+  recipe: { id: string; name: string; calories: number; protein_g: number; photos: string[] | null } | null;
+  trainer: { id: string; display_name: string | null } | null;
+};
+
+const CONGRATS = [
+  "¡Felicitaciones! Estoy muy orgulloso de tu esfuerzo. ¡Seguí así! 💪",
+  "¡Gran trabajo hoy! Cada sesión cuenta y la estás rompiendo. 🏆",
+  "¡Felicitaciones por tu progreso! Así se construye un campeón. 🔥",
+  "¡Excelente constancia! Tu disciplina te está dando resultados. 👏",
+];
+
 export default function EntrenadoresPage() {
   const profile = useProfile((s) => s.profile);
   const qc = useQueryClient();
-  const [assignOpen, setAssignOpen] = useState(false);
-  const [athleteId, setAthleteId] = useState("");
-  const [routineId, setRoutineId] = useState("");
+  const router = useRouter();
   const [courseOpen, setCourseOpen] = useState(false);
   const [cTitle, setCTitle] = useState("");
   const [cDesc, setCDesc] = useState("");
   const [cPrice, setCPrice] = useState("");
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [addSearch, setAddSearch] = useState("");
+
+  const [manageFor, setManageFor] = useState<string | null>(null);
+  const [manageTab, setManageTab] = useState<"routine" | "recipe">("routine");
 
   const isTrainer = profile?.role === "trainer";
 
@@ -63,7 +100,9 @@ export default function EntrenadoresPage() {
       const supabase = createClient();
       const { data } = await supabase
         .from("trainer_clients")
-        .select("id, status, athlete:profiles!trainer_clients_athlete_id_fkey(id, display_name, username)")
+        .select(
+          "id, status, created_at, athlete:profiles!trainer_clients_athlete_id_fkey(id, display_name, username, avatar_url, streak_count)"
+        )
         .eq("trainer_id", profile!.id)
         .order("created_at", { ascending: false });
       return (data ?? []) as unknown as ClientRow[];
@@ -76,7 +115,7 @@ export default function EntrenadoresPage() {
       const supabase = createClient();
       const { data } = await supabase
         .from("routines")
-        .select("id, name")
+        .select("id, name, is_template")
         .eq("user_id", profile!.id)
         .order("created_at", { ascending: false });
       return (data ?? []) as RoutineRow[];
@@ -115,9 +154,94 @@ export default function EntrenadoresPage() {
       const supabase = createClient();
       const { data } = await supabase
         .from("assigned_routines")
-        .select("id, routine:routines(name), trainer:profiles!assigned_routines_trainer_id_fkey(display_name)")
-        .eq("athlete_id", profile!.id);
+        .select("id, active, routine:routines(id, name), trainer:profiles!assigned_routines_trainer_id_fkey(id, display_name)")
+        .eq("athlete_id", profile!.id)
+        .eq("active", true)
+        .order("created_at", { ascending: false });
       return (data ?? []) as unknown as AssignedRow[];
+    },
+  });
+
+  const { data: assignedRecipes } = useQuery({
+    queryKey: ["assigned_recipes"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("assigned_recipes")
+        .select("id, active, recipe:recipes(id, name, calories, protein_g, photos), trainer:profiles!assigned_recipes_trainer_id_fkey(id, display_name)")
+        .eq("athlete_id", profile!.id)
+        .eq("active", true)
+        .order("created_at", { ascending: false });
+      return (data ?? []) as unknown as AssignedRecipeRow[];
+    },
+  });
+
+  const { data: addResults } = useQuery({
+    queryKey: ["search_athletes", addSearch],
+    queryFn: async () => {
+      const q = addSearch.trim().toLowerCase();
+      if (!q) return [];
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, display_name, username, avatar_url, streak_count, is_public_profile")
+        .or(`display_name.ilike.%${q}%,username.ilike.%${q}%`)
+        .limit(15);
+      return (data ?? []) as {
+        id: string;
+        display_name: string | null;
+        username: string | null;
+        avatar_url: string | null;
+        streak_count: number | null;
+        is_public_profile: boolean;
+      }[];
+    },
+  });
+
+  const clientIds = new Set((clients ?? []).map((c) => c.athlete?.id));
+
+  const manageClient = (clients ?? []).find((c) => c.athlete?.id === manageFor);
+
+  const { data: manageAssignedRoutines } = useQuery({
+    queryKey: ["assigned_routines_athlete", manageFor],
+    queryFn: async () => {
+      if (!manageFor) return [] as AssignedRow[];
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("assigned_routines")
+        .select("id, active, routine:routines(id, name)")
+        .eq("athlete_id", manageFor)
+        .order("created_at", { ascending: false });
+      return (data ?? []) as unknown as AssignedRow[];
+    },
+    enabled: !!manageFor,
+  });
+
+  const { data: manageAssignedRecipes } = useQuery({
+    queryKey: ["assigned_recipes_athlete", manageFor],
+    queryFn: async () => {
+      if (!manageFor) return [] as AssignedRecipeRow[];
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("assigned_recipes")
+        .select("id, active, recipe:recipes(id, name, calories, protein_g)")
+        .eq("athlete_id", manageFor)
+        .order("created_at", { ascending: false });
+      return (data ?? []) as unknown as AssignedRecipeRow[];
+    },
+    enabled: !!manageFor,
+  });
+
+  const { data: allRecipes } = useQuery({
+    queryKey: ["recipes_all"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("recipes")
+        .select("id, name, calories, protein_g, category")
+        .order("name")
+        .limit(500);
+      return (data ?? []) as { id: string; name: string; calories: number; protein_g: number; category: string | null }[];
     },
   });
 
@@ -134,24 +258,124 @@ export default function EntrenadoresPage() {
     onError: (e) => toast("error", "No se pudo actualizar", e.message),
   });
 
-  const assign = useMutation({
-    mutationFn: async () => {
+  const addAlumno = useMutation({
+    mutationFn: async (athleteId: string) => {
       const supabase = createClient();
-      const { error } = await supabase.from("assigned_routines").insert({
+      const { error } = await supabase.from("trainer_clients").insert({
         trainer_id: profile!.id,
         athlete_id: athleteId,
-        routine_id: routineId,
+        status: "active",
       });
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      setAssignOpen(false);
-      setAthleteId("");
-      setRoutineId("");
+      setAddSearch("");
+      qc.invalidateQueries({ queryKey: ["trainer_clients"] });
+      toast("success", "Alumno agregado", "Ya podés asignarle rutinas y recetas");
+    },
+    onError: (e) => toast("error", "No se pudo agregar", e.message),
+  });
+
+  const removeAlumno = useMutation({
+    mutationFn: async (clientId: string) => {
+      const supabase = createClient();
+      const { error } = await supabase.from("trainer_clients").delete().eq("id", clientId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["trainer_clients"] });
+      toast("success", "Alumno quitado");
+    },
+    onError: (e) => toast("error", "No se pudo quitar", e.message),
+  });
+
+  const assignRoutine = useMutation({
+    mutationFn: async (routineId: string) => {
+      const supabase = createClient();
+      const { error } = await supabase.from("assigned_routines").insert({
+        trainer_id: profile!.id,
+        athlete_id: manageFor!,
+        routine_id: routineId,
+        active: true,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assigned_routines_athlete", manageFor] });
       qc.invalidateQueries({ queryKey: ["assigned_routines"] });
       toast("success", "Rutina asignada");
     },
     onError: (e) => toast("error", "No se pudo asignar", e.message),
+  });
+
+  const unassignRoutine = useMutation({
+    mutationFn: async (assignmentId: string) => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("assigned_routines")
+        .delete()
+        .eq("id", assignmentId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assigned_routines_athlete", manageFor] });
+      qc.invalidateQueries({ queryKey: ["assigned_routines"] });
+      toast("success", "Rutina desasignada");
+    },
+    onError: (e) => toast("error", "No se pudo desasignar", e.message),
+  });
+
+  const assignRecipe = useMutation({
+    mutationFn: async (recipeId: string) => {
+      const supabase = createClient();
+      const { error } = await supabase.from("assigned_recipes").insert({
+        trainer_id: profile!.id,
+        athlete_id: manageFor!,
+        recipe_id: recipeId,
+        active: true,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assigned_recipes_athlete", manageFor] });
+      qc.invalidateQueries({ queryKey: ["assigned_recipes"] });
+      toast("success", "Receta asignada");
+    },
+    onError: (e) => toast("error", "No se pudo asignar", e.message),
+  });
+
+  const unassignRecipe = useMutation({
+    mutationFn: async (assignmentId: string) => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("assigned_recipes")
+        .delete()
+        .eq("id", assignmentId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assigned_recipes_athlete", manageFor] });
+      qc.invalidateQueries({ queryKey: ["assigned_recipes"] });
+      toast("success", "Receta desasignada");
+    },
+    onError: (e) => toast("error", "No se pudo desasignar", e.message),
+  });
+
+  const congrats = useMutation({
+    mutationFn: async (athleteId: string) => {
+      const supabase = createClient();
+      const msg = CONGRATS[Math.floor(Math.random() * CONGRATS.length)];
+      const { error } = await supabase.from("direct_messages").insert({
+        sender_id: profile!.id,
+        recipient_id: athleteId,
+        content: msg,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast("success", "¡Felicitaciones enviadas!", "Le llegó por mensaje directo");
+    },
+    onError: (e) => toast("error", "No se pudo enviar", e.message),
   });
 
   const createCourse = useMutation({
@@ -200,12 +424,14 @@ export default function EntrenadoresPage() {
     );
   }
 
+  const activeClients = (clients ?? []).filter((c) => c.status === "active");
+
   return (
     <div className="flex flex-col gap-5">
       <div>
         <h1 className="font-display text-3xl font-bold tracking-tight">Entrenadores</h1>
         <p className="mt-1 text-sm text-[var(--text-2)]">
-          {isTrainer ? "Panel de entrenador: alumnos, rutinas y cursos" : "Tus entrenadores y rutinas asignadas"}
+          {isTrainer ? "Panel de entrenador: alumnos, rutinas, recetas y cursos" : "Tus entrenadores, rutinas y recetas asignadas"}
         </p>
       </div>
 
@@ -213,20 +439,25 @@ export default function EntrenadoresPage() {
         <>
           {/* Alumnos */}
           <section className="card p-5">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Users className="size-5 text-[var(--accent)]" />
                 <h2 className="font-display text-lg font-bold tracking-tight">Mis alumnos</h2>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setAssignOpen(true)}>
-                <ClipboardList className="size-4" /> Asignar rutina
+              <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
+                <UserPlus className="size-4" /> Agregar alumno
               </Button>
             </div>
-            {(clients ?? []).length === 0 ? (
+            {activeClients.length === 0 ? (
               <EmptyState
                 icon={<Users className="size-6" />}
                 title="Todavía no tenés alumnos"
-                description="Cuando un atleta te agregue como entrenador, aparece acá."
+                description="Buscá por nombre o username y agregalos como alumnos. Después podés asignarles rutinas y recetas."
+                action={
+                  <Button variant="accent" size="sm" onClick={() => setAddOpen(true)}>
+                    <UserPlus className="size-4" /> Agregar mi primer alumno
+                  </Button>
+                }
               />
             ) : (
               <div className="flex flex-col gap-2">
@@ -235,9 +466,13 @@ export default function EntrenadoresPage() {
                     key={c.id}
                     className="flex items-center gap-3 rounded-xl bg-[var(--surface-2)]/60 px-3 py-2.5"
                   >
-                    <span className="flex size-9 items-center justify-center rounded-xl bg-[var(--surface-3)] font-display font-bold">
-                      {(c.athlete?.display_name ?? "?")[0]?.toUpperCase()}
-                    </span>
+                    <Avatar
+                      src={c.athlete?.avatar_url}
+                      size={36}
+                      alt={c.athlete?.display_name ?? "Alumno"}
+                      initialsText={c.athlete?.display_name ?? "A"}
+                      className="rounded-xl"
+                    />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold">
                         {c.athlete?.display_name ?? "Atleta"}
@@ -247,9 +482,18 @@ export default function EntrenadoresPage() {
                           </span>
                         )}
                       </p>
-                      <p className="text-xs capitalize text-[var(--muted)]">{c.status}</p>
+                      <p className="text-xs capitalize text-[var(--muted)]">
+                        {c.status === "active" ? (
+                          <>
+                            racha {c.athlete?.streak_count ?? 0} días
+                            {c.status !== "active" ? ` · ${c.status}` : ""}
+                          </>
+                        ) : (
+                          c.status
+                        )}
+                      </p>
                     </div>
-                    {c.status === "pending" && (
+                    {c.status === "pending" ? (
                       <div className="flex gap-1.5">
                         <button
                           onClick={() => updateClient.mutate({ id: c.id, status: "active" })}
@@ -266,7 +510,46 @@ export default function EntrenadoresPage() {
                           <X className="size-4" />
                         </button>
                       </div>
-                    )}
+                    ) : c.status === "active" ? (
+                      <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setManageFor(c.athlete!.id);
+                            setManageTab("routine");
+                          }}
+                        >
+                          <ClipboardList className="size-3.5" /> Rutina
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setManageFor(c.athlete!.id);
+                            setManageTab("recipe");
+                          }}
+                        >
+                          <Utensils className="size-3.5" /> Receta
+                        </Button>
+                        <button
+                          onClick={() => congrats.mutate(c.athlete!.id)}
+                          disabled={congrats.isPending}
+                          title="Felicitar"
+                          className="flex size-8 items-center justify-center rounded-lg bg-[#f59e0b]/15 text-[#f59e0b] transition-colors hover:bg-[#f59e0b]/25"
+                        >
+                          <PartyPopper className="size-4" />
+                        </button>
+                        <button
+                          onClick={() => removeAlumno.mutate(c.id)}
+                          disabled={removeAlumno.isPending}
+                          title="Quitar alumno"
+                          className="flex size-8 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]"
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
                 ))}
               </div>
@@ -337,7 +620,7 @@ export default function EntrenadoresPage() {
               <EmptyState
                 icon={<Dumbbell className="size-6" />}
                 title="No tenés entrenador"
-                description="Encontrá entrenadores en el marketplace o pedile a tu profe que te agregue por su panel."
+                description="Pedile a tu profe que te agregue como alumno desde su panel."
               />
             ) : (
               <div className="flex flex-col gap-2">
@@ -378,17 +661,58 @@ export default function EntrenadoresPage() {
                     key={a.id}
                     className="flex items-center gap-3 rounded-xl bg-[var(--surface-2)]/60 px-3 py-2.5"
                   >
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold">{a.routine?.name ?? "Rutina"}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">
+                        {a.routine?.name ?? "Rutina"}
+                      </p>
                       <p className="text-xs text-[var(--muted)]">
                         por {a.trainer?.display_name ?? "tu entrenador"}
                       </p>
                     </div>
-                    <a href={`/entrenar?routine=...`}>
+                    <Button
+                      variant="accent"
+                      size="sm"
+                      onClick={() => router.push(`/entrenar?routine=${a.routine?.id}`)}
+                    >
+                      <Dumbbell className="size-3.5" /> Entrenar
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Recetas asignadas */}
+          <section className="card p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <Utensils className="size-5 text-[var(--accent)]" />
+              <h2 className="font-display text-lg font-bold tracking-tight">Recetas asignadas</h2>
+            </div>
+            {(assignedRecipes ?? []).length === 0 ? (
+              <p className="text-sm text-[var(--muted)]">
+                Tu entrenador todavía no te asignó recetas.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {assignedRecipes?.map((a) => (
+                  <div
+                    key={a.id}
+                    className="flex items-center gap-3 rounded-xl bg-[var(--surface-2)]/60 px-3 py-2.5"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">
+                        {a.recipe?.name ?? "Receta"}
+                      </p>
+                      <p className="text-xs text-[var(--muted)]">
+                        {a.recipe?.calories ?? 0} kcal · P {a.recipe?.protein_g ?? 0} g · por{" "}
+                        {a.trainer?.display_name ?? "tu entrenador"}
+                      </p>
+                    </div>
+                    <Link href="/nutricion">
                       <Button variant="outline" size="sm">
-                        Ver
+                        Ver en recetario
                       </Button>
-                    </a>
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -397,57 +721,285 @@ export default function EntrenadoresPage() {
         </>
       )}
 
-      {/* Asignar rutina */}
-      <Dialog
-        open={assignOpen}
-        onClose={() => setAssignOpen(false)}
-        title="Asignar rutina"
-        footer={
-          <div className="flex w-full justify-end gap-2">
-            <Button variant="ghost" onClick={() => setAssignOpen(false)}>
-              Cancelar
-            </Button>
-            <Button
-              variant="accent"
-              onClick={() => assign.mutate()}
-              disabled={!athleteId || !routineId || assign.isPending}
-            >
-              Asignar
-            </Button>
+      {/* Hub de herramientas */}
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-display text-lg font-bold tracking-tight">Herramientas</h2>
+          <span className="text-xs text-[var(--muted)]">para tu entrenamiento</span>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <Link href="/ejercicios" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+            <Dumbbell className="size-5 text-[var(--accent)]" />
+            <span className="w-full truncate text-xs font-semibold">Ejercicios</span>
+          </Link>
+          <Link href="/glosario" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+            <BookOpenText className="size-5 text-[var(--accent)]" />
+            <span className="w-full truncate text-xs font-semibold">Diccionario</span>
+          </Link>
+          <Link href="/calculadora" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+            <Calculator className="size-5 text-[var(--accent)]" />
+            <span className="w-full truncate text-xs font-semibold">Calculadora</span>
+          </Link>
+        </div>
+      </section>
+
+      {/* Agregar alumno */}
+      <Dialog open={addOpen} onClose={() => setAddOpen(false)} title="Agregar alumno">
+        <div className="flex flex-col gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--muted)]" />
+            <Input
+              value={addSearch}
+              onChange={(e) => setAddSearch(e.target.value)}
+              placeholder="Buscar por nombre o username…"
+              className="pl-9"
+              autoFocus
+            />
           </div>
-        }
+          <div className="flex max-h-72 flex-col gap-1.5 overflow-y-auto">
+            {addSearch.trim() && (addResults ?? []).length === 0 && (
+              <p className="py-3 text-center text-sm text-[var(--muted)]">
+                Sin resultados para "{addSearch.trim()}"
+              </p>
+            )}
+            {(addResults ?? []).map((u) => {
+              const isMine = u.id === profile?.id;
+              const isClient = clientIds.has(u.id);
+              return (
+                <div
+                  key={u.id}
+                  className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-[var(--surface-2)]"
+                >
+                  <Avatar
+                    src={u.avatar_url}
+                    size={36}
+                    alt={u.display_name ?? u.username ?? "Atleta"}
+                    initialsText={u.display_name ?? u.username ?? "A"}
+                    className="rounded-full"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">
+                      {u.display_name ?? u.username}
+                      {!u.is_public_profile && (
+                        <span className="ml-1 text-[10px] uppercase text-[var(--muted)]">
+                          privado
+                        </span>
+                      )}
+                    </p>
+                    <p className="truncate text-xs text-[var(--muted)]">
+                      @{u.username ?? "—"} · racha {u.streak_count ?? 0} días
+                    </p>
+                  </div>
+                  {isMine ? (
+                    <span className="text-xs font-semibold text-[var(--muted)]">Sos vos</span>
+                  ) : isClient ? (
+                    <span className="text-xs font-semibold text-[var(--success)]">Ya es alumno</span>
+                  ) : (
+                    <Button
+                      variant="accent"
+                      size="sm"
+                      onClick={() => addAlumno.mutate(u.id)}
+                      disabled={addAlumno.isPending}
+                    >
+                      <UserPlus className="size-3.5" /> Agregar
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Gestionar alumno: rutinas / recetas */}
+      <Dialog
+        open={!!manageFor}
+        onClose={() => setManageFor(null)}
+        title={`Gestionar: ${manageClient?.athlete?.display_name ?? "alumno"}`}
+        size="lg"
       >
         <div className="flex flex-col gap-4">
-          <Field label="Alumno">
-            <select
-              value={athleteId}
-              onChange={(e) => setAthleteId(e.target.value)}
-              className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm focus:border-[var(--accent)] focus:outline-none"
-            >
-              <option value="">Elegí un alumno...</option>
-              {(clients ?? [])
-                .filter((c) => c.status === "active")
-                .map((c) => (
-                  <option key={c.id} value={c.athlete?.id}>
-                    {c.athlete?.display_name ?? "Atleta"}
-                  </option>
-                ))}
-            </select>
-          </Field>
-          <Field label="Rutina">
-            <select
-              value={routineId}
-              onChange={(e) => setRoutineId(e.target.value)}
-              className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm focus:border-[var(--accent)] focus:outline-none"
-            >
-              <option value="">Elegí una rutina tuya...</option>
-              {myRoutines?.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <div className="flex gap-1.5">
+            {[
+              { id: "routine" as const, label: "Rutinas", icon: <ClipboardList className="size-4" /> },
+              { id: "recipe" as const, label: "Recetas", icon: <Utensils className="size-4" /> },
+            ].map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setManageTab(t.id)}
+                className={cn(
+                  "flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-semibold transition-all",
+                  manageTab === t.id
+                    ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                    : "border-[var(--border)] text-[var(--text-2)] hover:text-[var(--text)]"
+                )}
+              >
+                {t.icon}
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {manageTab === "routine" ? (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">
+                  Rutinas asignadas
+                </p>
+                {(manageAssignedRoutines ?? []).length === 0 ? (
+                  <p className="text-sm text-[var(--muted)]">Sin rutinas asignadas todavía.</p>
+                ) : (
+                  (manageAssignedRoutines ?? []).map((a) => (
+                    <div
+                      key={a.id}
+                      className="flex items-center gap-3 rounded-xl bg-[var(--surface-2)]/60 px-3 py-2.5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold">
+                          {a.routine?.name ?? "Rutina"}
+                        </p>
+                        <p className="text-xs text-[var(--muted)]">
+                          {a.active ? "activa" : "inactiva"}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-[var(--danger)]/70 hover:text-[var(--danger)]"
+                        onClick={() => unassignRoutine.mutate(a.id)}
+                        disabled={unassignRoutine.isPending}
+                      >
+                        <Trash2 className="size-3.5" /> Quitar
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">
+                  Asignar rutina (tus rutinas)
+                </p>
+                {(myRoutines ?? []).length === 0 ? (
+                  <p className="text-sm text-[var(--muted)]">
+                    Creá rutinas en la sección Rutinas para asignarlas.
+                  </p>
+                ) : (
+                  <div className="flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+                    {myRoutines?.map((r) => {
+                      const already = (manageAssignedRoutines ?? []).some(
+                        (a) => a.routine?.id === r.id && a.active
+                      );
+                      return (
+                        <div
+                          key={r.id}
+                          className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-[var(--surface-2)]"
+                        >
+                          <Dumbbell className="size-4 shrink-0 text-[var(--muted)]" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold">{r.name}</p>
+                            <p className="text-xs text-[var(--muted)]">
+                              {r.is_template ? "plantilla" : "tu rutina"}
+                            </p>
+                          </div>
+                          {already ? (
+                            <span className="text-xs font-semibold text-[var(--success)]">
+                              Asignada
+                            </span>
+                          ) : (
+                            <Button
+                              variant="accent"
+                              size="sm"
+                              onClick={() => assignRoutine.mutate(r.id)}
+                              disabled={assignRoutine.isPending}
+                            >
+                              <Plus className="size-3.5" /> Asignar
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">
+                  Recetas asignadas
+                </p>
+                {(manageAssignedRecipes ?? []).length === 0 ? (
+                  <p className="text-sm text-[var(--muted)]">Sin recetas asignadas todavía.</p>
+                ) : (
+                  (manageAssignedRecipes ?? []).map((a) => (
+                    <div
+                      key={a.id}
+                      className="flex items-center gap-3 rounded-xl bg-[var(--surface-2)]/60 px-3 py-2.5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold">
+                          {a.recipe?.name ?? "Receta"}
+                        </p>
+                        <p className="text-xs text-[var(--muted)]">
+                          {a.recipe?.calories ?? 0} kcal · P {a.recipe?.protein_g ?? 0} g
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-[var(--danger)]/70 hover:text-[var(--danger)]"
+                        onClick={() => unassignRecipe.mutate(a.id)}
+                        disabled={unassignRecipe.isPending}
+                      >
+                        <Trash2 className="size-3.5" /> Quitar
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">
+                  Asignar receta del recetario
+                </p>
+                <div className="flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+                  {(allRecipes ?? []).map((r) => {
+                    const already = (manageAssignedRecipes ?? []).some(
+                      (a) => a.recipe?.id === r.id && a.active
+                    );
+                    return (
+                      <div
+                        key={r.id}
+                        className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-[var(--surface-2)]"
+                      >
+                        <Utensils className="size-4 shrink-0 text-[var(--muted)]" />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold">{r.name}</p>
+                          <p className="text-xs text-[var(--muted)]">
+                            {r.calories} kcal · P {r.protein_g} g
+                            {r.category ? ` · ${r.category}` : ""}
+                          </p>
+                        </div>
+                        {already ? (
+                          <span className="text-xs font-semibold text-[var(--success)]">
+                            Asignada
+                          </span>
+                        ) : (
+                          <Button
+                            variant="accent"
+                            size="sm"
+                            onClick={() => assignRecipe.mutate(r.id)}
+                            disabled={assignRecipe.isPending}
+                          >
+                            <Plus className="size-3.5" /> Asignar
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </Dialog>
 

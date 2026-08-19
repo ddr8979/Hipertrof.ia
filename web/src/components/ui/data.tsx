@@ -16,7 +16,7 @@ export function StatCard({
   return (
     <div className={cn("card min-w-0 overflow-hidden p-4", className)}>
       <div className="flex min-w-0 items-center justify-between gap-1.5">
-        <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
+        <p className="min-w-0 text-[10px] font-semibold uppercase leading-tight tracking-wide text-[var(--muted)]">
           {label}
         </p>
         {icon && <span className="shrink-0 text-[var(--accent)]">{icon}</span>}

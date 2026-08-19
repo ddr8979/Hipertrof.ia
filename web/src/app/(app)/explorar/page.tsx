@@ -578,61 +578,27 @@ export default function ExplorarPage() {
         </div>
       </div>
 
-      {/* Mejores amigos estilo Instagram */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">
-            Mejores amigos
-          </p>
-          <button
-            onClick={() => setBestEditOpen(true)}
-            className="flex items-center gap-1 text-xs font-bold text-[#22c55e] hover:underline"
-          >
-            <UserPlus className="size-3.5" />
-            Editar
-          </button>
-        </div>
-        <div className="flex gap-4 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {(bestFriends ?? []).map((f) => (
-            <Link
-              key={f.id}
-              href={`/perfil/${f.id}`}
-              className="flex w-14 shrink-0 flex-col items-center gap-1.5"
-            >
-              <span className="rounded-full bg-gradient-to-tr from-[#22c55e] via-emerald-400 to-lime-300 p-[2px]">
-                <span className="block rounded-full bg-[var(--bg)] p-[2px]">
-                  <Avatar
-                    src={f.avatar_url}
-                    size={48}
-                    alt={f.display_name ?? f.username ?? "Amigo"}
-                    className="ring-2 ring-[var(--bg)]"
-                  />
-                </span>
-              </span>
-              <span className="w-full truncate text-center text-[11px] leading-tight text-[var(--text-2)]">
-                {f.display_name ?? f.username}
-              </span>
-            </Link>
-          ))}
-          <button
-            onClick={() => setBestEditOpen(true)}
-            aria-label="Agregar mejores amigos"
-            className="flex w-14 shrink-0 flex-col items-center gap-1.5"
-          >
-            <span className="flex size-[52px] items-center justify-center rounded-full border-2 border-dashed border-[#22c55e]/50 text-[#22c55e] transition-colors hover:border-[#22c55e] hover:bg-[#22c55e]/10">
-              <UserPlus className="size-5" />
-            </span>
-            <span className="w-full truncate text-center text-[11px] font-semibold leading-tight text-[#22c55e]">
-              {bestFriends?.length ? "Agregar" : "Agregar amigos"}
-            </span>
-          </button>
-        </div>
-        {(bestFriends?.length ?? 0) === 0 && (
-          <p className="text-xs text-[var(--muted)]">
-            Elegí a las personas que verán tus posts exclusivos. Solo vos y ellos los ven.
-          </p>
-        )}
+      {/* Mejores amigos */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">
+          Mejores amigos
+          <span className="ml-2 font-medium normal-case text-[var(--text-2)]">
+            ({bestFriends?.length ?? 0})
+          </span>
+        </p>
+        <button
+          onClick={() => setBestEditOpen(true)}
+          className="flex items-center gap-1 text-xs font-bold text-[#22c55e] hover:underline"
+        >
+          <UserPlus className="size-3.5" />
+          Editar lista
+        </button>
       </div>
+      {(bestFriends?.length ?? 0) === 0 && (
+        <p className="text-xs text-[var(--muted)]">
+          Elegí a las personas que verán tus posts exclusivos. Solo vos y ellos los ven.
+        </p>
+      )}
 
       {tab !== "buscar" ? (
         <>
@@ -770,19 +736,24 @@ export default function ExplorarPage() {
                       )}
                       <div className="min-w-0 flex-1">
                         {author?.id ? (
-                          <Link
-                            href={`/perfil/${author.id}`}
-                            className="block truncate text-sm font-bold hover:underline"
-                          >
-                            {displayName(author)}
+                          <>
+                            <Link
+                              href={`/perfil/${author.id}`}
+                              className="block break-words text-sm font-bold leading-snug hover:underline"
+                            >
+                              {displayName(author)}
+                            </Link>
                             {author?.username && (
-                              <span className="ml-1.5 font-semibold text-[var(--muted)]">
+                              <Link
+                                href={`/perfil/${author.id}`}
+                                className="block break-words text-xs font-semibold text-[var(--muted)] hover:underline"
+                              >
                                 @{author.username}
-                              </span>
+                              </Link>
                             )}
-                          </Link>
+                          </>
                         ) : (
-                          <p className="truncate text-sm font-bold">
+                          <p className="break-words text-sm font-bold leading-snug">
                             {displayName(author)}
                           </p>
                         )}

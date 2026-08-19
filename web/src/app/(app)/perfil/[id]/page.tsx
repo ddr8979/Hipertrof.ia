@@ -20,6 +20,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { playlistThumb } from "@/lib/utils";
 import { SpotifyNowCard } from "@/components/spotify-now";
+import { ProfileTrackPlayer, SocialCircles, VerifiedBadge } from "@/components/profile-bits";
 import { Skeleton, Avatar } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/data";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,15 @@ type PublicProfile = {
   show_height: boolean;
   show_followers: boolean;
   show_personal: boolean;
+  is_verified: boolean | null;
+  instagram_handle: string | null;
+  tiktok_handle: string | null;
+  twitter_handle: string | null;
+  spotify_handle: string | null;
+  profile_track_id: string | null;
+  profile_track_name: string | null;
+  profile_track_artist: string | null;
+  profile_track_preview: string | null;
 } & Record<string, unknown>;
 
 type PublicPost = {
@@ -68,7 +78,7 @@ export default function PublicProfilePage() {
       const { data } = await supabase
         .from("public_profiles")
         .select(
-          "id, display_name, username, bio, avatar_url, banner_url, accent_color, streak_count, is_public_profile, show_weight, show_height, show_followers, show_personal"
+          "id, display_name, username, bio, avatar_url, banner_url, accent_color, streak_count, is_public_profile, show_weight, show_height, show_followers, show_personal, is_verified, instagram_handle, tiktok_handle, twitter_handle, spotify_handle, profile_track_id, profile_track_name, profile_track_artist, profile_track_preview"
         )
         .eq("id", id)
         .maybeSingle();
@@ -268,7 +278,7 @@ export default function PublicProfilePage() {
         <div className="px-5 pb-5" style={target.banner_url ? undefined : { paddingTop: "1.25rem" }}>
           <div className="-mt-10 flex items-end justify-between">
             <span
-              className="flex size-20 items-center justify-center overflow-hidden rounded-2xl border-4 border-[var(--surface)] bg-[var(--surface-3)] font-display text-2xl font-bold"
+              className="flex size-20 items-center justify-center overflow-hidden rounded-full border-4 border-[var(--surface)] bg-[var(--surface-3)] font-display text-2xl font-bold"
               style={
                 target.accent_color
                   ? { background: "var(--accent-soft)", color: "var(--accent)" }
@@ -279,7 +289,7 @@ export default function PublicProfilePage() {
                 src={target.avatar_url}
                 alt={name}
                 initialsText={name}
-                className="size-full rounded-none border-0 text-2xl"
+                className="size-full border-0 text-2xl"
                 size={80}
               />
             </span>
@@ -336,8 +346,9 @@ export default function PublicProfilePage() {
               </Link>
             )}
           </div>
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
             <h1 className="font-display text-2xl font-bold tracking-tight">{name}</h1>
+            {target.is_verified && <VerifiedBadge size={18} />}
             {target.username && (
               <span className="text-sm font-semibold text-[var(--muted)]">
                 @{target.username}
@@ -353,49 +364,61 @@ export default function PublicProfilePage() {
           {Boolean(target.bio) && (target.show_personal || isMine) && (
             <p className="mt-2 max-w-xl text-sm text-[var(--text-2)]">{String(target.bio)}</p>
           )}
-          <div className="mt-4 grid grid-cols-4 gap-3">
-            <div className="rounded-xl bg-[var(--surface-2)] p-3 text-center">
-              <p className="font-display text-sm font-bold">{target.streak_count ?? 0} días</p>
-              <p className="mt-0.5 text-[10px] uppercase tracking-wider text-[var(--muted)]">Racha</p>
-            </div>
+          <SocialCircles
+            handles={{
+              instagram_handle: target.instagram_handle,
+              tiktok_handle: target.tiktok_handle,
+              twitter_handle: target.twitter_handle,
+              spotify_handle: target.spotify_handle,
+            }}
+            className="mt-3"
+          />
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm">
+            <span>
+              <strong className="font-display text-base font-bold">
+                {target.streak_count ?? 0}
+              </strong>{" "}
+              <span className="text-[var(--muted)]">días de racha</span>
+            </span>
+            <span className="text-[var(--muted)]">·</span>
             <button
               onClick={() => setNetOpen(true)}
               disabled={!target.show_followers && !isMine}
               className={cn(
-                "rounded-xl bg-[var(--surface-2)] p-3 text-center transition-colors",
-                (target.show_followers || isMine) && "hover:bg-[var(--surface-3)]"
+                "text-left",
+                (target.show_followers || isMine) && "transition-opacity hover:opacity-70"
               )}
             >
-              <p className="font-display text-sm font-bold">
+              <strong className="font-display text-base font-bold">
                 {target.show_followers || isMine ? followersCount ?? 0 : "—"}
-              </p>
-              <p className="mt-0.5 text-[10px] uppercase tracking-wider text-[var(--muted)]">
-                Seguidores
-              </p>
+              </strong>{" "}
+              <span className="text-[var(--muted)]">seguidores</span>
             </button>
+            <span className="text-[var(--muted)]">·</span>
             <button
               onClick={() => setNetOpen(true)}
               disabled={!target.show_followers && !isMine}
               className={cn(
-                "rounded-xl bg-[var(--surface-2)] p-3 text-center transition-colors",
-                (target.show_followers || isMine) && "hover:bg-[var(--surface-3)]"
+                "text-left",
+                (target.show_followers || isMine) && "transition-opacity hover:opacity-70"
               )}
             >
-              <p className="font-display text-sm font-bold">
+              <strong className="font-display text-base font-bold">
                 {target.show_followers || isMine ? followingCount ?? 0 : "—"}
-              </p>
-              <p className="mt-0.5 text-[10px] uppercase tracking-wider text-[var(--muted)]">
-                Seguidos
-              </p>
+              </strong>{" "}
+              <span className="text-[var(--muted)]">seguidos</span>
             </button>
-            {target.show_weight !== false && (target as { weight_kg?: number }).weight_kg ? (
-              <div className="rounded-xl bg-[var(--surface-2)] p-3 text-center">
-                <p className="font-display text-sm font-bold">
-                  {(target as { weight_kg?: number }).weight_kg} kg
-                </p>
-                <p className="mt-0.5 text-[10px] uppercase tracking-wider text-[var(--muted)]">Peso</p>
-              </div>
-            ) : null}
+            {target.show_weight !== false && (target as { weight_kg?: number }).weight_kg && (
+              <>
+                <span className="text-[var(--muted)]">·</span>
+                <span>
+                  <strong className="font-display text-base font-bold">
+                    {(target as { weight_kg?: number }).weight_kg}
+                  </strong>{" "}
+                  <span className="text-[var(--muted)]">kg</span>
+                </span>
+              </>
+            )}
           </div>
           {(target.show_height || isMine) && (target as { height_cm?: number }).height_cm ? (
             <p className="mt-3 text-xs text-[var(--muted)]">
@@ -440,6 +463,7 @@ export default function PublicProfilePage() {
                       <img
                         src={p.thumbnail_url}
                         alt=""
+                        referrerPolicy="no-referrer"
                         className="size-10 shrink-0 rounded-lg object-cover"
                       />
                     ) : (
@@ -459,6 +483,20 @@ export default function PublicProfilePage() {
                   </a>
                 ))}
               </div>
+            </section>
+          )}
+
+          {target.profile_track_name && target.profile_track_preview && (
+            <section className="card p-5">
+              <div className="mb-3 flex items-center gap-2">
+                <Music4 className="size-5 text-[var(--accent)]" />
+                <h2 className="font-display text-lg font-bold tracking-tight">Tema del perfil</h2>
+              </div>
+              <ProfileTrackPlayer
+                name={target.profile_track_name}
+                artist={target.profile_track_artist}
+                previewUrl={target.profile_track_preview}
+              />
             </section>
           )}
 

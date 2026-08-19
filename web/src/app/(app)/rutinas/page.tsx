@@ -253,82 +253,83 @@ function RoutineEditor({
   }
 
   return (
-    <Dialog
-      open
-      onClose={onClose}
-      title={routine ? "Editar rutina" : "Nueva rutina"}
-      size="lg"
-      footer={
-        <div className="flex w-full items-center justify-between gap-3">
-          <Button variant="ghost" onClick={onClose} disabled={saving}>
-            Cancelar
-          </Button>
-          <Button onClick={save} loading={saving}>
-            Guardar rutina
-          </Button>
-        </div>
-      }
-    >
-      <div className="flex flex-col gap-4">
-        <Field label="Nombre">
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ej: Push A"
-            autoFocus
-          />
-        </Field>
-        <Field label="Descripción (opcional)">
-          <Input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Notas para vos o tus alumnos…"
-          />
-        </Field>
-
-        <div className="flex flex-col gap-2.5">
-          {drafts.map((d, i) => (
-            <DraftRow
-              key={d.key}
-              ex={d}
-              index={i}
-              total={drafts.length}
-              onChange={(patch) =>
-                setDrafts((arr) =>
-                  arr.map((x) => (x.key === d.key ? { ...x, ...patch } : x))
-                )
-              }
-              onRemove={() =>
-                setDrafts((arr) => arr.filter((x) => x.key !== d.key))
-              }
-              onMove={(dir) =>
-                setDrafts((arr) => {
-                  const j = i + dir;
-                  if (j < 0 || j >= arr.length) return arr;
-                  const copy = [...arr];
-                  [copy[i], copy[j]] = [copy[j], copy[i]];
-                  return copy;
-                })
-              }
+    <>
+      <Dialog
+        open
+        onClose={onClose}
+        title={routine ? "Editar rutina" : "Nueva rutina"}
+        size="lg"
+        footer={
+          <div className="flex w-full items-center justify-between gap-3">
+            <Button variant="ghost" onClick={onClose} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button onClick={save} loading={saving}>
+              Guardar rutina
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <Field label="Nombre">
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ej: Push A"
+              autoFocus
             />
-          ))}
-          <button
-            onClick={() => setPickerOpen(true)}
-            className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--border)] py-4 text-sm font-semibold text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
-          >
-            <Plus className="size-4.5" />
-            Agregar ejercicio
-          </button>
-        </div>
+          </Field>
+          <Field label="Descripción (opcional)">
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Notas para vos o tus alumnos…"
+            />
+          </Field>
 
-        <ExercisePicker
-          open={pickerOpen}
-          onClose={() => setPickerOpen(false)}
-          onPick={addExercise}
-          selectedIds={drafts.map((d) => d.exerciseId).filter(Boolean) as string[]}
-        />
-      </div>
-    </Dialog>
+          <div className="flex flex-col gap-2.5">
+            {drafts.map((d, i) => (
+              <DraftRow
+                key={d.key}
+                ex={d}
+                index={i}
+                total={drafts.length}
+                onChange={(patch) =>
+                  setDrafts((arr) =>
+                    arr.map((x) => (x.key === d.key ? { ...x, ...patch } : x))
+                  )
+                }
+                onRemove={() =>
+                  setDrafts((arr) => arr.filter((x) => x.key !== d.key))
+                }
+                onMove={(dir) =>
+                  setDrafts((arr) => {
+                    const j = i + dir;
+                    if (j < 0 || j >= arr.length) return arr;
+                    const copy = [...arr];
+                    [copy[i], copy[j]] = [copy[j], copy[i]];
+                    return copy;
+                  })
+                }
+              />
+            ))}
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--border)] py-4 text-sm font-semibold text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            >
+              <Plus className="size-4.5" />
+              Agregar ejercicio
+            </button>
+          </div>
+        </div>
+      </Dialog>
+      <ExercisePicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onPick={addExercise}
+        selectedIds={drafts.map((d) => d.exerciseId).filter(Boolean) as string[]}
+      />
+    </>
   );
 }
 
