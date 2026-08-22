@@ -170,7 +170,6 @@ export default function PerfilPage() {
           profile_track_name: trackName || null,
           profile_track_artist: trackArtist || null,
           profile_track_preview: trackPreview || null,
-          profile_track_cover: trackCover || null,
         })
         .eq("id", profile!.id);
       if (error) throw new Error(error.message);
