@@ -204,6 +204,7 @@ body {
   background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 60%, var(--info)));
   -webkit-background-clip: text;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: transparent;
 }
 

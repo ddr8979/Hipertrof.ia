@@ -30,34 +30,12 @@ export function VerifiedBadge({ size = 20, className }: { size?: number; classNa
       <defs>
         <linearGradient id={`${id}-grad`} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#4dc7ff" />
-          <stop offset="50%" stopColor="#3897f0" />
+          <stop offset="55%" stopColor="#3897f0" />
           <stop offset="100%" stopColor="#0e5ee8" />
-          <animate attributeName="x1" values="0%;100%;0%" dur="3s" repeatCount="indefinite" />
-          <animate attributeName="y1" values="0%;100%;0%" dur="3s" repeatCount="indefinite" />
-          <animate attributeName="x2" values="100%;0%;100%" dur="3s" repeatCount="indefinite" />
-          <animate attributeName="y2" values="100%;0%;100%" dur="3s" repeatCount="indefinite" />
         </linearGradient>
-        <radialGradient id={`${id}-glow`} cx="50%" cy="50%" r="60%">
-          <stop offset="0%" stopColor="rgba(77,199,255,0.4)" stopOpacity="0.4" />
-          <stop offset="70%" stopColor="rgba(56,151,240,0.1)" stopOpacity="0.1" />
-          <stop offset="100%" stopColor="rgba(14,94,232,0)" stopOpacity="0" />
-          <animate attributeName="r" values="60%;80%;60%" dur="2.5s" repeatCount="indefinite" />
-        </radialGradient>
-        <filter id={`${id}-shine`} x="-50%" y="0" width="200%" height="100%">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
-          <feSpecularLighting surfaceScale="3" specularConstant="0.5" specularExponent="20" lighting-color="#fff" result="spec">
-            <fePointLight x="12" y="12" z="30" />
-          </feSpecularLighting>
-          <feComposite in="spec" in2="SourceAlpha" operator="in" result="spec" />
-          <feComposite in="SourceGraphic" in2="spec" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
-          <animate attributeName="stdDeviation" values="2;4;2" dur="2s" repeatCount="indefinite" />
-        </filter>
       </defs>
-      <circle cx="12" cy="12" r="11" fill={`url(#${id}-grad)`} filter={`url(#${id}-shine)`} />
-      <circle cx="12" cy="12" r="14" fill={`url(#${id}-glow)`} />
-      <circle cx="12" cy="12" r="10.2" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="0.8">
-        <animate attributeName="stroke-opacity" values="0.35;0.6;0.35" dur="2s" repeatCount="indefinite" />
-      </circle>
+      <circle cx="12" cy="12" r="11" fill={`url(#${id}-grad)`} />
+      <circle cx="12" cy="12" r="10.2" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
       <path
         d="M7.6 12.4l2.9 2.9 6-6.1"
         fill="none"
@@ -65,12 +43,7 @@ export function VerifiedBadge({ size = 20, className }: { size?: number; classNa
         strokeWidth="2.4"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeDasharray="22"
-        strokeDashoffset="22"
-      >
-        <animate attributeName="strokeDashoffset" values="22;0" dur="0.6s" begin="0.2s" fill="freeze" calcMode="spline" keySplines="0.4 0 0.2 1" />
-        <animate attributeName="stroke-opacity" values="0;1" dur="0.3s" begin="0.2s" fill="freeze" />
-      </path>
+      />
     </svg>
   );
 }
