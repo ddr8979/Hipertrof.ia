@@ -202,7 +202,7 @@ export default async function LandingPage() {
             {
               icon: <Music4 className="size-6" />,
               title: "Tu música, tu perfil",
-              desc: "Conectá Spotify, Apple Music o YouTube Music y mostrá tus playlists de entreno.",
+              desc: "Conectá Spotify, Apple Music o YouTube Music y mostrá tus playlists.",
             },
             {
               icon: <Store className="size-6" />,

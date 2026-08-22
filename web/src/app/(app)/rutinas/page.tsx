@@ -18,6 +18,7 @@ import {
   ChevronUp,
   ChevronDown,
   Share2,
+  AlertCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,9 @@ type DraftEx = {
   sets: number;
   reps: string;
   rest: number;
+  groupName: string | null;
+  isSuperset: boolean;
+  color: string | null;
 };
 
 function DraftRow({
@@ -165,6 +169,9 @@ function RoutineEditor({
       sets: e.target_sets,
       reps: e.target_reps,
       rest: e.rest_sec,
+      groupName: e.group_name,
+      isSuperset: e.is_superset,
+      color: e.color,
     })) ?? []
   );
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -185,6 +192,9 @@ function RoutineEditor({
         sets: 3,
         reps: "8-12",
         rest: 90,
+        groupName: null,
+        isSuperset: false,
+        color: null,
       },
     ]);
     setPickerOpen(false);
@@ -215,11 +225,53 @@ function RoutineEditor({
           .update({ name: name.trim(), description: description.trim() || null })
           .eq("id", routineId);
         if (er) throw er;
-        const { error: ed } = await supabase
+
+        // Upsert de ejercicios preservando order_index, group_name, is_superset, color
+        // Primero obtener existentes para mapear por exercise_id+order_index
+        const { data: existingEx } = await supabase
           .from("routine_exercises")
-          .delete()
+          .select("id, exercise_id, order_index")
           .eq("routine_id", routineId);
-        if (ed) throw ed;
+
+        const existingMap = new Map<string, string>();
+        for (const ex of existingEx ?? []) {
+          existingMap.set(`${ex.exercise_id}:${ex.order_index}`, ex.id);
+        }
+
+const upserts = drafts.map((d, i) => {
+          const existingKey = `${d.exerciseId}:${i}`;
+          const existingId = existingMap.get(existingKey);
+          return {
+            id: existingId,
+            routine_id: routineId!,
+            exercise_id: d.exerciseId,
+            order_index: i,
+            target_sets: d.sets,
+            target_reps: d.reps,
+            rest_sec: d.rest,
+            group_name: d.groupName,
+            is_superset: d.isSuperset,
+            color: d.color,
+          };
+        });
+
+        // Para los existentes que ya no están en drafts, borrar
+        const newKeys = new Set(drafts.map((d, i) => `${d.exerciseId}:${i}`));
+        const toDelete = (existingEx ?? [])
+          .filter((ex) => !newKeys.has(`${ex.exercise_id}:${ex.order_index}`))
+          .map((ex) => ex.id);
+        if (toDelete.length > 0) {
+          const { error: ed } = await supabase
+            .from("routine_exercises")
+            .delete()
+            .in("id", toDelete);
+          if (ed) throw ed;
+        }
+
+        const { error: ei } = await supabase
+          .from("routine_exercises")
+          .upsert(upserts, { onConflict: "id" });
+        if (ei) throw ei;
       } else {
         const { data: r, error: er } = await supabase
           .from("routines")
@@ -228,18 +280,21 @@ function RoutineEditor({
           .single();
         if (er) throw er;
         routineId = r.id;
-      }
 
-      const rows = drafts.map((d, i) => ({
-        routine_id: routineId!,
-        exercise_id: d.exerciseId,
-        order_index: i,
-        target_sets: d.sets,
-        target_reps: d.reps,
-        rest_sec: d.rest,
-      }));
-      const { error: ei } = await supabase.from("routine_exercises").insert(rows);
-      if (ei) throw ei;
+        const rows = drafts.map((d, i) => ({
+          routine_id: routineId!,
+          exercise_id: d.exerciseId,
+          order_index: i,
+          target_sets: d.sets,
+          target_reps: d.reps,
+          rest_sec: d.rest,
+          group_name: d.groupName,
+          is_superset: d.isSuperset,
+          color: d.color,
+        }));
+        const { error: ei } = await supabase.from("routine_exercises").insert(rows);
+        if (ei) throw ei;
+      }
 
       qc.invalidateQueries({ queryKey: ["routines"] });
       toast("success", routine ? "Rutina actualizada" : "Rutina creada");
@@ -327,6 +382,9 @@ function RoutineEditor({
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onPick={addExercise}
+        onRemove={(exerciseId) => {
+          setDrafts((d) => d.filter((x) => x.exerciseId !== exerciseId));
+        }}
         selectedIds={drafts.map((d) => d.exerciseId).filter(Boolean) as string[]}
       />
     </>
@@ -338,6 +396,7 @@ export default function RutinasPage() {
   const router = useRouter();
   const [tab, setTab] = useState<"mine" | "library">("mine");
   const [editing, setEditing] = useState<Routine | null | undefined>(undefined);
+  const [deleteConfirm, setDeleteConfirm] = useState<Routine | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["routines"],
@@ -393,11 +452,16 @@ export default function RutinasPage() {
         target_reps: e.reps,
         rest_sec: e.rest,
       }));
+      const unmatched = template.exercises.filter((e) => !byName.has(e.name));
       const { error: ei } = await supabase.from("routine_exercises").insert(rows);
       if (ei) throw ei;
 
       qc.invalidateQueries({ queryKey: ["routines"] });
-      toast("success", "Plantilla agregada", `${template.name} está en tus rutinas`);
+      if (unmatched.length > 0) {
+        toast("warning", "Algunos ejercicios no se encontraron en la BD", `${unmatched.map((e) => e.name).join(", ")} se agregaron sin video/músculo`);
+      } else {
+        toast("success", "Plantilla agregada", `${template.name} está en tus rutinas`);
+      }
       router.push(`/entrenar?routine=${routine.id}`);
     } catch (err) {
       toast("error", "No se pudo agregar la plantilla", (err as Error).message);
@@ -405,14 +469,21 @@ export default function RutinasPage() {
   }
 
   async function remove(routine: Routine) {
+    setDeleteConfirm(routine);
+  }
+
+  async function confirmRemove() {
+    if (!deleteConfirm) return;
     try {
       const supabase = createClient();
-      const { error } = await supabase.from("routines").delete().eq("id", routine.id);
+      const { error } = await supabase.from("routines").delete().eq("id", deleteConfirm.id);
       if (error) throw error;
       qc.invalidateQueries({ queryKey: ["routines"] });
       toast("success", "Rutina eliminada");
     } catch (err) {
       toast("error", "No se pudo eliminar", (err as Error).message);
+    } finally {
+      setDeleteConfirm(null);
     }
   }
 
@@ -607,6 +678,30 @@ export default function RutinasPage() {
           onClose={() => setEditing(undefined)}
           onSaved={() => qc.invalidateQueries({ queryKey: ["routines"] })}
         />
+      )}
+
+      {deleteConfirm && (
+        <Dialog
+          open
+          onClose={() => setDeleteConfirm(null)}
+          title="Eliminar rutina"
+        >
+          <div className="flex flex-col gap-3">
+            <AlertCircle className="size-10 text-[var(--danger)] mx-auto" />
+            <p className="text-center text-sm text-[var(--text-2)]">
+              ¿Eliminar <strong>&laquo;{deleteConfirm.name}&raquo;</strong>?
+              Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => setDeleteConfirm(null)} className="flex-1">
+                Cancelar
+              </Button>
+              <Button variant="danger" onClick={confirmRemove} className="flex-1">
+                <Trash2 className="size-4" /> Eliminar
+              </Button>
+            </div>
+          </div>
+        </Dialog>
       )}
     </div>
   );

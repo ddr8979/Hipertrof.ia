@@ -116,22 +116,30 @@ function MacroText({
   className?: string;
 }) {
   return (
-    <span className={cn("inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] font-semibold", className)}>
+    <span
+      className={cn(
+        "inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] font-bold leading-none tracking-wide",
+        className
+      )}
+    >
       {p != null && (
-        <span className={cn("flex items-center gap-0.5", MACRO_COLORS.protein)}>
-          <span className="opacity-80">Proteína</span>
+        <span className={cn("inline-flex items-center gap-1 whitespace-nowrap", MACRO_COLORS.protein)}>
+          <span className="size-1.5 shrink-0 rounded-full bg-current opacity-80" aria-hidden />
+          <span className="opacity-90">Proteína</span>
           <span className="tabular-nums">{Math.round(p)}g</span>
         </span>
       )}
       {c != null && (
-        <span className={cn("flex items-center gap-0.5", MACRO_COLORS.carbs)}>
-          <span className="opacity-80">Carbohidratos</span>
+        <span className={cn("inline-flex items-center gap-1 whitespace-nowrap", MACRO_COLORS.carbs)}>
+          <span className="size-1.5 shrink-0 rounded-full bg-current opacity-80" aria-hidden />
+          <span className="opacity-90">Carbohidratos</span>
           <span className="tabular-nums">{Math.round(c)}g</span>
         </span>
       )}
       {g != null && (
-        <span className={cn("flex items-center gap-0.5", MACRO_COLORS.fats)}>
-          <span className="opacity-80">Grasas</span>
+        <span className={cn("inline-flex items-center gap-1 whitespace-nowrap", MACRO_COLORS.fats)}>
+          <span className="size-1.5 shrink-0 rounded-full bg-current opacity-80" aria-hidden />
+          <span className="opacity-90">Grasas</span>
           <span className="tabular-nums">{Math.round(g)}g</span>
         </span>
       )}
@@ -744,13 +752,13 @@ export default function NutricionPage() {
           ].map((m) => (
             <div
               key={m.label}
-              className="flex flex-col items-center rounded-xl bg-[var(--surface-2)] p-3 text-center"
+              className="flex flex-col items-center rounded-xl bg-[var(--surface-2)] p-3 text-center min-w-0"
             >
               <div className="flex w-full items-center justify-center gap-1.5 text-[10px] font-semibold uppercase leading-tight tracking-wide">
                 <m.icon className={cn("size-3.5 shrink-0", m.color)} />
-                <span className={cn("leading-tight", m.color)}>{m.label}</span>
+                <span className={cn("leading-tight truncate", m.color)}>{m.label}</span>
               </div>
-              <p className="mt-1.5 font-display text-lg font-bold tabular-nums">
+              <p className="mt-1.5 font-display text-lg font-bold tabular-nums truncate">
                 {m.value}
                 <span className="text-xs text-[var(--text-2)]"> / {m.target} g</span>
               </p>

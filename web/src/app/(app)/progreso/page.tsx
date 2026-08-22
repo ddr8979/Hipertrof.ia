@@ -32,6 +32,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/data";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { useProfile } from "@/components/providers";
 import { formatDuration, estimate1RM } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -287,9 +288,9 @@ export default function ProgresoPage() {
           title="Todavía no hay datos"
           description="Completá entrenamientos y acá vas a ver tu evolución: volumen, 1RM y rachas."
           action={
-            <a href="/entrenar">
+            <Link href="/entrenar">
               <Button variant="accent">Empezar a entrenar</Button>
-            </a>
+            </Link>
           }
         />
       </div>

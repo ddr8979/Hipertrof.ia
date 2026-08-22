@@ -30,7 +30,8 @@ import { ExercisePicker } from "@/components/exercise-picker";
 import { RestTimer } from "@/components/rest-timer";
 import { toast } from "@/components/ui/toast";
 import { formatDuration } from "@/lib/utils";
-import { cn, vibrate, exerciseGif } from "@/lib/utils";
+import { cn, vibrate } from "@/lib/utils";
+import { ExerciseMedia } from "@/components/exercise-media";
 
 const SET_TYPES: { id: SetType; label: string }[] = [
   { id: "N", label: "Normal" },
@@ -45,6 +46,7 @@ const TYPE_COLORS: Record<SetType, string> = {
   F: "bg-[var(--warn-soft)] text-[var(--warn)]",
   D: "bg-[var(--danger-soft)] text-[var(--danger)]",
 };
+const getTypeColor = (type: string) => TYPE_COLORS[type as SetType] ?? TYPE_COLORS.N;
 
 
 function ExerciseCard({
@@ -81,22 +83,11 @@ function ExerciseCard({
   }
 
   return (
-    <div className="card overflow-hidden">
+    <div className="card">
       <div className="flex items-start gap-3 p-4">
-        {exerciseGif(exercise.gifUrl) ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={exerciseGif(exercise.gifUrl)!}
-            alt={exercise.name}
-            loading="lazy"
-            decoding="async"
-            className="size-14 shrink-0 rounded-xl bg-[var(--surface-2)] object-cover"
-          />
-        ) : (
-          <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] font-display text-xl font-bold text-[var(--muted)]">
-            {exercise.name[0]}
-          </span>
-        )}
+        <div className="size-14 shrink-0 overflow-hidden rounded-xl bg-[var(--surface-2)]">
+          <ExerciseMedia url={exercise.gifUrl} alt={exercise.name} className="size-14 rounded-xl" />
+        </div>
         <div className="min-w-0 flex-1">
           <p className="font-display text-base font-bold leading-snug tracking-tight">
             {exercise.name}
@@ -123,7 +114,7 @@ function ExerciseCard({
             <div
               key={set.key}
               className={cn(
-                "flex items-center gap-2 rounded-xl border px-2.5 py-2 transition-colors",
+                "flex flex-wrap items-center gap-2 rounded-xl border px-2.5 py-2 transition-colors",
                 set.completed
                   ? "border-[var(--accent)]/50 bg-[var(--accent-soft)]/60"
                   : "border-[var(--border)]"
@@ -147,7 +138,7 @@ function ExerciseCard({
                   onClick={() => setTypeMenu(typeMenu === i ? null : i)}
                   className={cn(
                     "flex h-8 w-9 items-center justify-center rounded-lg text-[11px] font-bold",
-                    TYPE_COLORS[set.type]
+                    getTypeColor(set.type)
                   )}
                 >
                   {set.type}
@@ -170,7 +161,7 @@ function ExerciseCard({
                         <span
                           className={cn(
                             "flex h-5 w-5 items-center justify-center rounded-md text-[10px] font-bold",
-                            TYPE_COLORS[t.id]
+                            getTypeColor(t.id)
                           )}
                         >
                           {t.id}
@@ -210,7 +201,7 @@ function ExerciseCard({
               />
 
               {lastCompleted && restEndsAt && (
-                <span className="ml-auto flex items-center gap-1 text-xs font-bold text-[var(--accent)]">
+                <span className="flex items-center gap-1 text-xs font-bold text-[var(--accent)]">
                   <Timer className="size-3.5" />
                   Descansando
                 </span>
@@ -307,6 +298,7 @@ export default function EntrenarPage() {
   const qc = useQueryClient();
   const searchParams = useSearchParams();
   const draft = useWorkoutStore((s) => s.draft);
+  const existingDraft = useWorkoutStore.getState().draft;
   const startWorkout = useWorkoutStore((s) => s.startWorkout);
   const resumeWorkout = useWorkoutStore((s) => s.resumeWorkout);
   const discardWorkout = useWorkoutStore((s) => s.discardWorkout);
@@ -320,6 +312,11 @@ export default function EntrenarPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editName, setEditName] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [routineConfirm, setRoutineConfirm] = useState<{
+    routine: { id: string; name: string };
+    existingDraft: WorkoutDraft;
+  } | null>(null);
+  const [exitConfirm, setExitConfirm] = useState(false);
   const bootRef = useRef(false);
 
   const routineId = searchParams.get("routine");
@@ -333,9 +330,10 @@ export default function EntrenarPage() {
       const { data } = await supabase
         .from("routines")
         .select(
-          "id, name, routine_exercises(id, exercise_id, target_sets, target_reps, rest_sec, exercise:exercises(id, name, gif_url))"
+          "id, name, routine_exercises(id, exercise_id, target_sets, target_reps, rest_sec, order_index, exercise:exercises(id, name, gif_url))"
         )
         .eq("id", routineId)
+        .order("order_index", { referencedTable: "routine_exercises", ascending: true })
         .single();
       return data as unknown as {
         id: string;
@@ -346,6 +344,7 @@ export default function EntrenarPage() {
           target_sets: number;
           target_reps: number;
           rest_sec: number;
+          order_index: number;
           exercise: { id: string; name: string; gif_url: string | null } | null;
         }[];
       };
@@ -353,79 +352,118 @@ export default function EntrenarPage() {
     enabled: !!routineId,
   });
 
-  // Boot: rutina nueva siempre gana; si no, continuar sesión previa o esperar decisión
+  // Boot: rutina nueva, sesión previa o esperar decisión
   useEffect(() => {
     if (bootRef.current) return;
-    if (routineId && !routine) return;
+
+    // Esperar a que la query de rutina resuelva (éxito o error)
+    if (routineId && routine === undefined) return;
 
     bootRef.current = true;
 
-    const { draft: existing } = useWorkoutStore.getState();
     if (routine) {
-      startWorkout({
-        name: routine.name,
-        sourceRoutineId: routine.id,
-        exercises: [],
-      });
-      type RoutineExRow = {
-            exercise_id: string | null;
-            target_sets: number;
-            rest_sec: number;
-            exercise: { id: string; name: string; gif_url: string | null } | null;
-          };
-          routine.routine_exercises?.forEach((re: RoutineExRow) => {
-        addExercise({
-          exerciseId: re.exercise_id,
-          name: re.exercise?.name ?? "Ejercicio",
-          gifUrl: re.exercise?.gif_url ?? null,
-          restSec: re.rest_sec ?? 90,
-          sets: re.target_sets ?? 3,
-        });
-      });
+      // Hay rutina cargada: si ya hay draft, preguntar antes de sobrescribir
+      if (existingDraft) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- boot de sesión desde query async
+        setRoutineConfirm({ routine: { id: routine.id, name: routine.name }, existingDraft });
+        return;
+      }
+      applyRoutine(routine);
+      return;
+    }
 
-      // Cargas predeterminadas: pesos del último entrenamiento del usuario
-      void (async () => {
-        const supabase = createClient();
-        const { data: lastW } = await supabase
-          .from("workouts")
-          .select(
-            "workout_exercises(exercise_id, workout_sets(weight_kg))"
-          )
-          .order("started_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        const weights = new Map<string, number>();
-        for (const we of lastW?.workout_exercises ?? []) {
-          const w = we.workout_sets?.find((s) => s.weight_kg > 0)?.weight_kg;
-          if (w) weights.set(we.exercise_id, w);
-        }
-        if (weights.size === 0) return;
-        const st = useWorkoutStore.getState();
-        for (const ex of st.draft?.exercises ?? []) {
-          const w = weights.get(ex.exerciseId ?? "");
-          if (!w) continue;
-          for (const set of ex.sets) {
-            st.updateSet(ex.key, set.key, { weight: w });
-          }
-        }
-      })();
+    if (routineId && !routine) {
+      // La query falló o la rutina no existe: fallback a draft existente o vacío
+      if (existingDraft) {
+        resumeWorkout(existingDraft);
+      }
       return;
     }
-    if (existing) {
-      resumeWorkout(existing);
-      return;
+
+    // Sin rutina en URL: reanudar draft si existe
+    if (existingDraft) {
+      resumeWorkout(existingDraft);
     }
-  }, [routine, routineId, startWorkout, resumeWorkout, addExercise]);
+  }, [routine, routineId, existingDraft, startWorkout, resumeWorkout, addExercise]);
+
+  function applyRoutine(r: NonNullable<typeof routine>) {
+    startWorkout({
+      name: r.name,
+      sourceRoutineId: r.id,
+      exercises: [],
+    });
+    type RoutineExRow = {
+      exercise_id: string | null;
+      target_sets: number;
+      rest_sec: number;
+      exercise: { id: string; name: string; gif_url: string | null } | null;
+    };
+    const unmatched = r.routine_exercises?.filter((re) => !re.exercise_id) ?? [];
+    r.routine_exercises?.forEach((re: RoutineExRow) => {
+      addExercise({
+        exerciseId: re.exercise_id,
+        name: re.exercise?.name ?? "Ejercicio",
+        gifUrl: re.exercise?.gif_url ?? null,
+        restSec: re.rest_sec ?? 90,
+        sets: re.target_sets ?? 3,
+      });
+    });
+    if (unmatched.length > 0) {
+      toast("warning", "Ejercicios sin video/músculo", `${unmatched.map((u) => u.exercise?.name ?? "Desconocido").join(", ")} no están en la base de datos`);
+    }
+
+    // Cargas predeterminadas: pesos del último entrenamiento del usuario
+    void (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+const { data: lastW } = await supabase
+        .from("workouts")
+        .select(
+          "workout_exercises(exercise_id, workout_sets(weight_kg))"
+        )
+        .eq("user_id", user.id)
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const weights = new Map<string, number>();
+      for (const we of lastW?.workout_exercises ?? []) {
+        const w = we.workout_sets?.find((s) => s.weight_kg > 0)?.weight_kg;
+        if (w) weights.set(we.exercise_id, w);
+      }
+      if (weights.size === 0) return;
+      const st = useWorkoutStore.getState();
+      for (const ex of st.draft?.exercises ?? []) {
+        const w = weights.get(ex.exerciseId ?? "");
+        if (!w) continue;
+        for (const set of ex.sets) {
+          st.updateSet(ex.key, set.key, { weight: w });
+        }
+      }
+    })();
+  }
+
+  function confirmRoutineReplace(replace: boolean) {
+    if (replace && routine) {
+      applyRoutine(routine);
+    } else if (!replace && routineConfirm) {
+      resumeWorkout(routineConfirm.existingDraft);
+    }
+    setRoutineConfirm(null);
+  }
 
   const { data: lastWorkout, isLoading: loadingLast } = useQuery({
     queryKey: ["last_workout"],
     queryFn: async () => {
       const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
       const { data } = await supabase
         .from("workouts")
         .select(
           "id, name, workout_exercises(exercise_id, name, order_index, exercise:exercises(id, gif_url), workout_sets(set_index, type, weight_kg, reps, rpe))"
         )
+        .eq("user_id", user.id)
         .order("started_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -458,7 +496,7 @@ export default function EntrenarPage() {
       notes: "",
       sourceRoutineId: null,
       startedAt: null,
-      exercises: lastWorkout.workout_exercises
+      exercises: [...lastWorkout.workout_exercises]
         .sort((a, b) => a.order_index - b.order_index)
         .map((we) => ({
           key: crypto.randomUUID(),
@@ -466,7 +504,8 @@ export default function EntrenarPage() {
           name: we.name,
           gifUrl: we.exercise?.gif_url ?? null,
           notes: "",
-          sets: we.workout_sets
+          restSec: 90,
+          sets: [...we.workout_sets]
             .sort((a, b) => a.set_index - b.set_index)
             .map((s) => ({
               key: crypto.randomUUID(),
@@ -534,38 +573,41 @@ export default function EntrenarPage() {
         Math.floor((Date.now() - new Date(draft.startedAt).getTime()) / 1000)
       );
 
-      const { data: workout, error: we } = await supabase
-        .from("workouts")
-        .insert({
-          user_id: user.id,
-          name: draft.name,
-          notes: draft.notes || null,
-          source_routine_id: draft.sourceRoutineId,
-          started_at: draft.startedAt,
-          ended_at: endedAt,
-          duration_sec: durationSec,
-        })
-        .select("id")
-        .single();
+      // Idempotent: usar draft.id como workout_id (generado al startWorkout)
+      const workoutId = draft.id;
+
+      // 1. Insert workout con ID determinístico
+      const { error: we } = await supabase.from("workouts").upsert({
+        id: workoutId,
+        user_id: user.id,
+        name: draft.name,
+        notes: draft.notes || null,
+        source_routine_id: draft.sourceRoutineId,
+        started_at: draft.startedAt,
+        ended_at: endedAt,
+        duration_sec: durationSec,
+      });
       if (we) throw we;
 
-      const { data: wEs, error: we2 } = await supabase
-        .from("workout_exercises")
-        .insert(
-          draft.exercises.map((e, i) => ({
-            workout_id: workout.id,
+      // 2. Insert workout_exercises uno por uno para mapear IDs correctamente
+      const wEId = new Map<string, string>();
+      for (const e of draft.exercises) {
+        const { data: wE, error: we2 } = await supabase
+          .from("workout_exercises")
+          .insert({
+            workout_id: workoutId,
             exercise_id: e.exerciseId,
             name: e.name,
-            order_index: i,
+            order_index: draft.exercises.indexOf(e),
             notes: e.notes || null,
-          }))
-        )
-        .select();
-      if (we2) throw we2;
+          })
+          .select("id")
+          .single();
+        if (we2 || !wE) throw we2 ?? new Error("No se creó workout_exercise");
+        wEId.set(e.key, wE.id);
+      }
 
-      const wEId = new Map(
-        draft.exercises.map((e, i) => [e.key, wEs[i].id])
-      );
+      // 3. Insert sets en batch (ya tenemos los workout_exercise_id correctos)
       const sets: {
         workout_exercise_id: string;
         set_index: number;
@@ -577,8 +619,10 @@ export default function EntrenarPage() {
       }[] = [];
       draft.exercises.forEach((e) =>
         e.sets.forEach((s, i) => {
+          const weId = wEId.get(e.key);
+          if (!weId) throw new Error("Missing workout_exercise_id for " + e.key);
           sets.push({
-            workout_exercise_id: wEId.get(e.key),
+            workout_exercise_id: weId,
             set_index: i,
             type: s.type,
             weight_kg: s.weight,
@@ -668,13 +712,19 @@ export default function EntrenarPage() {
       {/* Barra superior */}
       <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
-          <Link
-            href="/dashboard"
+          <button
+            onClick={() => {
+              if (draft.exercises.length > 0) {
+                setExitConfirm(true);
+              } else {
+                router.push("/dashboard");
+              }
+            }}
             aria-label="Salir de la sesión"
             className="rounded-xl p-2 text-[var(--muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
           >
             <X className="size-5" />
-          </Link>
+          </button>
 
           <div className="min-w-0 flex-1">
             {editName ? (
@@ -741,13 +791,11 @@ export default function EntrenarPage() {
           </div>
         ) : (
           <>
-            {draft.exercises.map((e, i) => (
+            {draft.exercises.map((e) => (
               <ExerciseCard
                 key={e.key}
                 exercise={e}
-                routineRest={
-                  routine?.routine_exercises?.[i]?.rest_sec ?? 90
-                }
+                routineRest={e.restSec}
                 onRemove={() => removeExercise(e.key)}
               />
             ))}
@@ -838,10 +886,6 @@ export default function EntrenarPage() {
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onPick={(ex) => {
-          if (draft.exercises.some((e) => e.exerciseId === ex.id)) {
-            toast("warning", "Ese ejercicio ya está en la sesión");
-            return;
-          }
           addExercise({
             exerciseId: ex.id,
             name: ex.name,
@@ -849,6 +893,13 @@ export default function EntrenarPage() {
           });
           setPickerOpen(false);
           toast("success", `${ex.name} agregado`);
+        }}
+        onRemove={(exerciseId) => {
+          const ex = draft.exercises.find((e) => e.exerciseId === exerciseId);
+          if (ex) {
+            removeExercise(ex.key);
+            toast("success", `${ex.name} quitado`);
+          }
         }}
         selectedIds={
           draft.exercises
@@ -858,6 +909,52 @@ export default function EntrenarPage() {
       />
 
       <RestTimer />
+
+      {routineConfirm && (
+        <Dialog
+          open
+          onClose={() => confirmRoutineReplace(false)}
+          title="¿Reemplazar sesión actual?"
+        >
+          <div className="flex flex-col gap-3">
+            <p className="text-sm text-[var(--text-2)]">
+              Tenés una sesión en curso con <strong>{routineConfirm.existingDraft.exercises.length} ejercicios</strong>.
+              Al cargar la rutina &laquo;{routineConfirm.routine.name}&raquo; se perderá el progreso no guardado.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => confirmRoutineReplace(false)} className="flex-1">
+                Conservar mi sesión
+              </Button>
+              <Button variant="accent" onClick={() => confirmRoutineReplace(true)} className="flex-1">
+                Cargar rutina
+              </Button>
+            </div>
+          </div>
+        </Dialog>
+      )}
+
+      {exitConfirm && (
+        <Dialog
+          open
+          onClose={() => setExitConfirm(false)}
+          title="¿Salir de la sesión?"
+        >
+          <div className="flex flex-col gap-3">
+            <p className="text-sm text-[var(--text-2)]">
+              Tenés <strong>{draft.exercises.length} ejercicios</strong> con series completadas.
+              Si salís ahora, la sesión queda guardada para continuar luego.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => setExitConfirm(false)} className="flex-1">
+                Seguir entrenando
+              </Button>
+              <Button variant="accent" onClick={() => { router.push("/dashboard"); setExitConfirm(false); }} className="flex-1">
+                Salir y guardar
+              </Button>
+            </div>
+          </div>
+        </Dialog>
+      )}
     </main>
   );
 }

@@ -37,13 +37,17 @@ export default function ChatPage() {
   const router = useRouter();
   const qc = useQueryClient();
   const me = useProfile((s) => s.profile);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [text, setText] = useState("");
   const [stars, setStars] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const { data: other } = useQuery({
     queryKey: ["dm_other", otherId],
@@ -127,10 +131,15 @@ export default function ChatPage() {
     };
   }, [otherId, me?.id, qc]);
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  // Auto-scroll solo si el usuario estaba al fondo
+  const scrollToBottom = (instant = false) => {
+    if (messagesEndRef.current && isAtBottom) {
+      messagesEndRef.current.scrollIntoView({ behavior: instant ? "auto" : "smooth" });
     }
+  };
+
+  useEffect(() => {
+    scrollToBottom(false);
   }, [messages?.length]);
 
   useEffect(() => {
@@ -225,6 +234,49 @@ export default function ChatPage() {
     reader.readAsDataURL(file);
   }
 
+  function handleScroll() {
+    if (!messagesContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const threshold = 100;
+    setIsAtBottom(scrollHeight - scrollTop - clientHeight < threshold);
+  }
+
+  function handleFocus() {
+    setKeyboardOpen(true);
+    // Scroll to bottom when keyboard opens (iOS visualViewport)
+    setTimeout(() => scrollToBottom(false), 100);
+    // Also ensure input is visible via scrollIntoView on iOS
+    setTimeout(() => inputRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }), 150);
+  }
+
+  function handleBlur() {
+    setKeyboardOpen(false);
+  }
+
+  // iOS keyboard handling via visualViewport (fixes "teclado tapa input" y auto-scroll)
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onChange = () => {
+      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKeyboardOffset(offset);
+      // Mantener scroll al fondo solo si el usuario ya estaba abajo
+      if (offset > 0 && isAtBottom) {
+        setTimeout(() => scrollToBottom(false), 50);
+      }
+    };
+    vv.addEventListener("resize", onChange);
+    vv.addEventListener("scroll", onChange);
+    window.addEventListener("resize", onChange);
+    onChange();
+    return () => {
+      vv.removeEventListener("resize", onChange);
+      vv.removeEventListener("scroll", onChange);
+      window.removeEventListener("resize", onChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAtBottom]);
+
   if (isLoading || !other) {
     return (
       <div className="flex flex-col gap-4">
@@ -235,12 +287,19 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-[calc(100dvh-8rem)] flex-col gap-3 lg:h-[calc(100dvh-10rem)]">
-      <div className="flex items-center gap-3">
+    <div
+      className="flex flex-col h-[calc(100dvh-8rem)] lg:h-[calc(100dvh-10rem)] min-h-0"
+      style={
+        keyboardOffset > 0
+          ? { height: `calc(100dvh - 8rem - ${keyboardOffset}px)` }
+          : undefined
+      }
+    >
+      <header className="flex items-center gap-3 shrink-0 px-4 py-3 border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur">
         <button
           onClick={() => router.back()}
           aria-label="Volver"
-          className="rounded-xl p-2 text-[var(--muted)] transition-colors hover:bg-[var(--surface-2)]"
+          className="rounded-xl p-2 text-[var(--muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
         >
           <ArrowLeft className="size-5" />
         </button>
@@ -254,11 +313,11 @@ export default function ChatPage() {
             alt={other.display_name ?? other.username ?? "?"}
           />
           <div className="min-w-0">
-            <p className="truncate font-display text-lg font-bold tracking-tight">
+            <p className="break-words font-display text-lg font-bold leading-tight tracking-tight">
               {other.display_name ?? other.username ?? "Atleta"}
             </p>
             {other.username && (
-              <p className="truncate text-xs text-[var(--muted)]">@{other.username}</p>
+              <p className="break-words text-xs leading-snug text-[var(--muted)]">@{other.username}</p>
             )}
           </div>
         </Link>
@@ -271,11 +330,12 @@ export default function ChatPage() {
             <Trash2 className="size-4" />
           </button>
         )}
-      </div>
+      </header>
 
       <div
-        ref={scrollRef}
-        className="flex flex-1 flex-col gap-2 overflow-y-auto rounded-2xl bg-[var(--surface-2)] p-4"
+        ref={messagesContainerRef}
+        onScroll={handleScroll}
+        className="flex flex-1 flex-col gap-2 overflow-y-auto rounded-2xl bg-[var(--surface-2)] p-4 min-h-0"
       >
         {messages?.length === 0 && (
           <p className="m-auto max-w-xs text-center text-sm text-[var(--muted)]">
@@ -336,10 +396,11 @@ export default function ChatPage() {
             </div>
           );
         })}
+        <div ref={messagesEndRef} />
       </div>
 
-      <div className="flex items-end gap-2">
-        {pendingImage && (
+      {pendingImage && (
+        <div className="shrink-0 border-t border-[var(--border)] px-4 py-2">
           <div className="relative w-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-1.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -362,76 +423,83 @@ export default function ChatPage() {
               className="mt-1.5 h-9 border-0 bg-transparent text-sm focus:ring-0"
             />
           </div>
-        )}
-        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] p-1.5">
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              pickImage(e.target.files?.[0]);
-              e.target.value = "";
-            }}
-          />
-          <button
-            onClick={() => {
-              vibrate(6);
-              fileRef.current?.click();
-            }}
-            aria-label="Adjuntar imagen"
-            className="flex shrink-0 items-center justify-center rounded-xl p-2 text-[var(--muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
-          >
-            <ImagePlus className="size-5" />
-          </button>
-          <Input
-            ref={inputRef}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.nativeEvent.isComposing && text.trim()) {
-                if (pendingImage) {
-                  sendWithImage.mutate();
-                } else {
-                  send.mutate();
-                }
-              }
-            }}
-            placeholder={pendingImage ? "Comentario…" : "Escribí un mensaje…"}
-            className="border-0 bg-transparent focus:ring-0"
-          />
-          <button
-            onClick={() => {
-              vibrate(6);
-              setStars((s) => (s > 0 ? 0 : 1));
-            }}
-            disabled={(balance ?? 0) < stars + 1}
-            aria-label="Enviar estrellas"
-            className={cn(
-              "flex shrink-0 items-center gap-1 rounded-xl px-2.5 py-2 text-xs font-bold transition-colors",
-              stars > 0
-                ? "bg-[var(--accent)]/15 text-[var(--accent)]"
-                : "text-[var(--muted)] hover:bg-[var(--surface-2)]"
-            )}
-          >
-            <Star className={cn("size-4", stars > 0 && "fill-current")} />
-            {stars > 0 && stars}
-          </button>
-          {stars > 0 && (
-            <span className="shrink-0 text-[10px] text-[var(--muted)]">saldo: {balance ?? 0}</span>
-          )}
         </div>
-        <button
-          onClick={() => (pendingImage ? sendWithImage.mutate() : send.mutate())}
-          disabled={
-            (!text.trim() && !pendingImage) || send.isPending || sendWithImage.isPending || uploading
-          }
-          aria-label="Enviar"
-          className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--accent)] text-[var(--accent-ink)] transition-transform active:scale-95 disabled:opacity-40"
-        >
-          <Send className="size-5" />
-        </button>
-      </div>
+      )}
+
+      <footer className="shrink-0 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur px-4 py-3 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex items-end gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] p-1.5">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                pickImage(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+            <button
+              onClick={() => {
+                vibrate(6);
+                fileRef.current?.click();
+              }}
+              aria-label="Adjuntar imagen"
+              className="flex shrink-0 items-center justify-center rounded-xl p-2 text-[var(--muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
+            >
+              <ImagePlus className="size-5" />
+            </button>
+            <Input
+              ref={inputRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.nativeEvent.isComposing && text.trim()) {
+                  if (pendingImage) {
+                    sendWithImage.mutate();
+                  } else {
+                    send.mutate();
+                  }
+                }
+              }}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              placeholder={pendingImage ? "Comentario…" : "Escribí un mensaje…"}
+              className="border-0 bg-transparent focus:ring-0"
+            />
+            <button
+              onClick={() => {
+                vibrate(6);
+                setStars((s) => (s > 0 ? 0 : 1));
+              }}
+              disabled={(balance ?? 0) < stars + 1}
+              aria-label="Enviar estrellas"
+              className={cn(
+                "flex shrink-0 items-center gap-1 rounded-xl px-2.5 py-2 text-xs font-bold transition-colors",
+                stars > 0
+                  ? "bg-[var(--accent)]/15 text-[var(--accent)]"
+                  : "text-[var(--muted)] hover:bg-[var(--surface-2)]"
+              )}
+            >
+              <Star className={cn("size-4", stars > 0 && "fill-current")} />
+              {stars > 0 && stars}
+            </button>
+            {stars > 0 && (
+              <span className="shrink-0 text-[10px] text-[var(--muted)]">saldo: {balance ?? 0}</span>
+            )}
+          </div>
+          <button
+            onClick={() => (pendingImage ? sendWithImage.mutate() : send.mutate())}
+            disabled={
+              (!text.trim() && !pendingImage) || send.isPending || sendWithImage.isPending || uploading
+            }
+            aria-label="Enviar"
+            className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--accent)] text-[var(--accent-ink)] transition-transform active:scale-95 disabled:opacity-40"
+          >
+            <Send className="size-5" />
+          </button>
+        </div>
+      </footer>
     </div>
   );
 }

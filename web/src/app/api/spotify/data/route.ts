@@ -22,8 +22,40 @@ export async function GET(req: NextRequest) {
       "https://api.spotify.com/v1/me/player/currently-playing",
       { headers: { Authorization: `Bearer ${session.token}` } }
     );
+
+    const fetchRecent = async () => {
+      try {
+        const rr = await fetch("https://api.spotify.com/v1/me/player/recently-played?limit=1", {
+          headers: { Authorization: `Bearer ${session.token}` },
+        });
+        if (!rr.ok) return null;
+        const dd = (await rr.json()) as {
+          items?: {
+            track: {
+              name: string;
+              artists: { name: string }[];
+              album?: { images?: { url: string }[]; name?: string };
+            };
+          }[];
+        };
+        const track = dd.items?.[0]?.track;
+        if (!track) return null;
+        return {
+          name: track.name,
+          artists: track.artists?.map((a) => a.name).join(", ") ?? "",
+          cover: track.album?.images?.[0]?.url ?? null,
+          album: track.album?.name ?? null,
+          is_playing: false,
+          is_recent: true,
+        };
+      } catch {
+        return null;
+      }
+    };
+
     if (r.status === 204) {
-      return NextResponse.json({ connected: true, playing: null });
+      const recent = await fetchRecent();
+      return NextResponse.json({ connected: true, playing: recent });
     }
     if (r.status === 401 || r.status === 403) {
       const body = await r.text().catch(() => "");
@@ -33,6 +65,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ connected: true, playing: null });
     }
     if (!r.ok) {
+      const recent = await fetchRecent();
+      if (recent) return NextResponse.json({ connected: true, playing: recent });
       return NextResponse.json({ connected: true, playing: null });
     }
     const p = (await r.json()) as {
@@ -46,7 +80,10 @@ export async function GET(req: NextRequest) {
       is_playing?: boolean;
       progress_ms?: number;
     };
-    if (!p.item) return NextResponse.json({ connected: true, playing: null });
+    if (!p.item) {
+      const recent = await fetchRecent();
+      return NextResponse.json({ connected: true, playing: recent });
+    }
     return NextResponse.json({
       connected: true,
       playing: {

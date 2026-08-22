@@ -9,6 +9,8 @@ import { cn, formatDuration } from "@/lib/utils";
 
 let alarmCtx: AudioContext | null = null;
 let alarmTimer: ReturnType<typeof setInterval> | null = null;
+let alarmCycleCount = 0;
+const MAX_ALARM_CYCLES = 3; // ~10 segundos
 
 function startAlarmLoop() {
   try {
@@ -19,6 +21,7 @@ function startAlarmLoop() {
     if (!alarmCtx) alarmCtx = new Ctx();
     if (alarmCtx.state === "suspended") void alarmCtx.resume();
     if (alarmTimer) return;
+    alarmCycleCount = 0;
     const beep = () => {
       if (!alarmCtx) return;
       [0, 0.35, 0.7].forEach((at, i) => {
@@ -34,6 +37,10 @@ function startAlarmLoop() {
         osc.start(alarmCtx!.currentTime + at);
         osc.stop(alarmCtx!.currentTime + at + 0.2);
       });
+      alarmCycleCount++;
+      if (alarmCycleCount >= MAX_ALARM_CYCLES) {
+        stopAlarmLoop();
+      }
     };
     beep();
     alarmTimer = setInterval(beep, 3500);
@@ -51,6 +58,7 @@ function stopAlarmLoop() {
     void alarmCtx.close().catch(() => {});
     alarmCtx = null;
   }
+  alarmCycleCount = 0;
 }
 
 export function RestTimer() {
@@ -74,6 +82,11 @@ export function RestTimer() {
 
   useEffect(() => {
     if (done && restEndsAt !== null) {
+      // Ignorar rests ya expirados al montar (ej. recarga con restEndsAt viejo)
+      if (restEndsAt <= Date.now()) {
+        stopRest();
+        return;
+      }
       startAlarmLoop();
       navigator.vibrate?.([400, 150, 400, 150, 400]);
     } else {
@@ -120,6 +133,9 @@ export function RestTimer() {
   const pct = Math.min(100, Math.max(0, ((total - remaining) / total) * 100));
   const exerciseName = draft?.exercises.find((e) => e.key === restExerciseKey)?.name;
   const inSession = pathname?.startsWith("/entrenar") ?? false;
+
+  // Solo renderizar la barra completa en /entrenar; en otras rutas no mostrar UI (alarma sigue sonando)
+  if (!inSession) return null;
 
   return (
     <div
@@ -189,22 +205,21 @@ export function RestTimer() {
 
           <div className="flex items-center gap-2">
             {done && !inSession && draft && (
-              <Button variant="outline" size="sm" onClick={() => router.push("/entrenar")}>
-                <Play className="size-4" /> Volver a entrenar
+              <Button variant="accent" size="sm" onClick={() => router.push("/entrenar")}>
+                <Play className="size-4" /> Continuar entrenando
               </Button>
             )}
             {done && inSession && (
               <Button variant="accent" size="sm" onClick={stopRest}>
-                <Play className="size-4" /> Comenzar
+                <Play className="size-4" /> Comenzar serie
               </Button>
             )}
             <Button
-              variant={done ? "danger" : "ghost"}
+              variant="ghost"
               size="sm"
-              className={!done ? "text-[var(--danger)] hover:bg-[var(--danger-soft)]" : ""}
               onClick={stopRest}
             >
-              <Square className="size-4" /> Detener
+              <Square className="size-4" /> Silenciar
             </Button>
           </div>
         </div>

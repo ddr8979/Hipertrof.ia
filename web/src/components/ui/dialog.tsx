@@ -1,9 +1,26 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+let dialogOpenCount = 0;
+
+function setBodyScroll(enabled: boolean) {
+  if (typeof document === "undefined") return;
+  if (enabled) {
+    dialogOpenCount++;
+    if (dialogOpenCount === 1) {
+      document.body.style.overflow = "hidden";
+    }
+  } else {
+    dialogOpenCount = Math.max(0, dialogOpenCount - 1);
+    if (dialogOpenCount === 0) {
+      document.body.style.overflow = "";
+    }
+  }
+}
 
 export function Dialog({
   open,
@@ -28,10 +45,10 @@ export function Dialog({
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
+    setBodyScroll(true);
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      setBodyScroll(false);
     };
   }, [open, onClose]);
 

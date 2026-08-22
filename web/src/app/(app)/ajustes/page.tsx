@@ -180,7 +180,7 @@ export default function AjustesPage() {
           <div className="mt-2 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
             {adminSearch.trim() && (adminResults ?? []).length === 0 && (
               <p className="py-3 text-center text-sm text-[var(--muted)]">
-                Sin resultados para "{adminSearch.trim()}"
+                Sin resultados para “{adminSearch.trim()}”
               </p>
             )}
             {(adminResults ?? []).map((u) => {

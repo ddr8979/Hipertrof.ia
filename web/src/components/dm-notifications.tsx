@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X, Star } from "lucide-react";
@@ -60,9 +60,8 @@ export function DmNotifications() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const seen = useRef<Set<string>>(new Set());
-  const notify = useRef<(m: Incoming) => void>(() => {});
 
-  notify.current = (m: Incoming) => {
+  const notify = useCallback((m: Incoming) => {
     if (seen.current.has(m.id)) return;
     seen.current.add(m.id);
     playDmSound();
@@ -81,7 +80,7 @@ export function DmNotifications() {
     setIncoming(m);
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setIncoming(null), 5000);
-  };
+  }, []);
 
   useEffect(() => {
     if (!me?.id) return;
@@ -115,7 +114,7 @@ export function DmNotifications() {
             username: (author as { username?: string | null } | null)?.username ?? null,
             avatar_url: (author as { avatar_url?: string | null } | null)?.avatar_url ?? null,
           };
-          notify.current(msg);
+          notify(msg);
         }
       )
       .subscribe();
@@ -141,7 +140,7 @@ export function DmNotifications() {
           .select("display_name, username, avatar_url")
           .eq("id", row.sender_id)
           .maybeSingle();
-        notify.current({
+        notify({
           ...row,
           display_name: (author as { display_name?: string | null } | null)?.display_name ?? null,
           username: (author as { username?: string | null } | null)?.username ?? null,

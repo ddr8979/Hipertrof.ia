@@ -15,6 +15,11 @@ const eslintConfig = defineConfig([
     // Supabase local runtime
     "supabase/.temp/**",
     "supabase/.branches/**",
+    // Scripts sueltos de testing (playwright/supabase)
+    "edit-check.js",
+    "movil-check.js",
+    "pl-check.js",
+    "pl-self.js",
   ]),
 ]);
 

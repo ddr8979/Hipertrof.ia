@@ -1093,15 +1093,13 @@ export default function ExplorarPage() {
                     )}
                   </Link>
                   <Link href={`/perfil/${u.id}`} className="min-w-0 flex-1 hover:underline">
-                    <p className="truncate text-sm font-bold">
+                    <p className="break-words text-sm font-bold leading-snug">
                       {u.display_name ?? u.username ?? "Atleta"}
-                      {u.username && (
-                        <span className="ml-1.5 font-semibold text-[var(--muted)]">
-                          @{u.username}
-                        </span>
-                      )}
                     </p>
-                    <p className="text-xs text-[var(--muted)]">
+                    {u.username && (
+                      <p className="break-words text-xs font-semibold leading-snug text-[var(--muted)]">@{u.username}</p>
+                    )}
+                    <p className="break-words text-xs leading-snug text-[var(--muted)]">
                       {u.followers?.length ?? 0} seguidores · racha {u.streak_count ?? 0} días
                       {!u.is_public_profile && " · privado"}
                     </p>
@@ -1157,7 +1155,7 @@ export default function ExplorarPage() {
             <div className="flex max-h-56 flex-col gap-1.5 overflow-y-auto">
               {(bestResults ?? []).length === 0 && (
                 <p className="py-3 text-center text-sm text-[var(--muted)]">
-                  Sin resultados para "{bestSearch.trim()}"
+                  Sin resultados para “{bestSearch.trim()}”
                 </p>
               )}
               {(bestResults ?? []).map((r) => {
@@ -1173,8 +1171,8 @@ export default function ExplorarPage() {
                       className="rounded-full"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold">{r.display_name ?? r.username}</p>
-                      <p className="truncate text-xs text-[var(--muted)]">@{r.username ?? "—"}</p>
+                      <p className="break-words text-sm font-semibold leading-snug">{r.display_name ?? r.username}</p>
+                      <p className="break-words text-xs leading-snug text-[var(--muted)]">@{r.username ?? "—"}</p>
                     </div>
                     <button
                       onClick={() =>
@@ -1218,8 +1216,8 @@ export default function ExplorarPage() {
                     className="rounded-full"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{f.display_name ?? f.username}</p>
-                    <p className="truncate text-xs text-[var(--muted)]">@{f.username ?? "—"}</p>
+                    <p className="break-words text-sm font-semibold leading-snug">{f.display_name ?? f.username}</p>
+                    <p className="break-words text-xs leading-snug text-[var(--muted)]">@{f.username ?? "—"}</p>
                   </div>
                   <button
                     onClick={() => toggleBest.mutate({ targetId: f.id, want: !f.is_best_friend })}

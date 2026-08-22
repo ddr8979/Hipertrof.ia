@@ -20,6 +20,7 @@ export type DraftExercise = {
   name: string;
   gifUrl: string | null;
   notes: string;
+  restSec: number;
   sets: DraftSet[];
 };
 
@@ -97,7 +98,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           restExerciseKey: null,
         }),
 
-      resumeWorkout: (draft) => set({ draft }),
+      resumeWorkout: (draft) => set({ draft, restEndsAt: null, restExerciseKey: null, restTotal: null }),
 
       startSession: () =>
         set((s) =>
@@ -129,19 +130,26 @@ export const useWorkoutStore = create<WorkoutState>()(
                 name: ex.name,
                 gifUrl: ex.gifUrl,
                 notes: "",
+                restSec: ex.restSec ?? 90,
                 sets: defaultSets(ex.sets ?? 3),
               },
             ],
           };
-          // Auto-arrancar descanso del ejercicio previo, si es que hay
-          const prev = s.draft.exercises[s.draft.exercises.length - 1];
+          // NO tocar el descanso activo existente salvo que el ejercicio previo esté 100% completo
+          // y NO haya un descanso ya corriendo
           const next: { draft: WorkoutDraft; restEndsAt: number | null; restExerciseKey: string | null; restTotal: number | null } = {
             draft,
-            restEndsAt: null,
-            restExerciseKey: null,
-            restTotal: null,
+            restEndsAt: s.restEndsAt,
+            restExerciseKey: s.restExerciseKey,
+            restTotal: s.restTotal,
           };
-          if (prev && prev.sets.length > 0 && prev.sets.every((st) => st.completed)) {
+          const prev = s.draft.exercises[s.draft.exercises.length - 1];
+          if (
+            !s.restEndsAt &&
+            prev &&
+            prev.sets.length > 0 &&
+            prev.sets.every((st) => st.completed)
+          ) {
             next.restEndsAt = Date.now() + (ex.restSec ?? 90) * 1000;
             next.restExerciseKey = prev.key;
             next.restTotal = ex.restSec ?? 90;

@@ -29,7 +29,7 @@ import { useProfile } from "@/components/providers";
 import { NetDialog } from "@/components/net-dialog";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { cn, vibrate } from "@/lib/utils";
+import { cn, vibrate, splitEmojiRuns } from "@/lib/utils";
 
 type PublicProfile = {
   id: string;
@@ -54,6 +54,7 @@ type PublicProfile = {
   profile_track_name: string | null;
   profile_track_artist: string | null;
   profile_track_preview: string | null;
+  profile_track_cover: string | null;
 } & Record<string, unknown>;
 
 type PublicPost = {
@@ -346,11 +347,25 @@ export default function PublicProfilePage() {
               </Link>
             )}
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h1 className="font-display text-2xl font-bold tracking-tight">{name}</h1>
-            {target.is_verified && <VerifiedBadge size={18} />}
+          <div className="mt-3 flex flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h1 className="font-display text-2xl font-bold tracking-tight break-words leading-tight">
+                {splitEmojiRuns(name).map((s, i) =>
+                  s.emoji ? (
+                    <span key={i} className="text-[var(--text)]">
+                      {s.text}
+                    </span>
+                  ) : (
+                    <span key={i} className="accent-gradient">
+                      {s.text}
+                    </span>
+                  )
+                )}
+              </h1>
+              {target.is_verified && <VerifiedBadge size={18} />}
+            </div>
             {target.username && (
-              <span className="text-sm font-semibold text-[var(--muted)]">
+              <span className="break-words text-sm font-semibold leading-snug text-[var(--muted)]">
                 @{target.username}
               </span>
             )}
@@ -486,19 +501,19 @@ export default function PublicProfilePage() {
             </section>
           )}
 
-          {target.profile_track_name && target.profile_track_preview && (
-            <section className="card p-5">
-              <div className="mb-3 flex items-center gap-2">
-                <Music4 className="size-5 text-[var(--accent)]" />
-                <h2 className="font-display text-lg font-bold tracking-tight">Tema del perfil</h2>
-              </div>
-              <ProfileTrackPlayer
-                name={target.profile_track_name}
-                artist={target.profile_track_artist}
-                previewUrl={target.profile_track_preview}
-              />
-            </section>
-          )}
+          {/* Tema del perfil */}
+          <section className="card p-5">
+            <div className="mb-3 flex items-center gap-2">
+              <Music4 className="size-5 text-[var(--accent)]" />
+              <h2 className="font-display text-lg font-bold tracking-tight">Tema del perfil</h2>
+            </div>
+            <ProfileTrackPlayer
+              name={target.profile_track_name}
+              artist={target.profile_track_artist}
+              previewUrl={target.profile_track_preview}
+              coverUrl={target.profile_track_cover}
+            />
+          </section>
 
           {(posts ?? []).length > 0 && (
             <section className="card p-5">

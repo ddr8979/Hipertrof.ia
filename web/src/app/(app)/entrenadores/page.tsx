@@ -17,6 +17,11 @@ import {
   Search,
   UserPlus,
   Trash2,
+  History,
+  Store,
+  LayoutList,
+  Settings,
+  ChartLine,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -740,6 +745,30 @@ export default function EntrenadoresPage() {
             <Calculator className="size-5 text-[var(--accent)]" />
             <span className="w-full truncate text-xs font-semibold">Calculadora</span>
           </Link>
+          <Link href="/progreso" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+            <ChartLine className="size-5 text-[var(--accent)]" />
+            <span className="w-full truncate text-xs font-semibold">Progreso</span>
+          </Link>
+          <Link href="/historial" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+            <History className="size-5 text-[var(--accent)]" />
+            <span className="w-full truncate text-xs font-semibold">Historial</span>
+          </Link>
+          <Link href="/marketplace" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+            <Store className="size-5 text-[var(--accent)]" />
+            <span className="w-full truncate text-xs font-semibold">Marketplace</span>
+          </Link>
+          <Link href="/rutinas" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+            <LayoutList className="size-5 text-[var(--accent)]" />
+            <span className="w-full truncate text-xs font-semibold">Mis Rutinas</span>
+          </Link>
+          <Link href="/nutricion" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+            <Utensils className="size-5 text-[var(--accent)]" />
+            <span className="w-full truncate text-xs font-semibold">Alimentación</span>
+          </Link>
+          <Link href="/ajustes" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+            <Settings className="size-5 text-[var(--accent)]" />
+            <span className="w-full truncate text-xs font-semibold">Ajustes</span>
+          </Link>
         </div>
       </section>
 
@@ -759,7 +788,7 @@ export default function EntrenadoresPage() {
           <div className="flex max-h-72 flex-col gap-1.5 overflow-y-auto">
             {addSearch.trim() && (addResults ?? []).length === 0 && (
               <p className="py-3 text-center text-sm text-[var(--muted)]">
-                Sin resultados para "{addSearch.trim()}"
+                Sin resultados para “{addSearch.trim()}”
               </p>
             )}
             {(addResults ?? []).map((u) => {

@@ -48,6 +48,8 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
+  // iOS: make keyboard resizes visual viewport (allows JS offset handling)
+  interactiveWidget: "resizes-visual" as never,
 };
 
 export default function RootLayout({

@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { playlistThumb } from "@/lib/utils";
+import { playlistThumb, splitEmojiRuns } from "@/lib/utils";
 import { SpotifyNowCard, SpotifyConnectCard } from "@/components/spotify-now";
 import { ProfileTrackPlayer, SocialCircles, VerifiedBadge } from "@/components/profile-bits";
 import { NetDialog } from "@/components/net-dialog";
@@ -75,6 +75,7 @@ export default function PerfilPage() {
   const [trackArtist, setTrackArtist] = useState((profile?.profile_track_artist as string) ?? "");
   const [trackPreview, setTrackPreview] = useState((profile?.profile_track_preview as string) ?? "");
   const [trackId, setTrackId] = useState((profile?.profile_track_id as string) ?? "");
+  const [trackCover, setTrackCover] = useState((profile?.profile_track_cover as string) ?? "");
   const [netOpen, setNetOpen] = useState(false);
 
   const avatarInput = useRef<HTMLInputElement>(null);
@@ -168,6 +169,7 @@ export default function PerfilPage() {
           profile_track_name: trackName || null,
           profile_track_artist: trackArtist || null,
           profile_track_preview: trackPreview || null,
+          profile_track_cover: trackCover || null,
         })
         .eq("id", profile!.id);
       if (error) throw new Error(error.message);
@@ -315,13 +317,25 @@ export default function PerfilPage() {
               </Button>
             </div>
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h1 className="font-display text-2xl font-bold tracking-tight">
-              {profile.display_name ?? profile.username ?? "Sin nombre"}
-            </h1>
-            {(profile as { is_verified?: boolean }).is_verified && <VerifiedBadge size={18} />}
+          <div className="mt-3 flex flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h1 className="font-display text-2xl font-bold tracking-tight break-words leading-tight">
+                {splitEmojiRuns(profile.display_name ?? profile.username ?? "Sin nombre").map((s, i) =>
+                  s.emoji ? (
+                    <span key={i} className="text-[var(--text)]">
+                      {s.text}
+                    </span>
+                  ) : (
+                    <span key={i} className="accent-gradient">
+                      {s.text}
+                    </span>
+                  )
+                )}
+              </h1>
+              {(profile as { is_verified?: boolean }).is_verified && <VerifiedBadge size={18} />}
+            </div>
             {profile.username && (
-              <span className="text-sm font-semibold text-[var(--muted)]">@{profile.username}</span>
+              <span className="break-words text-sm font-semibold leading-snug text-[var(--muted)]">@{profile.username}</span>
             )}
           </div>
           {Boolean(profile.bio) && (
@@ -386,31 +400,30 @@ export default function PerfilPage() {
 
 
       {/* Tema del perfil */}
-      {Boolean(profile.profile_track_name && profile.profile_track_preview) && (
-        <section className="card p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Music4 className="size-5 text-[var(--accent)]" />
-              <h2 className="font-display text-lg font-bold tracking-tight">Tema del perfil</h2>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-              <Pencil className="size-4" /> Cambiar
-            </Button>
+      <section className="card p-5">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Music4 className="size-5 text-[var(--accent)]" />
+            <h2 className="font-display text-lg font-bold tracking-tight">Tema del perfil</h2>
           </div>
-          <ProfileTrackPlayer
-            name={profile.profile_track_name as string}
-            artist={profile.profile_track_artist as string}
-            previewUrl={profile.profile_track_preview as string}
-          />
-        </section>
-      )}
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="size-4" /> {profile.profile_track_name ? "Cambiar" : "Elegir"}
+          </Button>
+        </div>
+        <ProfileTrackPlayer
+          name={profile.profile_track_name as string | null}
+          artist={profile.profile_track_artist as string | null}
+          previewUrl={profile.profile_track_preview as string | null}
+          coverUrl={profile.profile_track_cover as string | null}
+        />
+      </section>
 
-      {/* Playlists */}
+      {/* Playlist */}
       <section className="card p-5">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Music4 className="size-5 text-[var(--accent)]" />
-            <h2 className="font-display text-lg font-bold tracking-tight">Playlists de entreno</h2>
+            <h2 className="font-display text-lg font-bold tracking-tight">Playlist</h2>
           </div>
           <Button variant="outline" size="sm" onClick={() => setPlaylistOpen(true)}>
             <Plus className="size-4" /> Agregar
@@ -504,17 +517,7 @@ export default function PerfilPage() {
               className="w-full resize-none rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2.5 text-sm focus:border-[var(--accent)] focus:outline-none"
             />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Peso (kg)">
-              <Input
-                type="number"
-                inputMode="decimal"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                placeholder="75"
-              />
-            </Field>
-            <Field label="Color de acento">
+          <Field label="Color de acento">
               <div className="flex items-center gap-2">
                 <input
                   type="color"
@@ -525,7 +528,6 @@ export default function PerfilPage() {
                 <span className="text-sm font-mono text-[var(--text-2)]">{accent}</span>
               </div>
             </Field>
-          </div>
 
           <div className="rounded-xl bg-[var(--surface-2)]/60 p-4">
             <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--muted)]">
@@ -574,12 +576,14 @@ export default function PerfilPage() {
                 setTrackName(t.name);
                 setTrackArtist(t.artist);
                 setTrackPreview(t.preview);
+                setTrackCover(t.cover ?? "");
               }}
               onClear={() => {
                 setTrackId("");
                 setTrackName("");
                 setTrackArtist("");
                 setTrackPreview("");
+                setTrackCover("");
               }}
             />
           </div>
@@ -835,7 +839,7 @@ function PlaylistThumb({ src, meta }: { src: string; meta?: { color: string } })
   );
 }
 
-type TrackPick = { id: string; name: string; artist: string; preview: string };
+type TrackPick = { id: string; name: string; artist: string; preview: string; hasPreview?: boolean; cover?: string };
 
 function TrackPicker({
   value,
@@ -847,28 +851,80 @@ function TrackPicker({
   onClear: () => void;
 }) {
   const [q, setQ] = useState("");
-  const [results, setResults] = useState<TrackPick[] | null>(null);
+  const [results, setResults] = useState<(TrackPick & { hasPreview?: boolean })[] | null>(null);
   const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  async function fetchFromUrl(url: string): Promise<(TrackPick & { hasPreview: boolean }) | null> {
+    try {
+      const res = await fetch(`/api/oembed?url=${encodeURIComponent(url)}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      // oEmbed no devuelve preview_url (requiere Premium del owner de la app)
+      return {
+        id: data.track_id ?? `url-${Date.now()}`,
+        name: data.title ?? "Tema",
+        artist: data.author_name ?? "Artista",
+        preview: "",
+        hasPreview: false,
+      };
+    } catch {
+      return null;
+    }
+  }
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
     if (!q.trim()) {
-      setResults(null);
+      timer.current = setTimeout(() => {
+        setResults(null);
+        setSearchError(null);
+        setSearching(false);
+      }, 250);
       return;
     }
+
+    // Si parece link de Spotify, usar oEmbed directo (sin debounce largo)
+    const isSpotifyUrl = q.includes("spotify.com/track/") || q.includes("spotify:track:");
+
     timer.current = setTimeout(async () => {
+      if (isSpotifyUrl) {
+        setSearching(true);
+        const track = await fetchFromUrl(q);
+        if (track) {
+          setResults([track]);
+        } else {
+          setResults([]);
+          setSearchError("No se pudo obtener info de ese link. Probá con otro.");
+        }
+        setSearching(false);
+        return;
+      }
+
+      // Búsqueda normal (requiere Premium del owner de la app)
       setSearching(true);
+      setSearchError(null);
       try {
         const res = await fetch(`/api/spotify/search?q=${encodeURIComponent(q.trim())}`);
-        const data = (await res.json()) as { tracks?: TrackPick[] };
-        setResults(data.tracks ?? []);
+        const data = await res.json();
+        if (data.error) {
+          if (data.details?.includes("premium") || data.details?.includes("Premium") || data.error.includes("premium")) {
+            setSearchError("La búsqueda requiere Spotify Premium del propietario de la app. Podés pegar un link directo de Spotify (ej: open.spotify.com/track/...) para agregar el tema sin preview.");
+          } else {
+            setSearchError(data.error);
+          }
+          setResults([]);
+        } else {
+          setResults(data.tracks ?? []);
+        }
       } catch {
         setResults([]);
+        setSearchError("Error de conexión");
       } finally {
         setSearching(false);
       }
-    }, 450);
+    }, isSpotifyUrl ? 0 : 450);
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
@@ -884,6 +940,9 @@ function TrackPicker({
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{value.name}</p>
             {value.artist && <p className="truncate text-xs text-[var(--muted)]">{value.artist}</p>}
+            {value.preview ? null : (
+              <p className="text-xs text-[var(--danger)]">Sin preview (requiere Premium del owner)</p>
+            )}
           </div>
           <Button variant="ghost" size="sm" onClick={onClear}>
             Quitar
@@ -891,16 +950,17 @@ function TrackPicker({
         </div>
       ) : (
         <p className="text-xs text-[var(--muted)]">
-          Elegí una canción para que suene en tu perfil (30 segundos).
+          Elegí una canción para que suene en tu perfil (30 seg, requiere Premium del owner). O pegá un link de Spotify.
         </p>
       )}
       <Input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Buscar tema en Spotify…"
+        placeholder="Buscar tema en Spotify… o pegá un link de Spotify"
       />
       {searching && <p className="text-xs text-[var(--muted)]">Buscando…</p>}
-      {results && !searching && results.length === 0 && (
+      {searchError && <p className="text-xs text-[var(--danger)]">{searchError}</p>}
+      {results && !searching && results.length === 0 && !searchError && (
         <p className="text-xs text-[var(--muted)]">Sin resultados con preview.</p>
       )}
       {results && results.length > 0 && (
@@ -909,7 +969,7 @@ function TrackPicker({
             <button
               key={t.id}
               onClick={() => {
-                onChange(t);
+                onChange({ ...t, hasPreview: !!t.preview, cover: t.cover });
                 setQ("");
                 setResults(null);
               }}
@@ -919,6 +979,7 @@ function TrackPicker({
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">{t.name}</p>
                 <p className="truncate text-xs text-[var(--muted)]">{t.artist}</p>
+                {!t.hasPreview && <p className="text-[10px] text-[var(--danger)]">Sin preview (requiere Premium)</p>}
               </div>
             </button>
           ))}

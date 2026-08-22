@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   Clock,
   Dumbbell,
   ChevronDown,
   Check,
 } from "lucide-react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/data";
@@ -26,7 +27,6 @@ type WorkoutRow = {
     id: string;
     name: string;
     order_index: number;
-    exercise: { name: string }[] | null;
     workout_sets: {
       set_index: number;
       type: string;
@@ -63,6 +63,34 @@ export default function HistorialPage() {
       getNextPageParam: (last, all) =>
         last.length === PAGE ? all.length : undefined,
     });
+
+  // Agregados globales (todas las sesiones, no solo la página actual)
+  const { data: totals } = useQuery({
+    queryKey: ["historial_totals"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { sessions: 0, volumeKg: 0, sets: 0 };
+      const { data: workouts } = await supabase
+        .from("workouts")
+        .select(
+          "id, workout_exercises(workout_sets(weight_kg, reps, completed))"
+        )
+        .eq("user_id", user.id);
+      if (!workouts) return { sessions: 0, volumeKg: 0, sets: 0 };
+      let volumeKg = 0;
+      let sets = 0;
+      for (const w of workouts) {
+        for (const we of w.workout_exercises ?? []) {
+          for (const s of we.workout_sets ?? []) {
+            if (s.completed) volumeKg += (s.weight_kg ?? 0) * (s.reps ?? 0);
+            sets++;
+          }
+        }
+      }
+      return { sessions: workouts.length, volumeKg, sets };
+    },
+  });
 
   const all = useMemo(() => data?.pages?.flat() ?? [], [data]);
 
@@ -118,14 +146,18 @@ export default function HistorialPage() {
           <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
             Sesiones
           </span>
-          <span className="font-display text-2xl font-bold">{all.length}</span>
+          <span className="font-display text-2xl font-bold">
+            {totals?.sessions ?? all.length}
+          </span>
         </div>
         <div className="card flex flex-col gap-1 p-4">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
             Volumen
           </span>
           <span className="font-display text-2xl font-bold">
-            {(totalVolume / 1000).toLocaleString("es-UY", { maximumFractionDigits: 1 })}
+            {((totals?.volumeKg ?? totalVolume) / 1000).toLocaleString("es-UY", {
+              maximumFractionDigits: 1,
+            })}
             <span className="text-sm text-[var(--text-2)]"> t</span>
           </span>
         </div>
@@ -133,7 +165,9 @@ export default function HistorialPage() {
           <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
             Series
           </span>
-          <span className="font-display text-2xl font-bold">{totalSets}</span>
+          <span className="font-display text-2xl font-bold">
+            {totals?.sets ?? totalSets}
+          </span>
         </div>
       </div>
 
@@ -149,9 +183,9 @@ export default function HistorialPage() {
           title="Todavía no tenés sesiones"
           description="Completá tu primer entrenamiento y aparece acá, con todas las métricas."
           action={
-            <a href="/entrenar">
+            <Link href="/entrenar">
               <Button variant="accent">Empezar a entrenar</Button>
-            </a>
+            </Link>
           }
         />
       ) : (

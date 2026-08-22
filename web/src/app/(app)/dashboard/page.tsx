@@ -291,7 +291,7 @@ function SpotifyWidget() {
         connected: boolean;
         hidden?: boolean;
         premiumRequired?: boolean;
-        playing?: { name: string; artists: string; cover: string | null; is_playing: boolean } | null;
+        playing?: { name: string; artists: string; cover: string | null; is_playing: boolean; is_recent?: boolean } | null;
       };
     },
     refetchInterval: 20000,
@@ -375,18 +375,26 @@ function SpotifyWidget() {
             <p className="truncate text-sm font-bold">
               {spotify.playing?.name ?? "Nada sonando ahora"}
             </p>
-            {spotify.playing?.is_playing ? (
-              <p className="truncate text-xs text-[var(--muted)]">{spotify.playing.artists}</p>
+            {spotify.playing ? (
+              <p className="truncate text-xs text-[var(--muted)]">
+                {spotify.playing.artists}
+                {spotify.playing.is_recent ? " · último" : spotify.playing.is_playing ? "" : " · pausado"}
+              </p>
             ) : (
-              <p className="text-xs text-[var(--muted)]">Pausado</p>
+              <p className="text-xs text-[var(--muted)]">Sin reproducción reciente</p>
             )}
           </div>
-          {spotify.playing?.is_playing && (
+          {spotify.playing?.is_playing ? (
             <span className="flex items-center gap-1 text-xs font-semibold text-[#1DB954]">
               <Music4 className="size-3.5" />
               Sonando
             </span>
-          )}
+          ) : spotify.playing?.is_recent ? (
+            <span className="flex items-center gap-1 text-xs font-semibold text-[var(--muted)]">
+              <Music4 className="size-3.5" />
+              Último
+            </span>
+          ) : null}
         </div>
       </section>
     );
