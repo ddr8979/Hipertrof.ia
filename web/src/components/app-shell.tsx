@@ -69,6 +69,7 @@ function NowPlayingMini() {
 const NAV = [
   { href: "/dashboard", label: "Inicio", icon: Home },
   { href: "/rutinas", label: "Rutinas", icon: Dumbbell },
+  { href: "/calculadora", label: "Calculadora", icon: Calculator },
   { href: "/nutricion", label: "Alimentación", icon: Utensils },
   { href: "/mensajes", label: "Mensajes", icon: MessageCircle },
   { href: "/explorar", label: "Social", icon: Compass },
@@ -76,14 +77,13 @@ const NAV = [
   { href: "/glosario", label: "Diccionario", icon: BookOpenText },
   { href: "/marketplace", label: "Marketplace", icon: Store },
   { href: "/perfil", label: "Perfil", icon: User },
+  { href: "/ajustes", label: "Configuración", icon: Settings },
 ];
 
 const NAV_EXTRA = [
   { href: "/historial", label: "Historial", icon: History },
-  { href: "/calculadora", label: "Calculadora", icon: Calculator },
   { href: "/progreso", label: "Progreso", icon: ChartLine },
   { href: "/entrenadores", label: "Entrenadores", icon: Users },
-  { href: "/ajustes", label: "Ajustes", icon: Settings },
 ];
 
 function RailIcon({

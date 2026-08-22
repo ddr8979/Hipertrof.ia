@@ -68,6 +68,7 @@ export default function PerfilPage() {
   const [showHeight, setShowHeight] = useState(profile?.show_height !== false);
   const [showFollowers, setShowFollowers] = useState(profile?.show_followers !== false);
   const [showPersonal, setShowPersonal] = useState(profile?.show_personal !== false);
+  const [showCalories, setShowCalories] = useState(profile?.show_calories !== false);
   const [igHandle, setIgHandle] = useState((profile?.instagram_handle as string) ?? "");
   const [ttHandle, setTtHandle] = useState((profile?.tiktok_handle as string) ?? "");
   const [twHandle, setTwHandle] = useState((profile?.twitter_handle as string) ?? "");
@@ -162,6 +163,7 @@ export default function PerfilPage() {
           show_height: showHeight,
           show_followers: showFollowers,
           show_personal: showPersonal,
+          show_calories: showCalories,
           instagram_handle: igHandle.trim().replace(/^@/, "") || null,
           tiktok_handle: ttHandle.trim().replace(/^@/, "") || null,
           twitter_handle: twHandle.trim().replace(/^@/, "") || null,
@@ -400,12 +402,14 @@ export default function PerfilPage() {
               <span className="text-[var(--muted)]">seguidos</span>
             </button>
             <span className="text-[var(--muted)]">·</span>
-            <span>
-              <strong className="font-display text-base font-bold">
-                {profile.tdee_kcal ? `${profile.tdee_kcal}` : "—"}
-              </strong>{" "}
-              <span className="text-[var(--muted)]">kcal TDEE</span>
-            </span>
+            {profile.show_calories !== false && (
+              <span>
+                <strong className="font-display text-base font-bold">
+                  {profile.tdee_kcal ? `${profile.tdee_kcal}` : "—"}
+                </strong>{" "}
+                <span className="text-[var(--muted)]">kcal TDEE</span>
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -631,6 +635,12 @@ export default function PerfilPage() {
                     set: setShowPersonal,
                     label: "Datos personales",
                     desc: "Bio, edad y datos del perfil",
+                  },
+                  {
+                    key: showCalories,
+                    set: setShowCalories,
+                    label: "Calorías",
+                    desc: "Mostrar tus kcal (TDEE) en el perfil",
                   },
                 ] as { key: boolean; set: (v: boolean) => void; label: string; desc: string }[]
               ).map((t) => (
