@@ -18,6 +18,7 @@ import {
   MoreHorizontal,
   BookOpenText,
   Calculator,
+  BicepsFlexed,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/components/providers";
@@ -71,7 +72,7 @@ const NAV = [
   { href: "/nutricion", label: "Alimentación", icon: Utensils },
   { href: "/mensajes", label: "Mensajes", icon: MessageCircle },
   { href: "/explorar", label: "Social", icon: Compass },
-  { href: "/ejercicios", label: "Ejercicios", icon: Dumbbell },
+  { href: "/ejercicios", label: "Ejercicios", icon: BicepsFlexed },
   { href: "/glosario", label: "Diccionario", icon: BookOpenText },
   { href: "/marketplace", label: "Marketplace", icon: Store },
   { href: "/perfil", label: "Perfil", icon: User },
