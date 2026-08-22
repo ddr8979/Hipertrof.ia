@@ -74,7 +74,7 @@ export default async function LandingPage() {
       <section className="relative z-10 mx-auto max-w-6xl px-5 pb-24 pt-16 text-center sm:pt-24">
         <h1 className="mx-auto max-w-3xl font-display text-5xl font-bold leading-[1.05] tracking-tight sm:text-7xl">
           Diario de cargas, rutinas,{" "}
-          <span className="accent-gradient">nutrición y comunidad.</span>
+          <span className="text-[var(--accent)]">nutrición y comunidad.</span>
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-[var(--text-2)]">
           Registrá cada serie con peso y repeticiones, seguí tu progreso con

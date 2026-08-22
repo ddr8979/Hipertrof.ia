@@ -356,7 +356,7 @@ export default function PublicProfilePage() {
                       {s.text}
                     </span>
                   ) : (
-                    <span key={i} className="accent-gradient">
+                    <span key={i} className="text-[var(--accent)]">
                       {s.text}
                     </span>
                   )
