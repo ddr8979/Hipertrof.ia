@@ -22,6 +22,8 @@ import {
   LayoutList,
   Settings,
   ChartLine,
+  ChevronRight,
+  Pencil,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -96,6 +98,7 @@ export default function EntrenadoresPage() {
 
   const [manageFor, setManageFor] = useState<string | null>(null);
   const [manageTab, setManageTab] = useState<"routine" | "recipe">("routine");
+  const [editRoutine, setEditRoutine] = useState<{ id: string; name: string } | null>(null);
 
   const isTrainer = profile?.role === "trainer";
 
@@ -235,6 +238,64 @@ export default function EntrenadoresPage() {
       return (data ?? []) as unknown as AssignedRecipeRow[];
     },
     enabled: !!manageFor,
+  });
+
+  const { data: editRoutineEx = [] } = useQuery<{
+      id: string;
+      target_sets: number;
+      target_reps: number;
+      rest_sec: number;
+      order_index: number;
+      exercise: { id: string; name: string } | null;
+    }[]>({
+    queryKey: ["routine_exercises_edit", editRoutine?.id],
+    queryFn: async () => {
+      if (!editRoutine) return [];
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("routine_exercises")
+        .select("id, target_sets, target_reps, rest_sec, order_index, exercise:exercises(id, name)")
+        .eq("routine_id", editRoutine.id)
+        .order("order_index", { ascending: true });
+      return (data ?? []) as never;
+    },
+    enabled: !!editRoutine,
+  });
+
+  const saveEditedRoutine = useMutation({
+    mutationFn: async ({
+      name,
+      exercises,
+    }: {
+      name: string;
+      exercises: { id: string; target_sets: number; target_reps: number; rest_sec: number }[];
+    }) => {
+      const supabase = createClient();
+      if (!editRoutine) return;
+      const { error: rErr } = await supabase
+        .from("routines")
+        .update({ name: name.trim() || editRoutine.name })
+        .eq("id", editRoutine.id);
+      if (rErr) throw new Error(rErr.message);
+      for (const ex of exercises) {
+        const { error } = await supabase
+          .from("routine_exercises")
+          .update({
+            target_sets: ex.target_sets,
+            target_reps: ex.target_reps,
+            rest_sec: ex.rest_sec,
+          })
+          .eq("id", ex.id);
+        if (error) throw new Error(error.message);
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["assigned_routines_athlete", manageFor] });
+      qc.invalidateQueries({ queryKey: ["assigned_routines"] });
+      toast("success", "Rutina actualizada", "El alumno verá los cambios");
+      setEditRoutine(null);
+    },
+    onError: (e) => toast("error", "No se pudo guardar", e.message),
   });
 
   const { data: allRecipes } = useQuery({
@@ -383,6 +444,22 @@ export default function EntrenadoresPage() {
     onError: (e) => toast("error", "No se pudo enviar", e.message),
   });
 
+  const becomeTrainer = useMutation({
+    mutationFn: async () => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("profiles")
+        .update({ role: "trainer", is_trainer_approved: true })
+        .eq("id", profile!.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["profile"] });
+      toast("success", "¡Ya sos personal trainer!", "Gestioná tus alumnos desde este panel");
+    },
+    onError: (e) => toast("error", "No se pudo registrar", e.message),
+  });
+
   const createCourse = useMutation({
     mutationFn: async () => {
       const supabase = createClient();
@@ -439,6 +516,37 @@ export default function EntrenadoresPage() {
           {isTrainer ? "Panel de entrenador: alumnos, rutinas, recetas y cursos" : "Tus entrenadores, rutinas y recetas asignadas"}
         </p>
       </div>
+
+      {!isTrainer && (
+        <div className="card flex flex-wrap items-center justify-between gap-3 p-4">
+          <div className="min-w-0">
+            <p className="font-display text-base font-bold tracking-tight">
+              ¿Querés ser personal trainer?
+            </p>
+            <p className="text-sm text-[var(--text-2)]">
+              {profile?.plan === "free"
+                ? "Registrate como trainer con el plan Plus: gestioná alumnos, asignales rutinas y vendé tus cursos."
+                : "Activá tu cuenta de trainer para gestionar alumnos, asignar rutinas y vender cursos."}
+            </p>
+          </div>
+          {profile?.plan === "free" ? (
+            <Link href="/facturacion">
+              <Button variant="accent" size="sm">
+                Ver planes <ChevronRight className="size-4" />
+              </Button>
+            </Link>
+          ) : (
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => becomeTrainer.mutate()}
+              disabled={becomeTrainer.isPending}
+            >
+              <UserPlus className="size-4" /> Registrarme como trainer
+            </Button>
+          )}
+        </div>
+      )}
 
       {isTrainer ? (
         <>
@@ -891,6 +999,17 @@ export default function EntrenadoresPage() {
                           {a.active ? "activa" : "inactiva"}
                         </p>
                       </div>
+                      {a.routine && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setEditRoutine({ id: a.routine!.id, name: a.routine!.name })
+                          }
+                        >
+                          <Pencil className="size-3.5" /> Editar
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -1076,6 +1195,125 @@ export default function EntrenadoresPage() {
           </Field>
         </div>
       </Dialog>
+
+      <Dialog
+        open={!!editRoutine}
+        onClose={() => setEditRoutine(null)}
+        title={`Editar rutina: ${editRoutine?.name ?? ""}`}
+        size="lg"
+      >
+        {editRoutine && editRoutineEx.length > 0 && (
+          <RoutineEditor
+            routineId={editRoutine.id}
+            name={editRoutine.name}
+            exercises={editRoutineEx}
+            onSave={(name, exercises) =>
+              saveEditedRoutine.mutate({ name, exercises })
+            }
+            saving={saveEditedRoutine.isPending}
+          />
+        )}
+        {editRoutine && editRoutineEx.length === 0 && (
+          <p className="py-6 text-center text-sm text-[var(--muted)]">
+            Esta rutina no tiene ejercicios todavía.
+          </p>
+        )}
+      </Dialog>
+    </div>
+  );
+}
+
+function RoutineEditor({
+  routineId,
+  name,
+  exercises,
+  onSave,
+  saving,
+}: {
+  routineId: string;
+  name: string;
+  exercises: {
+    id: string;
+    target_sets: number;
+    target_reps: number;
+    rest_sec: number;
+    exercise: { id: string; name: string } | null;
+  }[];
+  onSave: (
+    name: string,
+    exercises: { id: string; target_sets: number; target_reps: number; rest_sec: number }[]
+  ) => void;
+  saving: boolean;
+}) {
+  const [draftName, setDraftName] = useState(name);
+  const [draft, setDraft] = useState(() =>
+    exercises.map((e) => ({
+      id: e.id,
+      exerciseName: e.exercise?.name ?? "Ejercicio",
+      target_sets: e.target_sets,
+      target_reps: e.target_reps,
+      rest_sec: e.rest_sec,
+    }))
+  );
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Field label="Nombre de la rutina">
+        <Input value={draftName} onChange={(e) => setDraftName(e.target.value)} />
+      </Field>
+
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">
+          Ejercicios ({draft.length})
+        </p>
+        {draft.map((ex, i) => (
+          <div key={ex.id} className="rounded-xl bg-[var(--surface-2)]/60 p-3">
+            <p className="truncate text-sm font-semibold">
+              {i + 1}. {ex.exerciseName}
+            </p>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {(["sets", "reps", "rest"] as const).map((k) => {
+                const val = k === "sets" ? ex.target_sets : k === "reps" ? ex.target_reps : ex.rest_sec;
+                const set = (v: number) =>
+                  setDraft((prev) =>
+                    prev.map((p) => (p.id === ex.id ? { ...p, [k]: v } : p))
+                  );
+                return (
+                  <label key={k} className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                      {k === "sets" ? "Series" : k === "reps" ? "Reps" : "Descanso (s)"}
+                    </span>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      value={val}
+                      onChange={(e) => set(Math.max(0, Number(e.target.value) || 0))}
+                    />
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Button
+        variant="accent"
+        onClick={() =>
+          onSave(
+            draftName,
+            draft.map((d) => ({
+              id: d.id,
+              target_sets: d.target_sets,
+              target_reps: d.target_reps,
+              rest_sec: d.rest_sec,
+            }))
+          )
+        }
+        disabled={saving}
+      >
+        {saving ? "Guardando…" : "Guardar cambios"}
+      </Button>
     </div>
   );
 }

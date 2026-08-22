@@ -27,6 +27,7 @@ import { createClient } from "@/lib/supabase/client";
 import { playlistThumb, splitEmojiRuns } from "@/lib/utils";
 import { SpotifyNowCard, SpotifyConnectCard } from "@/components/spotify-now";
 import { ProfileTrackPlayer, SocialCircles, VerifiedBadge } from "@/components/profile-bits";
+import { PlanBadge } from "@/components/plan-badge";
 import { NetDialog } from "@/components/net-dialog";
 import { Skeleton } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/data";
@@ -348,6 +349,7 @@ export default function PerfilPage() {
                 )}
               </h1>
               {(profile as { is_verified?: boolean }).is_verified && <VerifiedBadge size={18} />}
+              <PlanBadge plan={profile.plan as never} />
             </div>
             {profile.username && (
               <span className="break-words text-sm font-semibold leading-snug text-[var(--muted)]">@{profile.username}</span>

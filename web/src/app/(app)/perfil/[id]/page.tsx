@@ -21,6 +21,7 @@ import { createClient } from "@/lib/supabase/client";
 import { playlistThumb } from "@/lib/utils";
 import { SpotifyNowCard } from "@/components/spotify-now";
 import { ProfileTrackPlayer, SocialCircles, VerifiedBadge } from "@/components/profile-bits";
+import { PlanBadge } from "@/components/plan-badge";
 import { Skeleton, Avatar } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/data";
 import { Button } from "@/components/ui/button";
@@ -81,7 +82,7 @@ export default function PublicProfilePage() {
       const { data } = await supabase
         .from("public_profiles")
         .select(
-          "id, display_name, username, bio, avatar_url, banner_url, accent_color, streak_count, is_public_profile, show_weight, show_height, show_followers, show_personal, is_verified, instagram_handle, tiktok_handle, twitter_handle, spotify_handle, profile_track_id, profile_track_name, profile_track_artist, profile_track_preview"
+          "id, display_name, username, bio, avatar_url, banner_url, accent_color, streak_count, is_public_profile, show_weight, show_height, show_followers, show_personal, is_verified, plan, instagram_handle, tiktok_handle, twitter_handle, spotify_handle, profile_track_id, profile_track_name, profile_track_artist, profile_track_preview"
         )
         .eq("id", id)
         .maybeSingle();
@@ -376,6 +377,7 @@ export default function PublicProfilePage() {
                 )}
               </h1>
               {target.is_verified && <VerifiedBadge size={18} />}
+              <PlanBadge plan={target.plan as never} />
             </div>
             {target.username && (
               <span className="break-words text-sm font-semibold leading-snug text-[var(--muted)]">
