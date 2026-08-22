@@ -36,8 +36,6 @@ export function ExerciseMedia({
 }) {
   const local = exerciseLocalWebm(url);
   const remote = exerciseGif(url);
-  // Thumb JPG del mismo exercisedb (mucho más liviano, se ve instantáneo como poster)
-  const poster = remote ? remote.replace(/\.gif$/, ".jpg") : null;
 
   const [mode, setMode] = useState<Mode>(() => {
     if (local && canPlayWebM()) return "video";
@@ -50,12 +48,14 @@ export function ExerciseMedia({
   const wrapRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Lazy: solo autoplay / cargar cuando entra en viewport (eager lo evita)
+  // Lazy: el video solo baja datos y reproduce cuando entra en viewport (eager lo evita).
+  // El video está SIEMPRE montado (sin placeholder) para no romper el layout ni mostrar imágenes rotas.
   useEffect(() => {
-    if (eager || mode !== "video") return;
+    if (mode !== "video") return;
     const el = wrapRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") {
-      setVisible(true);
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") {
+      queueMicrotask(() => setVisible(true));
       return;
     }
     const io = new IntersectionObserver(
@@ -63,36 +63,28 @@ export function ExerciseMedia({
         for (const e of entries) {
           if (e.isIntersecting) {
             setVisible(true);
-            io.disconnect();
-            break;
+          } else if (!eager) {
+            setVisible(false);
           }
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px", threshold: 0.05 }
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [eager, mode]);
+  }, [mode, eager]);
 
-  // Pausar video cuando sale de viewport (ahorro batería + CPU), reanudar al volver
+  // Reproducir/pausar según visible (evita que 246 videos corran a la vez y ahorra batería)
   useEffect(() => {
-    if (mode !== "video" || !videoRef.current || typeof IntersectionObserver === "undefined") return;
     const v = videoRef.current;
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            v.play().catch(() => {});
-          } else {
-            v.pause();
-          }
-        }
-      },
-      { threshold: 0.1 }
-    );
-    io.observe(v);
-    return () => io.disconnect();
-  }, [mode, webmOk]);
+    if (mode !== "video" || !v) return;
+    if (visible) {
+      v.muted = true;
+      void v.play().catch(() => {});
+    } else {
+      v.pause();
+    }
+  }, [visible, mode, webmOk]);
 
   const handleVideoError = useCallback(() => {
     // Fallback a GIF remoto si el WebM falla (codec no soportado, archivo faltante, etc)
@@ -107,44 +99,25 @@ export function ExerciseMedia({
       <div
         ref={wrapRef}
         className={cn("relative size-full overflow-hidden bg-[var(--surface-2)]", className)}
+        style={{ contentVisibility: "auto" } as React.CSSProperties}
       >
-        {/* Poster JPG mientras el video carga — evita flash blanco y div más grande que gif */}
-        {poster && !webmOk && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={poster}
-            alt=""
-            aria-hidden
-            loading="lazy"
-            decoding="async"
-            className={cn("absolute inset-0 size-full", objectFit, "opacity-60 blur-[0.5px]")}
-          />
-        )}
-        {visible ? (
-          <video
-            ref={videoRef}
-            src={local}
-            poster={poster ?? undefined}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload={eager ? "auto" : "metadata"}
-            onCanPlay={() => setWebmOk(true)}
-            onError={handleVideoError}
-            className={cn(
-              "relative size-full transition-opacity duration-500 ease-out will-change-[opacity]",
-              objectFit,
-              webmOk ? "opacity-100" : "opacity-0",
-              videoClassName
-            )}
-            style={{ contentVisibility: "auto" } as React.CSSProperties}
-          />
-        ) : (
-          // Placeholder antes de que el observer dispare (evita layout shift)
-          // eslint-disable-next-line @next/next/no-img-element
-          poster ? <img src={poster} alt="" aria-hidden className={cn("size-full", objectFit, "opacity-60")} /> : null
-        )}
+        <video
+          ref={videoRef}
+          src={local}
+          autoPlay={visible}
+          muted
+          loop
+          playsInline
+          preload={visible ? "auto" : "none"}
+          onCanPlay={() => setWebmOk(true)}
+          onError={handleVideoError}
+          className={cn(
+            "size-full transition-opacity duration-300 ease-out will-change-[opacity]",
+            objectFit,
+            webmOk ? "opacity-100" : "opacity-0",
+            videoClassName
+          )}
+        />
       </div>
     );
   }
@@ -163,12 +136,11 @@ export function ExerciseMedia({
           onLoad={() => setImgOk(true)}
           onError={() => setMode("fallback")}
           className={cn(
-            "relative size-full transition-opacity duration-500 ease-out",
+            "relative size-full transition-opacity duration-300 ease-out",
             objectFit,
             imgOk ? "opacity-100" : "opacity-0",
             imgClassName
           )}
-          style={{ contentVisibility: "auto" } as React.CSSProperties}
         />
       </div>
     );
