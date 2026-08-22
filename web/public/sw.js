@@ -1,5 +1,5 @@
-const SHELL_CACHE = "hypertrofia-shell-v3";
-const DATA_CACHE = "hypertrofia-data-v3";
+const SHELL_CACHE = "hypertrofia-shell-v4";
+const DATA_CACHE = "hypertrofia-data-v4";
 
 self.addEventListener("install", () => {
   self.skipWaiting();

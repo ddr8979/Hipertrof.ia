@@ -18,9 +18,15 @@ const EMOJI_CLUSTER = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u;
 
 export function splitEmojiRuns(name: string): { text: string; emoji: boolean }[] {
   const out: { text: string; emoji: boolean }[] = [];
-  const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
-  const clusters: string[] = [];
-  for (const seg of segmenter.segment(name)) clusters.push(seg.segment);
+  let clusters: string[];
+  try {
+    const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+    clusters = [];
+    for (const seg of segmenter.segment(name)) clusters.push(seg.segment);
+  } catch {
+    // Fallback para navegadores sin Intl.Segmenter: separar por caracter
+    clusters = [...name];
+  }
   let buf = "";
   let bufEmoji = false;
   let started = false;
