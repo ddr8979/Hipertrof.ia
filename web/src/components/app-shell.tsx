@@ -71,14 +71,14 @@ const NAV = [
   { href: "/nutricion", label: "Alimentación", icon: Utensils },
   { href: "/mensajes", label: "Mensajes", icon: MessageCircle },
   { href: "/explorar", label: "Social", icon: Compass },
+  { href: "/ejercicios", label: "Ejercicios", icon: Dumbbell },
+  { href: "/glosario", label: "Diccionario", icon: BookOpenText },
   { href: "/marketplace", label: "Marketplace", icon: Store },
   { href: "/perfil", label: "Perfil", icon: User },
 ];
 
 const NAV_EXTRA = [
   { href: "/historial", label: "Historial", icon: History },
-  { href: "/ejercicios", label: "Ejercicios", icon: Dumbbell },
-  { href: "/glosario", label: "Diccionario", icon: BookOpenText },
   { href: "/calculadora", label: "Calculadora", icon: Calculator },
   { href: "/progreso", label: "Progreso", icon: ChartLine },
   { href: "/entrenadores", label: "Entrenadores", icon: Users },
