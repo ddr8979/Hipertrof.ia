@@ -326,7 +326,7 @@ export default function PerfilPage() {
                       {s.text}
                     </span>
                   ) : (
-                    <span key={i} className="text-[var(--accent)]">
+                    <span key={i} className="text-white">
                       {s.text}
                     </span>
                   )
