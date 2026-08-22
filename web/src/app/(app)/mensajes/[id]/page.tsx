@@ -46,8 +46,6 @@ export default function ChatPage() {
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
-  const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const { data: other } = useQuery({
     queryKey: ["dm_other", otherId],
@@ -242,40 +240,13 @@ export default function ChatPage() {
   }
 
   function handleFocus() {
-    setKeyboardOpen(true);
-    // Scroll to bottom when keyboard opens (iOS visualViewport)
-    setTimeout(() => scrollToBottom(false), 100);
-    // Also ensure input is visible via scrollIntoView on iOS
-    setTimeout(() => inputRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }), 150);
+    // Al abrir el teclado, mantener el scroll al fondo del chat (sin mover la página)
+    setTimeout(() => scrollToBottom(false), 150);
   }
 
   function handleBlur() {
-    setKeyboardOpen(false);
+    // nada: el layout se mantiene estático con 100dvh
   }
-
-  // iOS keyboard handling via visualViewport (fixes "teclado tapa input" y auto-scroll)
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const onChange = () => {
-      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      setKeyboardOffset(offset);
-      // Mantener scroll al fondo solo si el usuario ya estaba abajo
-      if (offset > 0 && isAtBottom) {
-        setTimeout(() => scrollToBottom(false), 50);
-      }
-    };
-    vv.addEventListener("resize", onChange);
-    vv.addEventListener("scroll", onChange);
-    window.addEventListener("resize", onChange);
-    onChange();
-    return () => {
-      vv.removeEventListener("resize", onChange);
-      vv.removeEventListener("scroll", onChange);
-      window.removeEventListener("resize", onChange);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAtBottom]);
 
   if (isLoading || !other) {
     return (
@@ -287,14 +258,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div
-      className="flex flex-col h-[calc(100dvh-8rem)] lg:h-[calc(100dvh-10rem)] min-h-0"
-      style={
-        keyboardOffset > 0
-          ? { height: `calc(100dvh - 8rem - ${keyboardOffset}px)` }
-          : undefined
-      }
-    >
+    <div className="flex flex-col h-[calc(100dvh-8rem)] lg:h-[calc(100dvh-10rem)] min-h-0">
       <header className="flex items-center gap-3 shrink-0 px-4 py-3 border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur">
         <button
           onClick={() => router.back()}
