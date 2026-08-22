@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { useProfile } from "@/components/providers";
 import { NetDialog } from "@/components/net-dialog";
+import { Dialog } from "@/components/ui/dialog";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn, vibrate, splitEmojiRuns } from "@/lib/utils";
@@ -71,6 +72,7 @@ export default function PublicProfilePage() {
   const me = useProfile((s) => s.profile);
   const [pendingFollow, setPendingFollow] = useState(false);
   const [netOpen, setNetOpen] = useState(false);
+  const [viewImg, setViewImg] = useState(false);
 
   const { data: target, isLoading } = useQuery({
     queryKey: ["public_profile", id],
@@ -277,9 +279,20 @@ export default function PublicProfilePage() {
           </div>
         )}
         <div className="px-5 pb-5" style={target.banner_url ? undefined : { paddingTop: "1.25rem" }}>
-          <div className="-mt-10 flex items-end justify-between">
-            <span
-              className="flex size-20 items-center justify-center overflow-hidden rounded-full border-4 border-[var(--surface)] bg-[var(--surface-3)] font-display text-2xl font-bold"
+          <div className="-mt-10 flex items-end justify-between gap-3">
+            <button
+              onClick={() => {
+                if (target.avatar_url) {
+                  vibrate(6);
+                  setViewImg(true);
+                }
+              }}
+              disabled={!target.avatar_url}
+              aria-label="Ampliar foto de perfil"
+              className={cn(
+                "flex size-20 items-center justify-center overflow-hidden rounded-full border-4 border-[var(--surface)] bg-[var(--surface-3)] font-display text-2xl font-bold transition-transform",
+                target.avatar_url && "active:scale-95 cursor-zoom-in"
+              )}
               style={
                 target.accent_color
                   ? { background: "var(--accent-soft)", color: "var(--accent)" }
@@ -293,9 +306,9 @@ export default function PublicProfilePage() {
                 className="size-full border-0 text-2xl"
                 size={80}
               />
-            </span>
+            </button>
             {!isMine && me?.id && (
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 self-end pl-4">
                 <Link
                   href={`/mensajes/${target.id}`}
                   className="flex h-9 items-center gap-1.5 rounded-xl bg-[var(--surface-2)] px-3 text-sm font-semibold transition-colors hover:bg-[var(--surface-3)]"
@@ -450,6 +463,19 @@ export default function PublicProfilePage() {
         userId={target.id}
         isMine={isMine}
       />
+
+      {/* Foto de perfil ampliada */}
+      <Dialog open={viewImg} onClose={() => setViewImg(false)} title={name}>
+        <div className="mx-auto w-full max-w-lg">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={String(target.avatar_url)}
+            alt=""
+            className="size-full max-h-[70dvh] rounded-2xl object-contain"
+            onClick={() => setViewImg(false)}
+          />
+        </div>
+      </Dialog>
 
       {!isMine && !target.is_public_profile && !iFollow ? (
         <EmptyState

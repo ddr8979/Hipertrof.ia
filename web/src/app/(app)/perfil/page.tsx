@@ -36,7 +36,7 @@ import { Field, Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 import { useProfile } from "@/components/providers";
 import { ICONS, PROVIDERS } from "@/lib/profile-meta";
-import { cn } from "@/lib/utils";
+import { cn, vibrate } from "@/lib/utils";
 
 type Achievement = {
   achievement: { code: string; name: string; description: string; icon: string; category: string };
@@ -58,6 +58,7 @@ export default function PerfilPage() {
   const qc = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
   const [playlistOpen, setPlaylistOpen] = useState(false);
+  const [viewImg, setViewImg] = useState(false);
   const [username, setUsername] = useState(profile?.username ?? "");
   const [name, setName] = useState(profile?.display_name ?? "");
   const [bio, setBio] = useState((profile?.bio as string) ?? "");
@@ -277,15 +278,28 @@ export default function PerfilPage() {
           </button>
         </div>
         <div className="px-5 pb-5">
-          <div className="-mt-10 flex items-end justify-between">
+          <div className="-mt-10 flex items-end justify-between gap-3">
             <div className="relative">
-              <span className="flex size-20 items-center justify-center overflow-hidden rounded-full border-4 border-[var(--surface)] bg-[var(--surface-3)] font-display text-2xl font-bold">
+              <button
+                onClick={() => {
+                  if (profile.avatar_url) {
+                    vibrate(6);
+                    setViewImg(true);
+                  }
+                }}
+                disabled={!profile.avatar_url}
+                aria-label="Ampliar foto de perfil"
+                className={cn(
+                  "flex size-20 items-center justify-center overflow-hidden rounded-full border-4 border-[var(--surface)] bg-[var(--surface-3)] font-display text-2xl font-bold transition-transform",
+                  profile.avatar_url && "active:scale-95 cursor-zoom-in"
+                )}
+              >
                 {profile.avatar_url ? (
                   <img src={String(profile.avatar_url)} alt="" className="size-full object-cover" />
                 ) : (
                   (profile.display_name ?? "?")[0]?.toUpperCase()
                 )}
-              </span>
+              </button>
               <input
                 ref={avatarInput}
                 type="file"
@@ -300,13 +314,13 @@ export default function PerfilPage() {
               <button
                 onClick={() => avatarInput.current?.click()}
                 disabled={uploading !== null}
-                className="absolute -right-1.5 -bottom-1.5 flex size-8 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--accent-ink)] transition-transform hover:scale-105"
+                className="absolute -right-1.5 -bottom-1.5 flex size-8 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--accent-ink)] transition-transform hover:scale-105 active:scale-90"
                 title="Cambiar avatar"
               >
                 <Camera className="size-4" />
               </button>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 self-end pl-4">
               <Link href="/progreso">
                 <Button variant="outline" size="sm">
                   <ChartLine className="size-4" /> Progreso
@@ -683,6 +697,19 @@ export default function PerfilPage() {
         userId={profile!.id}
         isMine
       />
+
+      {/* Foto de perfil ampliada */}
+      <Dialog open={viewImg} onClose={() => setViewImg(false)} title={profile.display_name ?? "Foto de perfil"}>
+        <div className="mx-auto w-full max-w-lg">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={String(profile.avatar_url)}
+            alt=""
+            className="size-full max-h-[70dvh] rounded-2xl object-contain"
+            onClick={() => setViewImg(false)}
+          />
+        </div>
+      </Dialog>
     </div>
   );
 }

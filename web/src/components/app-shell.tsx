@@ -24,7 +24,7 @@ import { useProfile } from "@/components/providers";
 import { Avatar } from "@/components/ui/primitives";
 import { createClient } from "@/lib/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { DmNotifications } from "@/components/dm-notifications";
 import { RestTimer } from "@/components/rest-timer";
@@ -106,10 +106,11 @@ function RailIcon({
       onClick={onClick}
       aria-label={label}
       title={label}
+      data-active={active ? "true" : undefined}
       className={cn(
-        "relative flex size-9 items-center justify-center rounded-xl transition-all",
+        "relative z-10 flex size-9 items-center justify-center rounded-xl transition-all duration-200 active:scale-90",
         active
-          ? "bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_4px_14px_-4px_var(--accent-soft)]"
+          ? "text-[var(--accent-ink)]"
           : "text-[var(--muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
       )}
     >
@@ -128,6 +129,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const profile = useProfile((s) => s.profile);
   const [moreOpen, setMoreOpen] = useState(false);
+  const railRef = useRef<HTMLElement>(null);
+  const [indTop, setIndTop] = useState<number | null>(null);
+
+  // Indicador deslizante tipo Instagram: sigue al item activo del hub
+  useEffect(() => {
+    const nav = railRef.current;
+    if (!nav) return;
+    const el = nav.querySelector<HTMLElement>('a[data-active="true"]');
+    if (el) setIndTop(el.offsetTop);
+    else setIndTop(null);
+  }, [pathname]);
 
   const { data: unread } = useQuery({
     queryKey: ["unread_dm"],
@@ -180,7 +192,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-dvh">
       <div className="flex min-h-dvh items-start lg:pl-60">
       {/* Rail lateral móvil: hub compacto, ocupa su propio espacio */}
-      <nav className="sticky top-24 z-40 ml-2 mt-2 flex h-fit flex-col items-center gap-1.5 rounded-2xl border border-[var(--border)] bg-[var(--surface)]/85 p-1.5 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.25)] backdrop-blur-xl lg:hidden">
+      <nav ref={railRef} className="sticky top-24 z-40 ml-2 mt-2 flex h-fit flex-col items-center gap-1.5 rounded-2xl border border-[var(--border)] bg-[var(--surface)]/85 p-1.5 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.25)] backdrop-blur-xl lg:hidden">
+        {/* Marca deslizante del item activo */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute left-1.5 z-0 h-9 w-[calc(100%-0.75rem)] rounded-xl bg-[var(--accent)] shadow-[0_4px_14px_-4px_var(--accent-soft)] transition-[top,opacity] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+          style={{ top: indTop ?? -48, opacity: indTop === null ? 0 : 1 }}
+        />
         {NAV.map((n) => (
           <RailIcon key={n.href} {...n} badge={n.href === "/mensajes" ? (unread ?? 0) : undefined} />
         ))}
@@ -189,7 +207,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           aria-label="Más"
           title="Más"
           className={cn(
-            "flex size-9 items-center justify-center rounded-xl transition-all",
+            "relative z-10 flex size-9 items-center justify-center rounded-xl transition-all active:scale-90",
             moreOpen
               ? "bg-[var(--accent)] text-[var(--accent-ink)]"
               : "text-[var(--muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
@@ -197,7 +215,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         >
           <MoreHorizontal className="size-4.5" />
         </button>
-        <NowPlayingMini />
+        <div className="relative z-10">
+          <NowPlayingMini />
+        </div>
       </nav>
 
       {/* Sidebar desktop */}
