@@ -22,7 +22,11 @@ export function useSpotifyNow(userId?: string) {
       if (!r.ok) throw new Error("spotify");
       return (await r.json()) as SpotifyNowData;
     },
-    refetchInterval: 20000,
+    // Solo seguir consultando si está conectado; si no, no gastar red
+    refetchInterval: (query) => {
+      const d = query.state.data;
+      return d?.connected ? 30000 : false;
+    },
   });
 }
 

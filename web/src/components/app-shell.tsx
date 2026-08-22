@@ -149,7 +149,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       if (error) return 0;
       return (data ?? []).reduce((s: number, c: { unread?: number }) => s + (c.unread ?? 0), 0);
     },
-    refetchInterval: 10000,
+    refetchInterval: 30000,
   });
 
   async function handleLogout() {

@@ -147,7 +147,7 @@ export function DmNotifications() {
           avatar_url: (author as { avatar_url?: string | null } | null)?.avatar_url ?? null,
         });
       }
-    }, 3000);
+    }, 15000);
     return () => {
       supabase.removeChannel(channel);
       clearInterval(poll);

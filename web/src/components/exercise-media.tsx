@@ -42,14 +42,12 @@ export function ExerciseMedia({
     if (remote) return "img";
     return "fallback";
   });
-  const [webmOk, setWebmOk] = useState(false);
   const [imgOk, setImgOk] = useState(false);
   const [visible, setVisible] = useState(eager ?? false);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Lazy: el video solo baja datos y reproduce cuando entra en viewport (eager lo evita).
-  // El video está SIEMPRE montado (sin placeholder) para no romper el layout ni mostrar imágenes rotas.
+  // Lazy: el video SOLO se monta cuando entra en viewport (evita cientos de <video> en DOM).
+  // Fuera de pantalla se muestra un placeholder liviano.
   useEffect(() => {
     if (mode !== "video") return;
     const el = wrapRef.current;
@@ -61,11 +59,8 @@ export function ExerciseMedia({
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
-          if (e.isIntersecting) {
-            setVisible(true);
-          } else if (!eager) {
-            setVisible(false);
-          }
+          if (e.isIntersecting) setVisible(true);
+          else if (!eager) setVisible(false);
         }
       },
       { rootMargin: "200px", threshold: 0.05 }
@@ -73,18 +68,6 @@ export function ExerciseMedia({
     io.observe(el);
     return () => io.disconnect();
   }, [mode, eager]);
-
-  // Reproducir/pausar según visible (evita que 246 videos corran a la vez y ahorra batería)
-  useEffect(() => {
-    const v = videoRef.current;
-    if (mode !== "video" || !v) return;
-    if (visible) {
-      v.muted = true;
-      void v.play().catch(() => {});
-    } else {
-      v.pause();
-    }
-  }, [visible, mode, webmOk]);
 
   const handleVideoError = useCallback(() => {
     // Fallback a GIF remoto si el WebM falla (codec no soportado, archivo faltante, etc)
@@ -101,23 +84,20 @@ export function ExerciseMedia({
         className={cn("relative size-full overflow-hidden bg-[var(--surface-2)]", className)}
         style={{ contentVisibility: "auto" } as React.CSSProperties}
       >
-        <video
-          ref={videoRef}
-          src={local}
-          autoPlay={visible}
-          muted
-          loop
-          playsInline
-          preload={visible ? "auto" : "none"}
-          onCanPlay={() => setWebmOk(true)}
-          onError={handleVideoError}
-          className={cn(
-            "size-full transition-opacity duration-300 ease-out will-change-[opacity]",
-            objectFit,
-            webmOk ? "opacity-100" : "opacity-0",
-            videoClassName
-          )}
-        />
+        {visible ? (
+          <video
+            src={local}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            onError={handleVideoError}
+            className={cn("size-full", objectFit, videoClassName)}
+          />
+        ) : (
+          <div className="size-full animate-pulse bg-[var(--surface-2)]" />
+        )}
       </div>
     );
   }
