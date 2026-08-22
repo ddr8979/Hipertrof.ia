@@ -1065,7 +1065,6 @@ export default function ExplorarPage() {
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nombre o username..."
               className="pl-9"
-              autoFocus
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -1279,7 +1278,6 @@ export default function ExplorarPage() {
               onChange={(e) => setRecipeSearch(e.target.value)}
               placeholder="Buscar..."
               className="pl-9"
-              autoFocus
             />
           </div>
           <div className="flex max-h-80 flex-col gap-1.5 overflow-y-auto pr-1">

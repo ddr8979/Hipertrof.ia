@@ -9,9 +9,6 @@ import {
   LogOut,
   ShieldAlert,
   UserX,
-  Dumbbell,
-  BookOpenText,
-  Calculator,
   GraduationCap,
   Search,
   UserPlus,
@@ -251,27 +248,6 @@ export default function AjustesPage() {
         <Button variant="outline" className="mt-4" onClick={handleExport} loading={exporting}>
           <Download className="size-4" /> Exportar mis datos
         </Button>
-      </section>
-
-      <section className="card p-5">
-        <div className="mb-3 flex items-center gap-2">
-          <Dumbbell className="size-5 text-[var(--accent)]" />
-          <h2 className="font-display text-lg font-bold tracking-tight">Herramientas</h2>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          <Link href="/ejercicios" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <Dumbbell className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Ejercicios</span>
-          </Link>
-          <Link href="/glosario" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <BookOpenText className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Diccionario</span>
-          </Link>
-          <Link href="/calculadora" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <Calculator className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Calculadora</span>
-          </Link>
-        </div>
       </section>
 
       <section className="card p-5">
