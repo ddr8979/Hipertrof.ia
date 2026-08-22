@@ -294,7 +294,10 @@ function SpotifyWidget() {
         playing?: { name: string; artists: string; cover: string | null; is_playing: boolean; is_recent?: boolean } | null;
       };
     },
-    refetchInterval: 20000,
+    refetchInterval: (query) => {
+      const d = query.state.data as { connected?: boolean } | null | undefined;
+      return d?.connected ? 30000 : false;
+    },
   });
 
   if (spotify?.connected && spotify?.premiumRequired && !spotify?.hidden) {
