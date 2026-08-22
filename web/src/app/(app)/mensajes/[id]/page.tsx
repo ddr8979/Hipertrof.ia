@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Star, Send, Trash2, ImagePlus, X } from "lucide-react";
+import { ArrowLeft, Star, Send, Trash2, ImagePlus, X, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
@@ -22,6 +22,8 @@ type Message = {
   created_at: string;
   read_at: string | null;
   image_url?: string | null;
+  view_once?: boolean;
+  opened_at?: string | null;
 };
 
 function formatTime(iso: string): string {
@@ -45,6 +47,7 @@ export default function ChatPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [viewOnce, setViewOnce] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
 
   const { data: other } = useQuery({
@@ -86,7 +89,7 @@ export default function ChatPage() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("direct_messages")
-        .select("id, sender_id, recipient_id, content, stars, created_at, read_at, image_url")
+        .select("id, sender_id, recipient_id, content, stars, created_at, read_at, image_url, view_once, opened_at")
         .or(`and(sender_id.eq.${me?.id},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${me?.id})`)
         .order("created_at", { ascending: true })
         .limit(200);
@@ -200,12 +203,14 @@ export default function ChatPage() {
         recipient_id: otherId,
         content: text.trim() || "📷 Imagen",
         image_url: pub.publicUrl,
+        view_once: viewOnce,
       });
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
       setText("");
       setPendingImage(null);
+      setViewOnce(false);
       qc.invalidateQueries({ queryKey: ["dm"] });
       qc.invalidateQueries({ queryKey: ["conversations"] });
       qc.invalidateQueries({ queryKey: ["unread_dm"] });
@@ -213,6 +218,22 @@ export default function ChatPage() {
     },
     onError: (e) => toast("error", "No se pudo enviar la imagen", e.message),
     onSettled: () => setUploading(false),
+  });
+
+  const revealViewOnce = useMutation({
+    mutationFn: async (msgId: string) => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("direct_messages")
+        .update({ opened_at: new Date().toISOString() })
+        .eq("id", msgId)
+        .eq("recipient_id", me!.id)
+        .is("opened_at", null);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dm"] });
+    },
   });
 
   const muted = useMemo(() => other && other.is_public_profile === false, [other]);
@@ -333,15 +354,10 @@ export default function ChatPage() {
                   </span>
                 )}
                 {m.image_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={m.image_url}
-                    alt="Imagen del chat"
-                    loading="lazy"
-                    className={cn(
-                      "mb-1.5 max-h-64 w-full max-w-full rounded-xl object-cover",
-                      mine && "bg-[var(--accent-ink)]/10"
-                    )}
+                  <ViewOnceImage
+                    msg={m}
+                    mine={mine}
+                    onReveal={() => revealViewOnce.mutate(m.id)}
                   />
                 )}
                 {m.content !== "📷 Imagen" && (
@@ -354,7 +370,8 @@ export default function ChatPage() {
                   )}
                 >
                   {formatTime(m.created_at)}
-                  {mine && m.read_at && " · leído"}
+                  {mine && m.view_once && (m.opened_at ? " · abierto" : " · sin abrir")}
+                  {mine && !m.view_once && m.read_at && " · leído"}
                 </p>
               </div>
             </div>
@@ -379,6 +396,17 @@ export default function ChatPage() {
               className="absolute right-3 top-3 flex size-7 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm transition-transform active:scale-90 disabled:opacity-40"
             >
               <X className="size-4" />
+            </button>
+            <button
+              onClick={() => setViewOnce((v) => !v)}
+              disabled={uploading}
+              className={cn(
+                "absolute left-3 top-3 flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-bold backdrop-blur-sm transition-all active:scale-95",
+                viewOnce ? "bg-[var(--accent)] text-[var(--accent-ink)]" : "bg-black/60 text-white"
+              )}
+            >
+              <Eye className="size-3.5" />
+              Ver una vez
             </button>
             <Input
               value={text}
@@ -475,4 +503,73 @@ function dataUrlToBlob(dataUrl: string): Blob {
   const arr = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
   return new Blob([arr], { type: mime });
+}
+
+function ViewOnceImage({
+  msg,
+  mine,
+  onReveal,
+}: {
+  msg: Message;
+  mine: boolean;
+  onReveal: () => void;
+}) {
+  const isViewOnce = msg.view_once === true;
+
+  // Mensaje propio: siempre se ve el thumbnail (con estado abierto/sin abrir arriba)
+  if (mine) {
+    return (
+      <img
+        src={msg.image_url ?? ""}
+        alt="Imagen del chat"
+        loading="lazy"
+        className={cn(
+          "mb-1.5 max-h-64 w-full max-w-full rounded-xl object-cover",
+          isViewOnce && msg.opened_at && "opacity-70"
+        )}
+      />
+    );
+  }
+
+  // Recibido y NO es view-once: imagen normal
+  if (!isViewOnce) {
+    return (
+      <img
+        src={msg.image_url ?? ""}
+        alt="Imagen del chat"
+        loading="lazy"
+        className="mb-1.5 max-h-64 w-full max-w-full rounded-xl object-cover"
+      />
+    );
+  }
+
+  // Recibido, view-once y ya abierto: no se muestra más
+  if (msg.opened_at) {
+    return (
+      <div className="mb-1.5 flex h-40 w-64 max-w-full flex-col items-center justify-center gap-2 rounded-xl bg-[var(--surface-3)] text-[var(--muted)]">
+        <EyeOff className="size-6" />
+        <span className="text-xs font-semibold">Se vio una vez</span>
+      </div>
+    );
+  }
+
+  // Recibido, view-once y sin abrir: blurred + tap para ver
+  return (
+    <button
+      onClick={onReveal}
+      className="relative mb-1.5 block h-64 w-64 max-w-full overflow-hidden rounded-xl"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={msg.image_url ?? ""}
+        alt="Imagen de un solo uso"
+        className="size-full scale-105 object-cover blur-xl"
+      />
+      <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40 text-white">
+        <Eye className="size-6" />
+        <span className="text-xs font-bold">Toca para ver</span>
+        <span className="text-[10px] opacity-80">Foto de un solo uso</span>
+      </span>
+    </button>
+  );
 }
