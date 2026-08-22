@@ -43,24 +43,33 @@ export function ExerciseMedia({
     return "fallback";
   });
   const [imgOk, setImgOk] = useState(false);
-  const [visible, setVisible] = useState(eager ?? false);
+  // mount: el video se monta UNA vez al entrar en viewport (no se desmonta -> sin flicker al scrollear)
+  const [mounted, setMounted] = useState(eager ?? false);
+  // inView: reproduce solo cuando está en pantalla (pausa offscreen, ahorra batería)
+  const [inView, setInView] = useState(eager ?? false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Lazy: el video SOLO se monta cuando entra en viewport (evita cientos de <video> en DOM).
-  // Fuera de pantalla se muestra un placeholder liviano.
   useEffect(() => {
     if (mode !== "video") return;
     const el = wrapRef.current;
     if (!el) return;
     if (typeof IntersectionObserver === "undefined") {
-      queueMicrotask(() => setVisible(true));
+      queueMicrotask(() => {
+        setMounted(true);
+        setInView(true);
+      });
       return;
     }
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
-          if (e.isIntersecting) setVisible(true);
-          else if (!eager) setVisible(false);
+          if (e.isIntersecting) {
+            setMounted(true);
+            setInView(true);
+          } else {
+            setInView(false);
+          }
         }
       },
       { rootMargin: "200px", threshold: 0.05 }
@@ -68,6 +77,18 @@ export function ExerciseMedia({
     io.observe(el);
     return () => io.disconnect();
   }, [mode, eager]);
+
+  // Reproducir/pausar según inView
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || mode !== "video" || !mounted) return;
+    if (inView) {
+      v.muted = true;
+      void v.play().catch(() => {});
+    } else {
+      v.pause();
+    }
+  }, [inView, mode, mounted]);
 
   const handleVideoError = useCallback(() => {
     // Fallback a GIF remoto si el WebM falla (codec no soportado, archivo faltante, etc)
@@ -84,14 +105,15 @@ export function ExerciseMedia({
         className={cn("relative size-full overflow-hidden bg-[var(--surface-2)]", className)}
         style={{ contentVisibility: "auto" } as React.CSSProperties}
       >
-        {visible ? (
+        {mounted ? (
           <video
+            ref={videoRef}
             src={local}
-            autoPlay
+            autoPlay={inView}
             muted
             loop
             playsInline
-            preload="auto"
+            preload={inView ? "auto" : "metadata"}
             onError={handleVideoError}
             className={cn("size-full", objectFit, videoClassName)}
           />
