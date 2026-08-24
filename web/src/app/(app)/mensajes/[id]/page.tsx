@@ -90,7 +90,6 @@ export default function ChatPage() {
       const { data, error } = await supabase
         .from("direct_messages")
         .select("id, sender_id, recipient_id, content, stars, created_at, read_at, image_url, view_once, opened_at")
-        .or(`and(sender_id.eq.${me?.id},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${me?.id})`)
         .order("created_at", { ascending: true })
         .limit(200);
       if (error) throw new Error(error.message);

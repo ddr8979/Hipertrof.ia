@@ -49,6 +49,7 @@ type Routine = {
   name: string;
   description: string | null;
   is_template: boolean;
+  days_per_week: number;  // Cuántos días por semana (1-7)
   updated_at: string;
   routine_exercises: RoutineEx[];
 };
@@ -591,11 +592,33 @@ export default function RutinasPage() {
                         Entrenar
                       </Button>
                     </Link>
-                    <Link href="/social" aria-label="Compartir rutina">
-                      <Button variant="ghost" size="sm">
-                        <Share2 className="size-4" />
-                      </Button>
-                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const url = `${window.location.origin}/entrenar?routine=${r.id}`;
+                        const text = `Rutina: ${r.name}\n${url}`;
+                        if (navigator.share) {
+                          navigator.share({ title: r.name, text })
+                            .then(() => toast("success", "Compartido", "Rutina compartida"))
+                            .catch(() => navigator.clipboard.writeText(text).then(() => toast("success", "Link copiado", "Link copiado al portapapeles")));
+                        } else {
+                          navigator.clipboard.writeText(text).then(() => toast("success", "Link copiado", "Link copiado al portapapeles"));
+                        }
+                      }}
+                      aria-label="Compartir rutina"
+                    >
+                      <Share2 className="size-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigator.clipboard.writeText(`${window.location.origin}/entrenar?routine=${r.id}`)}
+                      aria-label="Copiar link de la rutina"
+                    >
+                      <Copy className="size-4" />
+                    </Button>
+
                     <Button variant="ghost" size="sm" onClick={() => setEditing(r)}>
                       <Pencil className="size-4" />
                     </Button>
