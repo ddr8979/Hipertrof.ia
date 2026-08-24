@@ -15,7 +15,6 @@ import {
   Compass,
   ChartLine,
   MessageCircle,
-  MoreHorizontal,
   BookOpenText,
   Calculator,
   BicepsFlexed,
@@ -26,7 +25,6 @@ import { Avatar } from "@/components/ui/primitives";
 import { createClient } from "@/lib/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useRef, useEffect } from "react";
-import { Dialog } from "@/components/ui/dialog";
 import { DmNotifications } from "@/components/dm-notifications";
 import { RestTimer } from "@/components/rest-timer";
 import { useSpotifyNow } from "@/components/spotify-now";
@@ -78,9 +76,6 @@ const NAV = [
   { href: "/marketplace", label: "Marketplace", icon: Store },
   { href: "/perfil", label: "Perfil", icon: User },
   { href: "/ajustes", label: "Configuración", icon: Settings },
-];
-
-const NAV_EXTRA = [
   { href: "/historial", label: "Historial", icon: History },
   { href: "/progreso", label: "Progreso", icon: ChartLine },
   { href: "/entrenadores", label: "Entrenadores", icon: Users },
@@ -129,7 +124,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const profile = useProfile((s) => s.profile);
-  const [moreOpen, setMoreOpen] = useState(false);
   const railRef = useRef<HTMLElement>(null);
   const prevPathname = useRef(pathname);
   const [indTop, setIndTop] = useState<number | null>(null);
@@ -196,7 +190,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-dvh">
       <div className="flex min-h-dvh items-start lg:pl-60">
       {/* Rail lateral móvil: hub compacto, ocupa su propio espacio */}
-      <nav ref={railRef} className="sticky top-24 z-40 ml-2 mt-2 flex h-fit flex-col items-center gap-1.5 rounded-2xl border border-[var(--border)] bg-[var(--surface)]/85 p-1.5 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.25)] backdrop-blur-xl lg:hidden">
+      <nav ref={railRef} className="sticky top-24 z-40 ml-2 mt-2 flex max-h-[calc(100dvh-7rem)] flex-col items-center gap-1.5 overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--surface)]/85 p-1.5 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.25)] backdrop-blur-xl lg:hidden">
         {/* Marca deslizante del item activo */}
         <span
           aria-hidden
@@ -206,19 +200,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {NAV.map((n) => (
           <RailIcon key={n.href} {...n} badge={n.href === "/mensajes" ? (unread ?? 0) : undefined} />
         ))}
-        <button
-          onClick={() => setMoreOpen(true)}
-          aria-label="Más"
-          title="Más"
-          className={cn(
-            "relative z-10 flex size-9 items-center justify-center rounded-xl transition-all active:scale-90",
-            moreOpen
-              ? "bg-[var(--accent)] text-[var(--accent-ink)]"
-              : "text-[var(--muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
-          )}
-        >
-          <MoreHorizontal className="size-4.5" />
-        </button>
         <div className="relative z-10">
           <NowPlayingMini />
         </div>
@@ -239,10 +220,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
           {NAV.map((n) => (
-            <NavLink key={n.href} {...n} />
-          ))}
-          <div className="divider my-2" />
-          {NAV_EXTRA.map((n) => (
             <NavLink key={n.href} {...n} />
           ))}
         </nav>
@@ -284,30 +261,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <DmNotifications />
       <RestTimer />
-
-      <Dialog open={moreOpen} onClose={() => setMoreOpen(false)} title="Más">
-        <div className="flex flex-col gap-1">
-          {NAV_EXTRA.map((n) => {
-            const active = pathname === n.href || pathname.startsWith(n.href + "/");
-            return (
-              <Link
-                key={n.href}
-                href={n.href}
-                onClick={() => setMoreOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
-                  active
-                    ? "bg-[var(--surface-2)] text-[var(--text)]"
-                    : "text-[var(--text-2)] hover:bg-[var(--surface-2)]"
-                )}
-              >
-                <n.icon className={cn("size-4.5", active && "text-[var(--accent)]")} />
-                {n.label}
-              </Link>
-            );
-          })}
-        </div>
-      </Dialog>
     </div>
   );
 }
