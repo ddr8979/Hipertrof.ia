@@ -15,3 +15,6 @@ edit-check.js
 movil-check.js
 pl-check.js
 pl-self.js
+
+# Contextos de sesion (pueden contener secretos)
+CONTEXTO_SESION_*.md
