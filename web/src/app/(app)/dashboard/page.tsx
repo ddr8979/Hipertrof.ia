@@ -252,27 +252,27 @@ export default function DashboardPage() {
         <div className="grid grid-cols-3 gap-3">
           <Link href="/ejercicios" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
             <Dumbbell className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Ejercicios</span>
+            <span className="w-full break-words text-center text-xs font-semibold leading-tight">Ejercicios</span>
           </Link>
           <Link href="/glosario" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
             <BookOpenText className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Diccionario</span>
+            <span className="w-full break-words text-center text-xs font-semibold leading-tight">Diccionario</span>
           </Link>
           <Link href="/calculadora" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
             <Calculator className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Calculadora</span>
+            <span className="w-full break-words text-center text-xs font-semibold leading-tight">Calculadora</span>
           </Link>
           <Link href="/nutricion" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
             <Utensils className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Nutrición</span>
+            <span className="w-full break-words text-center text-xs font-semibold leading-tight">Nutrición</span>
           </Link>
           <Link href="/progreso" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
             <ChartLine className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Progreso</span>
+            <span className="w-full break-words text-center text-xs font-semibold leading-tight">Progreso</span>
           </Link>
           <Link href="/perfil" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
             <Music4 className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Perfil</span>
+            <span className="w-full break-words text-center text-xs font-semibold leading-tight">Perfil</span>
           </Link>
         </div>
       </section>
