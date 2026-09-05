@@ -24,7 +24,7 @@ import { useProfile } from "@/components/providers";
 import { Avatar } from "@/components/ui/primitives";
 import { createClient } from "@/lib/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useRef, useEffect } from "react";
+import { memo, useState, useRef, useEffect } from "react";
 import { DmNotifications } from "@/components/dm-notifications";
 import { RestTimer } from "@/components/rest-timer";
 import { useSpotifyNow } from "@/components/spotify-now";
@@ -81,7 +81,7 @@ const NAV = [
   { href: "/entrenadores", label: "Entrenadores", icon: Users },
 ];
 
-function RailIcon({
+const RailIcon = memo(function RailIcon({
   href,
   label,
   icon: Icon,
@@ -118,7 +118,7 @@ function RailIcon({
       ) : null}
     </Link>
   );
-}
+});
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -157,34 +157,35 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     router.refresh();
   }
 
-  const NavLink = ({
-    href,
-    label,
-    icon: Icon,
-    className,
-  }: {
-    href: string;
-    label: string;
-    icon: React.ComponentType<{ className?: string }>;
-    className?: string;
-  }) => {
-    const active = pathname === href || pathname.startsWith(href + "/");
-    return (
-      <Link
-        href={href}
-        className={cn(
-          "flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
-          active
-            ? "bg-[var(--surface-2)] text-[var(--text)]"
-            : "text-[var(--text-2)] hover:text-[var(--text)]",
-          className
-        )}
-      >
-        <Icon className={cn("size-4.5", active && "text-[var(--accent)]")} />
-        {label}
-      </Link>
-    );
-  };
+  const NavLink = memo(function NavLink({
+  href,
+  label,
+  icon: Icon,
+  className,
+}: {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  className?: string;
+}) {
+  const pathname = usePathname();
+  const active = pathname === href || pathname.startsWith(href + "/");
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
+        active
+          ? "bg-[var(--surface-2)] text-[var(--text)]"
+          : "text-[var(--text-2)] hover:text-[var(--text)]",
+        className
+      )}
+    >
+      <Icon className={cn("size-4.5", active && "text-[var(--accent)]")} />
+      {label}
+    </Link>
+  );
+});
 
   return (
     <div className="min-h-dvh">

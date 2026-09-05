@@ -1,8 +1,17 @@
-const SHELL_CACHE = "hypertrofia-shell-v4";
-const DATA_CACHE = "hypertrofia-data-v4";
+const SHELL_CACHE = "hypertrofia-shell-v5";
+const DATA_CACHE = "hypertrofia-data-v5";
+const RUNTIME_CACHE = "hypertrofia-runtime-v5";
 
-self.addEventListener("install", () => {
+const SHELL_URLS = ["/", "/dashboard", "/manifest.webmanifest"];
+
+self.addEventListener("install", (event) => {
   self.skipWaiting();
+  event.waitUntil(
+    (async () => {
+      const cache = await caches.open(SHELL_CACHE);
+      await Promise.allSettled(SHELL_URLS.map((u) => cache.add(u)));
+    })()
+  );
 });
 
 self.addEventListener("activate", (event) => {
@@ -10,7 +19,9 @@ self.addEventListener("activate", (event) => {
     (async () => {
       const keys = await caches.keys();
       await Promise.all(
-        keys.filter((k) => k !== SHELL_CACHE && k !== DATA_CACHE).map((k) => caches.delete(k))
+        keys
+          .filter((k) => ![SHELL_CACHE, DATA_CACHE, RUNTIME_CACHE].includes(k))
+          .map((k) => caches.delete(k))
       );
       await self.clients.claim();
     })()
@@ -34,10 +45,16 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   event.waitUntil(
     (async () => {
-      const url = new URL(event.notification.data?.url ?? "/mensajes", self.location.origin).href;
-      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const url = new URL(
+        event.notification.data?.url ?? "/mensajes",
+        self.location.origin
+      ).href;
+      const windows = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
       for (const w of windows) {
-        if (w.url.includes(self.location.origin)) {
+        if (w.url.startsWith(self.location.origin)) {
           await w.navigate(url);
           await w.focus();
           return;
@@ -49,63 +66,76 @@ self.addEventListener("notificationclick", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
+  const req = event.request;
+  if (req.method !== "GET") return;
 
-  if (event.request.method !== "GET") return;
+  const url = new URL(req.url);
 
-  // Imagenes y medios externos (CDN de Spotify, ejercicios, etc.): el
-  // navegador los maneja directo, sin pasar por el service worker.
-  if (url.origin !== location.origin && !url.hostname.endsWith("supabase.co")) return;
+  if (url.origin !== self.location.origin && !url.hostname.endsWith("supabase.co")) {
+    return;
+  }
 
-  // Datos de Supabase: network-first con respaldo en cache
   if (url.hostname.endsWith("supabase.co")) {
     event.respondWith(
       (async () => {
         const cache = await caches.open(DATA_CACHE);
-        try {
-          const res = await fetch(event.request);
-          if (res.ok) cache.put(event.request, res.clone());
-          return res;
-        } catch (err) {
-          const cached = await cache.match(event.request);
-          if (cached) return cached;
-          throw err;
-        }
+        const cached = await cache.match(req);
+        const network = fetch(req)
+          .then((res) => {
+            if (res.ok) cache.put(req, res.clone());
+            return res;
+          })
+          .catch(() => null);
+        return cached || (await network) || new Response("", { status: 504 });
       })()
     );
     return;
   }
 
-  // Navegación: network-first, fallback a cache de la shell
-  if (event.request.mode === "navigate") {
+  if (req.mode === "navigate") {
     event.respondWith(
       (async () => {
         const cache = await caches.open(SHELL_CACHE);
         try {
-          const res = await fetch(event.request);
-          if (res.ok) cache.put("/dashboard", res.clone());
+          const res = await fetch(req);
+          if (res.ok && res.redirected === false) cache.put(req, res.clone());
           return res;
-        } catch (err) {
-          const cached = await cache.match("/dashboard");
+        } catch {
+          const cached = (await cache.match(req)) || (await cache.match("/dashboard"));
           if (cached) return cached;
-          throw err;
+          throw new Error("offline");
         }
       })()
     );
     return;
   }
 
-  // Assets estáticos: cache-first
-  event.respondWith(
-    (async () => {
-      const cache = await caches.open(SHELL_CACHE);
-      const cached = await cache.match(event.request);
-      if (cached) return cached;
-      const res = await fetch(event.request);
-      if (res.ok && (url.pathname.startsWith("/_next/static") || url.pathname.startsWith("/icons"))) {
-        cache.put(event.request, res.clone());
-      }
-      return res;
-    })()
-  );
+  const isStatic =
+    url.pathname.startsWith("/_next/static") ||
+    url.pathname.startsWith("/icons") ||
+    /\.(?:woff2?|ttf|otf|png|jpg|jpeg|webp|svg|gif|webm|mp4|ico)$/.test(url.pathname);
+
+  if (isStatic) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(RUNTIME_CACHE);
+        const cached = await cache.match(req);
+        if (cached) {
+          fetch(req)
+            .then((res) => {
+              if (res.ok) cache.put(req, res.clone());
+            })
+            .catch(() => {});
+          return cached;
+        }
+        try {
+          const res = await fetch(req);
+          if (res.ok) cache.put(req, res.clone());
+          return res;
+        } catch (err) {
+          throw err;
+        }
+      })()
+    );
+  }
 });

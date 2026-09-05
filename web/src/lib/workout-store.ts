@@ -243,6 +243,11 @@ export const useWorkoutStore = create<WorkoutState>()(
           };
         }),
     }),
-    { name: "hypertrofia-workout-draft" }
+    {
+      name: "hypertrofia-workout-draft",
+      partialize: (s) => ({
+        draft: s.draft,
+      }),
+    }
   )
 );

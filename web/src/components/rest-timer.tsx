@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Minus, Plus, Play, Square } from "lucide-react";
 import { useWorkoutStore } from "@/lib/workout-store";
@@ -74,8 +74,17 @@ export function RestTimer() {
 
   useEffect(() => {
     if (restEndsAt === null) return;
-    const t = setInterval(() => setNow(Date.now()), 250);
-    return () => clearInterval(t);
+    let raf = 0;
+    let last = 0;
+    const tick = (t: number) => {
+      if (t - last >= 250) {
+        last = t;
+        setNow(Date.now());
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [restEndsAt]);
 
   const done = restEndsAt !== null && now >= restEndsAt;

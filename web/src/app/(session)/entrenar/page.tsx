@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,12 +26,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { ExercisePicker } from "@/components/exercise-picker";
-import { RestTimer } from "@/components/rest-timer";
+import dynamic from "next/dynamic";
 import { toast } from "@/components/ui/toast";
 import { formatDuration } from "@/lib/utils";
 import { cn, vibrate } from "@/lib/utils";
 import { ExerciseMedia } from "@/components/exercise-media";
+import { RestTimer } from "@/components/rest-timer";
+
+const ExercisePicker = dynamic(
+  () => import("@/components/exercise-picker").then((m) => m.ExercisePicker),
+  { ssr: false }
+);
 
 const SET_TYPES: { id: SetType; label: string }[] = [
   { id: "N", label: "Normal" },
@@ -49,7 +54,7 @@ const TYPE_COLORS: Record<SetType, string> = {
 const getTypeColor = (type: string) => TYPE_COLORS[type as SetType] ?? TYPE_COLORS.N;
 
 
-function ExerciseCard({
+const ExerciseCard = memo(function ExerciseCard({
   exercise,
   routineRest,
   onRemove,
@@ -228,7 +233,7 @@ function ExerciseCard({
       </div>
     </div>
   );
-}
+});
 
 function SpotifyMini() {
   const { data } = useQuery({

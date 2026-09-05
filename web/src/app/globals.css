@@ -129,6 +129,8 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* Desktop: escala nativa equivalente a ~125% de zoom para no leer reducido */
@@ -145,6 +147,23 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* Hint de capa GPU solo en elementos que animan posición/transformación.
+   Evita will-change global que satura memoria. */
+.animate-fade-up,
+.animate-fade-in,
+.animate-scale-in,
+.animate-slide-up,
+[class*="animate-["] {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.glass {
+  transform: translateZ(0);
 }
 
 /* Acento personalizable del perfil (se aplica desde el cliente) */

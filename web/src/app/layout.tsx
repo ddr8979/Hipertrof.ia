@@ -55,6 +55,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://static.exercisedb.dev" crossOrigin="" />
+        <link rel="preconnect" href="https://i.scdn.co" crossOrigin="" />
+        <link rel="preconnect" href="https://api.spotify.com" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+      </head>
       <body className={`${inter.variable} ${space.variable} antialiased`}>
         <Providers>{children}</Providers>
       </body>

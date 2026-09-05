@@ -24,6 +24,8 @@ export function ProfileProvider() {
         return;
       }
 
+      if (useProfile.getState().profile?.id === user.id) return;
+
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
