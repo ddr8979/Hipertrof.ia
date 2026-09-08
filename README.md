@@ -1,40 +1,87 @@
-# hipertrof.ia
+# Hipertrof.ia
 
-Ecosistema web-first (PWA) para **atletas**, **personal trainers** y **gimnasios**.
+> PWA offline-first para atletas y personal trainers. Diario de cargas con UX Hevy-like, gestión de alumnos, y rendimiento táctil móvil.
 
-## Si querés aprender a programar (con IA)
+---
 
-Empezá por `docs/00-indice.md`. Está escrito para aprender “programando en un proyecto real” y usando la IA como copiloto.
+## Quick start
 
-## Alcance (según `Manual_Integral_HipertrofIA_Final.pdf`)
+```bash
+cd ~/Documentos/HIPERTROFIA/web
+npm install
+npm run dev
+# → http://localhost:3000
+```
 
-- **Atleta**
-  - Rutinas interactivas + diario de cargas (series/peso/descanso)
-  - Nutrición: cálculo calórico (Harris–Benedict) + registro
-  - Chat IA (en el manual: pensado para correr en infraestructura propia)
-- **Personal Trainer**
-  - Gestión de alumnos
-  - Constructor masivo de rutinas
-  - Marketplace de cursos/guías
-- **Gimnasio**
-  - Check-in QR “semáforo” (bloqueo de morosos)
-  - Alertas/recordatorios por WhatsApp
-  - Gestión administrativa básica
+Para producción local con protección anti-crash:
 
-## MVP propuesto (Mes 1 del roadmap)
+```bash
+hiptrun
+```
 
-- Registro / inicio de sesión
-- Perfiles (rol + datos físicos)
-- Calculadora Harris–Benedict (BMR + TDEE como punto de partida)
-- Base técnica para incorporar IA local luego (endpoint stub)
+---
 
-## Estructura del repo (plan)
+## Documentación
 
-- `apps/web`: PWA (Next.js)
-- `packages/db`: Prisma schema y migraciones
-- `apps/api` (opcional): API separada si hace falta escalar
+**Toda la documentación está en [`docs/`](./docs/).** Empezá por:
 
-## Próximo paso
+- 📚 [**Índice completo**](./docs/README.md)
+- 🚀 [**Setup local**](./docs/operations/01-setup-local.md)
+- 🏗️ [**Arquitectura**](./docs/architecture/01-vision-general.md)
+- 🤖 [**Sistema Guardian**](./docs/operations/03-sistema-guardian.md) — Cómo evitar que el sistema se trabe
+- 🆘 [**Problemas comunes**](./docs/troubleshooting/01-comunes.md)
 
-Inicializar el proyecto web (Next.js + Tailwind) y dejar corriendo el skeleton del MVP.
+---
 
+## Stack
+
+- **Next.js 16.3.1** + React 19 + TypeScript
+- **Prisma** ORM (SQLite local, Postgres prod)
+- **Zustand** con persistencia offline
+- **Tailwind CSS v4**
+- **Capacitor 8** para Android
+- **Supabase** como backend cloud
+
+---
+
+## Estructura
+
+```
+.
+├── web/             → Next.js app + Android project
+├── docs/            → Documentación completa
+├── exercises-dataset/  → Catálogo de ejercicios
+└── web-legacy/      → Código viejo archivado (no usar)
+```
+
+---
+
+## Scripts útiles
+
+| Comando | Qué hace |
+|---------|----------|
+| `npm run dev` | Modo desarrollo con hot reload |
+| `npm start` | Producción local |
+| `hiptrun` | Producción con protección anti-crash |
+| `npx prisma studio` | Inspector visual de DB |
+| `healthcheck` | Diagnóstico del sistema |
+| `~/.local/bin/guardian.sh status` | Estado del monitor |
+
+---
+
+## Sistema Guardian
+
+El sistema incluye un monitor inteligente que previene los problemas que tuvimos:
+
+- Auto-limpia coredumps cuando se acumulan
+- Detecta crash loops de Next.js y limita CPU
+- Notifica con notificaciones nativas (sin spam)
+- **Nunca mata procesos sin avisar**
+
+Ver [`docs/operations/03-sistema-guardian.md`](./docs/operations/03-sistema-guardian.md) para detalles.
+
+---
+
+## Licencia
+
+Privado.

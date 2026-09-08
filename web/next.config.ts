@@ -1,12 +1,19 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,
   poweredByHeader: false,
   compress: true,
   productionBrowserSourceMaps: false,
   experimental: {
     optimizePackageImports: ["lucide-react", "recharts", "date-fns"],
+    workerThreads: false,
+    cpus: 1,
+  },
+  // Hardening contra crash loops
+  output: "standalone",
+  logging: {
+    fetches: { fullUrl: false },
   },
   async headers() {
     return [
