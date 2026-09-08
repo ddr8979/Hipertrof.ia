@@ -126,11 +126,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const profile = useProfile((s) => s.profile);
   const railRef = useRef<HTMLElement>(null);
   const prevPathname = useRef(pathname);
+  const prevEffectTs = useRef(Date.now());
   const [indTop, setIndTop] = useState<number | null>(null);
 
   // Indicador deslizante tipo Instagram: sigue al item activo del hub
   useEffect(() => {
     if (prevPathname.current === pathname) return;
+    const now = Date.now();
+    if (now - prevEffectTs.current < 80) return;
+    prevEffectTs.current = now;
     prevPathname.current = pathname;
     const nav = railRef.current;
     if (!nav) return;
