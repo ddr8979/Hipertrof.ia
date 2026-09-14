@@ -18,3 +18,4 @@ pl-self.js
 
 # Contextos de sesion (pueden contener secretos)
 CONTEXTO_SESION_*.md
+*.vercel.json

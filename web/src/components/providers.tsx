@@ -76,30 +76,81 @@ function ProfileSync() {
     const supabase = createClient();
     let active = true;
 
-    async function load(userId: string | null) {
+    async function load(userId: string | null, user: any = null) {
       if (!userId) {
         setProfile(null);
         return;
       }
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .maybeSingle();
-      if (active) setProfile(data ?? null);
+
+      // Build profile from JWT metadata as fallback
+      const fallback: ProfileRow = {
+        id: userId,
+        display_name:
+          user?.user_metadata?.full_name ||
+          user?.user_metadata?.name ||
+          user?.user_metadata?.preferred_username ||
+          null,
+        username:
+          user?.user_metadata?.preferred_username ||
+          user?.email?.split("@")[0] ||
+          null,
+        avatar_url:
+          user?.user_metadata?.avatar_url ||
+          user?.user_metadata?.picture ||
+          null,
+        accent_color: null,
+      };
+
+      // Retry with backoff (trigger may be slow on first login)
+      for (let attempt = 0; attempt < 3 && active; attempt++) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select(
+            "id, display_name, username, avatar_url, accent_color, streak_count, max_streak, weight_kg, tdee_kcal, diet_goal"
+          )
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (data) {
+          setProfile(data);
+          return;
+        }
+
+        if (error && error.code !== "PGRST116") {
+          console.warn(`Profile load attempt ${attempt + 1}:`, error.message);
+        }
+
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
+        }
+      }
+
+      // Fallback to JWT-derived profile
+      if (active && user) setProfile(fallback);
     }
 
-    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT") {
-        setProfile(null);
-        return;
+    const { data: sub } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "SIGNED_OUT") {
+          setProfile(null);
+          return;
+        }
+        if (
+          event === "SIGNED_IN" ||
+          event === "TOKEN_REFRESHED" ||
+          event === "USER_UPDATED"
+        ) {
+          const sessionUser = session?.user ?? null;
+          void load(sessionUser?.id ?? null, sessionUser);
+        }
       }
-      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
-        void load(session?.user?.id ?? null);
-      }
-    });
+    );
 
-    supabase.auth.getSession().then((s) => load(s.data.session?.user?.id ?? null));
+    supabase.auth.getSession().then(async (s) => {
+      const sessionUser = s.data.session?.user ?? null;
+      const { data: fresh } = await supabase.auth.getUser();
+      void load(sessionUser?.id ?? null, fresh?.user ?? sessionUser);
+    });
 
     return () => {
       active = false;

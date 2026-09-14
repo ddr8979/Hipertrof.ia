@@ -14,6 +14,7 @@ import {
   UserPlus,
   ShieldCheck,
   Users,
+  Sun,
 } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -23,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import { useProfile } from "@/components/providers";
+import { ThemeToggle } from "@/components/brand-icons";
 
 export default function AjustesPage() {
   const router = useRouter();
@@ -235,6 +237,19 @@ export default function AjustesPage() {
           </div>
         </section>
       )}
+
+      <section className="card p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <Sun className="size-5 text-[var(--accent)]" />
+          <h2 className="font-display text-lg font-bold tracking-tight">Apariencia</h2>
+        </div>
+        <p className="text-sm text-[var(--text-2)]">
+          Elegí light, dark o dejalo en automático (elige según tu sistema).
+        </p>
+        <div className="mt-4">
+          <ThemeToggle variant="list" label="Tema de la aplicación" />
+        </div>
+      </section>
 
       <section className="card p-5">
         <div className="mb-3 flex items-center gap-2">

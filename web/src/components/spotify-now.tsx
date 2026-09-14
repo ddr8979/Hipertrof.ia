@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Music4 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SpotifyIcon } from "@/components/brand-icons";
 
 export type SpotifyNowData = {
   connected: boolean;
@@ -44,15 +44,15 @@ export function SpotifyNowCard({
   if (data.premiumRequired) {
     return (
       <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#1DB954]/15 text-[#1DB954]">
-          <Music4 className="size-5" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold">Spotify requiere Premium</p>
-          <p className="text-xs text-[var(--muted)]">
-            La cuenta dueña de la app de Spotify necesita Premium para ver lo que se reproduce.
-          </p>
-        </div>
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#1DB954]/15 text-[#1DB954]">
+            <SpotifyIcon size={20} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">Spotify requiere Premium</p>
+            <p className="text-xs text-[var(--muted)]">
+              La cuenta dueña de la app de Spotify necesita Premium para ver lo que se reproduce.
+            </p>
+          </div>
       </div>
     );
   }
@@ -69,7 +69,7 @@ export function SpotifyNowCard({
         <img src={p.cover} referrerPolicy="no-referrer" alt="" className="size-10 shrink-0 rounded-xl object-cover" />
       ) : (
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#1DB954]/15 text-[#1DB954]">
-          <Music4 className="size-5" />
+          <SpotifyIcon size={20} />
         </span>
       )}
       <div className="min-w-0 flex-1">
@@ -78,7 +78,7 @@ export function SpotifyNowCard({
       </div>
       {p.is_playing && (
         <span className="flex items-center gap-1 text-xs font-semibold text-[#1DB954]">
-          <Music4 className="size-3.5" />
+          <SpotifyIcon size={14} />
           Sonando
         </span>
       )}
@@ -93,7 +93,7 @@ export function SpotifyConnectCard() {
     <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
       <div className="flex items-center gap-3">
         <span className="flex size-10 items-center justify-center rounded-xl bg-[#1DB954]/15 text-[#1DB954]">
-          <Music4 className="size-5" />
+          <SpotifyIcon size={20} />
         </span>
         <div>
           <p className="text-sm font-semibold">Conectá tu Spotify</p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,8 +9,10 @@ import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
 import { Input } from "@/components/ui/input";
+import { Dialog } from "@/components/ui/dialog";
 import { Avatar } from "@/components/ui/primitives";
 import { useProfile } from "@/components/providers";
+import { ThemeToggle } from "@/components/brand-icons";
 import { vibrate, cn } from "@/lib/utils";
 
 type Message = {
@@ -25,6 +27,15 @@ type Message = {
   view_once?: boolean;
   opened_at?: string | null;
 };
+
+type MessageReaction = {
+  message_id: string;
+  user_id: string;
+  emoji: string;
+  created_at: string;
+};
+
+const REACTION_OPTIONS = ["👍", "❤️", "😂", "🔥", "💪"] as const;
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString("es-UY", {
@@ -49,6 +60,8 @@ export default function ChatPage() {
   const [uploading, setUploading] = useState(false);
   const [viewOnce, setViewOnce] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [reactionTarget, setReactionTarget] = useState<Message | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: other } = useQuery({
     queryKey: ["dm_other", otherId],
@@ -87,15 +100,47 @@ export default function ChatPage() {
     queryKey: ["dm", otherId],
     queryFn: async () => {
       const supabase = createClient();
+      const meId = me?.id ?? "";
       const { data, error } = await supabase
         .from("direct_messages")
         .select("id, sender_id, recipient_id, content, stars, created_at, read_at, image_url, view_once, opened_at")
+        .or(
+          `or(and(sender_id.eq.${meId},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${meId}))`
+        )
         .order("created_at", { ascending: true })
         .limit(200);
       if (error) throw new Error(error.message);
-      return (data ?? []) as Message[];
+      const safe = (data ?? []) as Message[];
+      return safe.filter(
+        (m) =>
+          (m.sender_id === meId && m.recipient_id === otherId) ||
+          (m.sender_id === otherId && m.recipient_id === meId)
+      );
     },
-    enabled: !!me?.id,
+    enabled: !!me?.id && !!otherId,
+  });
+
+  const messageIds = useMemo(() => (messages ?? []).map((message) => message.id), [messages]);
+  const reactionQueryKey = [
+    "dm_reactions",
+    me?.id ?? "anon",
+    otherId,
+    messageIds.join(","),
+  ];
+
+  const { data: reactions = [] } = useQuery({
+    queryKey: reactionQueryKey,
+    queryFn: async () => {
+      if (messageIds.length === 0) return [];
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("message_reactions")
+        .select("message_id, user_id, emoji, created_at")
+        .in("message_id", messageIds);
+      if (error) throw new Error(error.message);
+      return (data ?? []) as MessageReaction[];
+    },
+    enabled: !!me?.id && messageIds.length > 0,
   });
 
   useEffect(() => {
@@ -121,9 +166,25 @@ export default function ChatPage() {
               .eq("id", m.id);
           }
           qc.invalidateQueries({ queryKey: ["dm"] });
+          qc.invalidateQueries({ queryKey: ["dm_reactions"] });
           qc.invalidateQueries({ queryKey: ["conversations"] });
           qc.invalidateQueries({ queryKey: ["unread_dm"] });
         }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "message_reactions" },
+        () => qc.invalidateQueries({ queryKey: ["dm_reactions"] })
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "message_reactions" },
+        () => qc.invalidateQueries({ queryKey: ["dm_reactions"] })
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "message_reactions" },
+        () => qc.invalidateQueries({ queryKey: ["dm_reactions"] })
       )
       .subscribe();
     return () => {
@@ -143,18 +204,22 @@ export default function ChatPage() {
   }, [messages?.length]);
 
   useEffect(() => {
-    if (!me?.id || !otherId) return;
-    const supabase = createClient();
-    supabase
-      .from("direct_messages")
-      .update({ read_at: new Date().toISOString() })
-      .eq("recipient_id", me.id)
-      .eq("sender_id", otherId)
-      .is("read_at", null)
-      .then(() => {
-        qc.invalidateQueries({ queryKey: ["conversations"] });
-        qc.invalidateQueries({ queryKey: ["unread_dm"] });
-      });
+    if (!messages || messages.length === 0) return;
+    const timer = setTimeout(() => {
+      if (!me?.id || !otherId) return;
+      const supabase = createClient();
+      supabase
+        .from("direct_messages")
+        .update({ read_at: new Date().toISOString() })
+        .eq("recipient_id", me.id)
+        .eq("sender_id", otherId)
+        .is("read_at", null)
+        .then(() => {
+          qc.invalidateQueries({ queryKey: ["conversations"] });
+          qc.invalidateQueries({ queryKey: ["unread_dm"] });
+        });
+    }, 500);
+    return () => clearTimeout(timer);
   }, [otherId, me?.id, messages?.length, qc]);
 
   const send = useMutation({
@@ -235,6 +300,74 @@ export default function ChatPage() {
     },
   });
 
+  const reactionsByMessage = useMemo(() => {
+    const grouped = new Map<string, MessageReaction[]>();
+    for (const reaction of reactions) {
+      const current = grouped.get(reaction.message_id) ?? [];
+      current.push(reaction);
+      grouped.set(reaction.message_id, current);
+    }
+    return grouped;
+  }, [reactions]);
+
+  const toggleReaction = useMutation({
+    mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
+      if (!me?.id) throw new Error("No hay sesión activa");
+      const supabase = createClient();
+      const current = qc.getQueryData<MessageReaction[]>(reactionQueryKey) ?? [];
+      const existing = current.find(
+        (reaction) => reaction.message_id === messageId && reaction.user_id === me.id
+      );
+      if (existing?.emoji === emoji) {
+        const { error } = await supabase
+          .from("message_reactions")
+          .delete()
+          .eq("message_id", messageId)
+          .eq("user_id", me.id);
+        if (error) throw new Error(error.message);
+        return;
+      }
+      const { error } = await supabase.from("message_reactions").upsert({
+        message_id: messageId,
+        user_id: me.id,
+        emoji,
+      }, { onConflict: "message_id,user_id" });
+      if (error) throw new Error(error.message);
+    },
+    onMutate: async ({ messageId, emoji }) => {
+      if (!me?.id) return;
+      await qc.cancelQueries({ queryKey: reactionQueryKey, exact: true });
+      const previous = qc.getQueryData<MessageReaction[]>(reactionQueryKey);
+      const current = previous ?? [];
+      const existing = current.find(
+        (reaction) => reaction.message_id === messageId && reaction.user_id === me.id
+      );
+      const next = existing?.emoji === emoji
+        ? current.filter((reaction) => !(reaction.message_id === messageId && reaction.user_id === me.id))
+        : [
+            ...current.filter(
+              (reaction) => !(reaction.message_id === messageId && reaction.user_id === me.id)
+            ),
+            {
+              message_id: messageId,
+              user_id: me.id,
+              emoji,
+              created_at: new Date().toISOString(),
+            },
+          ];
+      qc.setQueryData(reactionQueryKey, next);
+      return { previous };
+    },
+    onError: (e, _, context) => {
+      qc.setQueryData(reactionQueryKey, context?.previous ?? []);
+      toast("error", "No se pudo reaccionar", e.message);
+    },
+    onSuccess: () => {
+      setReactionTarget(null);
+      qc.invalidateQueries({ queryKey: ["dm_reactions"] });
+    },
+  });
+
   const muted = useMemo(() => other && other.is_public_profile === false, [other]);
 
   function pickImage(file: File | undefined | null) {
@@ -268,7 +401,36 @@ export default function ChatPage() {
     // nada: el layout se mantiene estático con 100dvh
   }
 
-  if (isLoading || !other) {
+  function cancelLongPress() {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }
+
+  function openReactionPicker(message: Message) {
+    cancelLongPress();
+    setReactionTarget(message);
+    vibrate(10);
+  }
+
+  function handleMessagePointerDown(message: Message) {
+    cancelLongPress();
+    longPressTimerRef.current = setTimeout(() => openReactionPicker(message), 450);
+  }
+
+  function handleMessagePointerEnd() {
+    cancelLongPress();
+  }
+
+  function handleMessageContextMenu(event: ReactMouseEvent<HTMLElement>, message: Message) {
+    event.preventDefault();
+    openReactionPicker(message);
+  }
+
+  useEffect(() => cancelLongPress, []);
+
+  if (isLoading || !other || !me) {
     return (
       <div className="flex flex-col gap-4">
         <Skeleton className="h-12" />
@@ -279,47 +441,52 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-8rem)] lg:h-[calc(100dvh-10rem)] min-h-0">
-      <header className="flex items-center gap-3 shrink-0 px-4 py-3 border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur">
-        <button
-          onClick={() => router.back()}
-          aria-label="Volver"
-          className="rounded-xl p-2 text-[var(--muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
-        >
-          <ArrowLeft className="size-5" />
-        </button>
-        <Link
-          href={`/perfil/${otherId}`}
-          className="flex min-w-0 flex-1 items-center gap-3"
-        >
-          <Avatar
-            src={other.avatar_url}
-            size={40}
-            alt={other.display_name ?? other.username ?? "?"}
-          />
-          <div className="min-w-0">
-            <p className="break-words font-display text-lg font-bold leading-tight tracking-tight">
-              {other.display_name ?? other.username ?? "Atleta"}
-            </p>
-            {other.username && (
-              <p className="break-words text-xs leading-snug text-[var(--muted)]">@{other.username}</p>
-            )}
-          </div>
-        </Link>
-        {muted && (
+      <header className="flex items-center justify-between gap-3 shrink-0 px-4 py-3 border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur">
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => toast("info", "Perfil privado", "Solo podés ver lo que comparte.")}
-            aria-label="Perfil privado"
-            className="rounded-xl p-2 text-[var(--muted)]"
+            onClick={() => router.back()}
+            aria-label="Volver"
+            className="rounded-xl p-2 text-[var(--muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
           >
-            <Trash2 className="size-4" />
+            <ArrowLeft className="size-5" />
           </button>
-        )}
+          <Link
+            href={`/perfil/${otherId}`}
+            className="flex min-w-0 flex-1 items-center gap-3"
+          >
+            <Avatar
+              src={other.avatar_url}
+              size={40}
+              alt={other.display_name ?? other.username ?? "?"}
+            />
+            <div className="min-w-0">
+              <p className="break-words font-display text-lg font-bold leading-tight tracking-tight">
+                {other.display_name ?? other.username ?? "Atleta"}
+              </p>
+              {other.username && (
+                <p className="break-words text-xs leading-snug text-[var(--muted)]">@{other.username}</p>
+              )}
+            </div>
+          </Link>
+        </div>
+        <div className="flex items-center gap-1">
+          {muted && (
+            <button
+              onClick={() => toast("info", "Perfil privado", "Solo podés ver lo que comparte.")}
+              aria-label="Perfil privado"
+              className="rounded-xl p-2 text-[var(--muted)]"
+            >
+              <Trash2 className="size-4" />
+            </button>
+          )}
+          <ThemeToggle variant="compact" />
+        </div>
       </header>
 
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex flex-1 flex-col gap-2 overflow-y-auto rounded-2xl bg-[var(--surface-2)] p-4 min-h-0"
+        className="flex flex-1 flex-col gap-2 overflow-y-auto rounded-2xl bg-[var(--surface-2)] px-1 py-3 min-h-0 sm:px-4 sm:py-4"
       >
         {messages?.length === 0 && (
           <p className="m-auto max-w-xs text-center text-sm text-[var(--muted)]">
@@ -333,6 +500,11 @@ export default function ChatPage() {
             <div
               key={m.id}
               className={cn("flex flex-col", mine ? "items-end" : "items-start")}
+              onPointerDown={() => handleMessagePointerDown(m)}
+              onPointerUp={handleMessagePointerEnd}
+              onPointerLeave={handleMessagePointerEnd}
+              onPointerCancel={handleMessagePointerEnd}
+              onContextMenu={(event) => handleMessageContextMenu(event, m)}
             >
               <div
                 className={cn(
@@ -373,6 +545,12 @@ export default function ChatPage() {
                   {mine && !m.view_once && m.read_at && " · leído"}
                 </p>
               </div>
+              <ReactionSummary
+                reactions={reactionsByMessage.get(m.id) ?? []}
+                currentUserId={me!.id}
+                align={mine ? "end" : "start"}
+                onReact={(emoji) => toggleReaction.mutate({ messageId: m.id, emoji })}
+              />
             </div>
           );
         })}
@@ -380,13 +558,13 @@ export default function ChatPage() {
       </div>
 
       {pendingImage && (
-        <div className="shrink-0 border-t border-[var(--border)] px-4 py-2">
-          <div className="relative w-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-1.5">
+        <div className="shrink-0 border-t border-[var(--border)] px-4 py-2 pb-[env(safe-area-inset-bottom)]">
+          <div className="relative w-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={pendingImage}
               alt="Vista previa"
-              className="h-40 w-full rounded-xl object-cover"
+              className="h-36 w-full rounded-xl object-cover sm:h-40"
             />
             <button
               onClick={() => setPendingImage(null)}
@@ -411,15 +589,15 @@ export default function ChatPage() {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Agregá un comentario…"
-              className="mt-1.5 h-9 border-0 bg-transparent text-sm focus:ring-0"
+              className="mt-2 h-9 border-0 bg-transparent text-sm focus:ring-0"
             />
           </div>
         </div>
       )}
 
-      <footer className="shrink-0 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur px-4 py-3 pb-[env(safe-area-inset-bottom)]">
+      <footer className="shrink-0 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
         <div className="flex items-end gap-2">
-          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] p-1.5">
+          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] p-2 sm:p-1.5">
             <input
               ref={fileRef}
               type="file"
@@ -435,8 +613,9 @@ export default function ChatPage() {
                 vibrate(6);
                 fileRef.current?.click();
               }}
+              disabled={uploading}
               aria-label="Adjuntar imagen"
-              className="flex shrink-0 items-center justify-center rounded-xl p-2 text-[var(--muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
+              className="flex shrink-0 items-center justify-center rounded-xl p-2.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--text)] disabled:opacity-40"
             >
               <ImagePlus className="size-5" />
             </button>
@@ -456,7 +635,7 @@ export default function ChatPage() {
               onFocus={handleFocus}
               onBlur={handleBlur}
               placeholder={pendingImage ? "Comentario…" : "Escribí un mensaje…"}
-              className="border-0 bg-transparent focus:ring-0"
+              className="border-0 bg-transparent focus:ring-0 text-[15px] py-2"
             />
             <button
               onClick={() => {
@@ -466,10 +645,10 @@ export default function ChatPage() {
               disabled={(balance ?? 0) < stars + 1}
               aria-label="Enviar estrellas"
               className={cn(
-                "flex shrink-0 items-center gap-1 rounded-xl px-2.5 py-2 text-xs font-bold transition-colors",
+                "flex shrink-0 items-center gap-1 rounded-xl px-2.5 py-2 text-xs font-bold transition-colors disabled:opacity-40",
                 stars > 0
                   ? "bg-[var(--accent)]/15 text-[var(--accent)]"
-                  : "text-[var(--muted)] hover:bg-[var(--surface-2)]"
+                  : "text-[var(--muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
               )}
             >
               <Star className={cn("size-4", stars > 0 && "fill-current")} />
@@ -485,12 +664,92 @@ export default function ChatPage() {
               (!text.trim() && !pendingImage) || send.isPending || sendWithImage.isPending || uploading
             }
             aria-label="Enviar"
-            className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--accent)] text-[var(--accent-ink)] transition-transform active:scale-95 disabled:opacity-40"
+            className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--accent)] text-[var(--accent-ink)] transition-transform active:scale-95 disabled:opacity-40"
           >
             <Send className="size-5" />
           </button>
         </div>
       </footer>
+
+      <Dialog
+        open={!!reactionTarget}
+        onClose={() => setReactionTarget(null)}
+        title="Reaccionar"
+        size="sm"
+        className="!max-w-sm"
+      >
+        <div className="flex items-center justify-center gap-2 py-1">
+          {REACTION_OPTIONS.map((emoji) => (
+            <button
+              key={emoji}
+              onClick={() => {
+                if (reactionTarget) {
+                  toggleReaction.mutate({ messageId: reactionTarget.id, emoji });
+                }
+              }}
+              className="flex size-12 items-center justify-center rounded-2xl text-2xl transition active:scale-90 hover:bg-[var(--surface-2)]"
+              aria-label={`Reaccionar con ${emoji}`}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      </Dialog>
+    </div>
+  );
+}
+
+function ReactionSummary({
+  reactions,
+  currentUserId,
+  align,
+  onReact,
+}: {
+  reactions: MessageReaction[];
+  currentUserId: string;
+  align: "start" | "end";
+  onReact: (emoji: string) => void;
+}) {
+  if (reactions.length === 0) return null;
+
+  const counts = new Map<string, number>();
+  for (const reaction of reactions) {
+    counts.set(reaction.emoji, (counts.get(reaction.emoji) ?? 0) + 1);
+  }
+  const orderedEmojis = [
+    ...REACTION_OPTIONS.filter((emoji) => counts.has(emoji)),
+    ...Array.from(counts.keys()).filter((emoji) => !REACTION_OPTIONS.includes(emoji as typeof REACTION_OPTIONS[number])),
+  ];
+
+  return (
+    <div
+      className={cn(
+        "mt-1 flex max-w-full flex-wrap gap-1",
+        align === "end" ? "justify-end" : "justify-start"
+      )}
+      onPointerDown={(event) => event.stopPropagation()}
+    >
+      {orderedEmojis.map((emoji) => {
+        const active = reactions.some(
+          (reaction) => reaction.emoji === emoji && reaction.user_id === currentUserId
+        );
+        return (
+          <button
+            key={emoji}
+            onClick={() => onReact(emoji)}
+            className={cn(
+              "flex items-center gap-1 rounded-full border px-2 py-1 text-xs transition active:scale-95 sm:text-[11px]",
+              active
+                ? "border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--accent)]"
+                : "border-[var(--border)] bg-[var(--surface)]/80 text-[var(--text-2)] hover:bg-[var(--surface-2)]"
+            )}
+            aria-label={`Reacción ${emoji}`}
+          >
+            <span>{emoji}</span>
+            <span className="text-[10px] font-semibold">{counts.get(emoji)}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

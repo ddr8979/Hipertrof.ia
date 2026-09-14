@@ -8,10 +8,8 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "recharts", "date-fns"],
     workerThreads: false,
-    cpus: 1,
+    cpus: 4,
   },
-  // Hardening contra crash loops
-  output: "standalone",
   logging: {
     fetches: { fullUrl: false },
   },
@@ -19,15 +17,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/_next/static/:path*",
-        headers: [
-          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
-        ],
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },
       {
         source: "/icons/:path*",
-        headers: [
-          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
-        ],
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },
       {
         source: "/sw.js",
@@ -38,9 +32,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/manifest.webmanifest",
-        headers: [
-          { key: "Cache-Control", value: "public, max-age=3600" },
-        ],
+        headers: [{ key: "Cache-Control", value: "public, max-age=3600" }],
       },
     ];
   },

@@ -28,7 +28,8 @@ import { memo, useState, useRef, useEffect } from "react";
 import { DmNotifications } from "@/components/dm-notifications";
 import { RestTimer } from "@/components/rest-timer";
 import { useSpotifyNow } from "@/components/spotify-now";
-import { Music4 } from "lucide-react";
+import { ThemeToggle } from "@/components/brand-icons";
+import { SpotifyIcon } from "@/components/brand-icons";
 
 function NowPlayingMini() {
   const { data } = useSpotifyNow();
@@ -50,7 +51,7 @@ function NowPlayingMini() {
         />
       ) : (
         <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#1DB954]/15 text-[#1DB954]">
-          <Music4 className="size-3.5" />
+          <SpotifyIcon size={16} />
         </span>
       )}
       <span className="flex min-w-0 flex-col">
@@ -126,14 +127,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const profile = useProfile((s) => s.profile);
   const railRef = useRef<HTMLElement>(null);
   const prevPathname = useRef(pathname);
-  const prevEffectTs = useRef(Date.now());
+  const prevEffectTs = useRef<number | null>(null);
   const [indTop, setIndTop] = useState<number | null>(null);
 
   // Indicador deslizante tipo Instagram: sigue al item activo del hub
   useEffect(() => {
     if (prevPathname.current === pathname) return;
     const now = Date.now();
-    if (now - prevEffectTs.current < 80) return;
+    if (prevEffectTs.current !== null && now - prevEffectTs.current < 80) return;
     prevEffectTs.current = now;
     prevPathname.current = pathname;
     const nav = railRef.current;
@@ -196,6 +197,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-dvh items-start lg:pl-60">
       {/* Rail lateral móvil: hub compacto, ocupa su propio espacio */}
       <nav ref={railRef} className="sticky top-24 z-40 ml-2 mt-2 flex max-h-[calc(100dvh-7rem)] flex-col items-center gap-1.5 overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--surface)]/85 p-1.5 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.25)] backdrop-blur-xl lg:hidden">
+        {/* Tema rapido móvil */}
+        <ThemeToggle variant="compact" className="mb-1" />
         {/* Marca deslizante del item activo */}
         <span
           aria-hidden
@@ -212,7 +215,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar desktop */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur-xl lg:flex">
-        <div className="flex h-16 items-center gap-2.5 border-b border-[var(--border)] px-5">
+        <div className="flex h-16 items-center justify-between gap-2.5 border-b border-[var(--border)] px-5">
           <Link href="/dashboard" className="flex items-center gap-2.5">
             <span className="flex size-8 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--accent-ink)]">
               <Dumbbell className="size-4.5" />
@@ -221,6 +224,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               hypertrof<span className="text-[var(--accent)]">.ia</span>
             </span>
           </Link>
+          <ThemeToggle variant="compact" />
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
@@ -239,12 +243,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 alt={profile?.display_name ?? profile?.username ?? "Perfil"}
               />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">
-                  {profile?.display_name ?? profile?.username}
-                </p>
-                <p className="truncate text-xs text-[var(--muted)]">
-                  @{profile?.username}
-                </p>
+<p className="truncate text-sm font-semibold">
+  {profile?.display_name || profile?.username || "Atleta"}
+</p>
+<p className="truncate text-xs text-[var(--muted)]">
+  @{profile?.username || profile?.id?.slice(0, 8) || ""}
+</p>
               </div>
             </Link>
             <button
@@ -259,7 +263,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Contenido */}
-      <main className="mx-auto w-full min-w-0 flex-1 max-w-3xl px-4 pb-12 pt-12 sm:px-6 sm:pt-16 lg:px-6 lg:pb-12 lg:pt-10">
+      <main className="mx-auto w-full min-w-0 flex-1 max-w-3xl px-4 pb-14 pt-12 sm:px-6 sm:pt-16 lg:max-w-none lg:pt-10">
           {children}
         </main>
       </div>
