@@ -11,10 +11,10 @@ import {
   ChartLine,
   CalendarDays,
   ChevronRight,
-  Music4,
   BookOpenText,
   Calculator,
 } from "lucide-react";
+import { SpotifyIcon } from "@/components/brand-icons";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/components/providers";
 import { Button } from "@/components/ui/button";
@@ -271,7 +271,7 @@ export default function DashboardPage() {
             <span className="w-full break-words text-center text-xs font-semibold leading-tight">Progreso</span>
           </Link>
           <Link href="/perfil" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <Music4 className="size-5 text-[var(--accent)]" />
+            <SpotifyIcon className="size-5 text-[#1DB954]" />
             <span className="w-full break-words text-center text-xs font-semibold leading-tight">Perfil</span>
           </Link>
         </div>
@@ -305,7 +305,7 @@ function SpotifyWidget() {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h3 className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
-            <Music4 className="size-5 text-[#1DB954]" />
+            <SpotifyIcon className="size-5 text-[#1DB954]" />
             Escuchando ahora
           </h3>
           <button
@@ -317,7 +317,7 @@ function SpotifyWidget() {
         </div>
         <div className="flex items-center gap-3.5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
           <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[#1DB954]">
-            <Music4 className="size-5" />
+            <SpotifyIcon className="size-5" />
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold">Spotify requiere Premium</p>
@@ -337,7 +337,7 @@ function SpotifyWidget() {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h3 className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
-            <Music4 className="size-5 text-[#1DB954]" />
+            <SpotifyIcon className="size-5 text-[#1DB954]" />
             Escuchando ahora
           </h3>
           <div className="flex items-center gap-3">
@@ -371,7 +371,7 @@ function SpotifyWidget() {
             />
           ) : (
             <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[#1DB954]">
-              <Music4 className="size-5" />
+              <SpotifyIcon className="size-5" />
             </span>
           )}
           <div className="min-w-0 flex-1">
@@ -389,12 +389,12 @@ function SpotifyWidget() {
           </div>
           {spotify.playing?.is_playing ? (
             <span className="flex items-center gap-1 text-xs font-semibold text-[#1DB954]">
-              <Music4 className="size-3.5" />
+              <SpotifyIcon className="size-3.5" />
               Sonando
             </span>
           ) : spotify.playing?.is_recent ? (
             <span className="flex items-center gap-1 text-xs font-semibold text-[var(--muted)]">
-              <Music4 className="size-3.5" />
+              <SpotifyIcon className="size-3.5" />
               Último
             </span>
           ) : null}
@@ -408,7 +408,7 @@ function SpotifyWidget() {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h3 className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
-            <Music4 className="size-5 text-[#1DB954]" />
+            <SpotifyIcon className="size-5 text-[#1DB954]" />
             Spotify
           </h3>
           <a
@@ -421,7 +421,7 @@ function SpotifyWidget() {
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
           <div className="flex items-center gap-3">
             <span className="flex size-10 items-center justify-center rounded-xl bg-[#1DB954]/15 text-[#1DB954]">
-              <Music4 className="size-5" />
+              <SpotifyIcon className="size-5" />
             </span>
             <div>
               <p className="text-sm font-semibold">Conectá tu Spotify</p>
@@ -444,7 +444,7 @@ function SpotifyWidget() {
     <section>
       <div className="mb-3 flex items-center justify-between">
         <h3 className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
-          <Music4 className="size-5 text-[#1DB954]" />
+          <SpotifyIcon className="size-5 text-[#1DB954]" />
           Spotify
         </h3>
         <span className="text-xs font-semibold text-[var(--muted)]">Conectado</span>
