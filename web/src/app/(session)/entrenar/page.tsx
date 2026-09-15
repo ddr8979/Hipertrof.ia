@@ -14,7 +14,6 @@ import {
   Square,
   Dumbbell,
   Trash2,
-  Music4,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -32,6 +31,7 @@ import { formatDuration } from "@/lib/utils";
 import { cn, vibrate } from "@/lib/utils";
 import { ExerciseMedia } from "@/components/exercise-media";
 import { RestTimer } from "@/components/rest-timer";
+import { SpotifyIcon } from "@/components/brand-icons";
 
 const ExercisePicker = dynamic(
   () => import("@/components/exercise-picker").then((m) => m.ExercisePicker),
@@ -257,7 +257,7 @@ function SpotifyMini() {
       >
         <span className="flex items-center gap-2.5">
           <span className="flex size-9 items-center justify-center rounded-xl bg-[#1DB954]/15 text-[#1DB954]">
-            <Music4 className="size-4.5" />
+            <SpotifyIcon className="size-4.5" />
           </span>
           <span className="text-sm font-semibold">Conectá tu Spotify</span>
         </span>
@@ -270,7 +270,7 @@ function SpotifyMini() {
     return (
       <div className="flex w-full max-w-sm items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
         <span className="flex size-9 items-center justify-center rounded-xl bg-[#1DB954]/15 text-[#1DB954]">
-          <Music4 className="size-4.5" />
+          <SpotifyIcon className="size-4.5" />
         </span>
         <span className="text-sm font-semibold text-[var(--text-2)]">
           Nada sonando ahora en Spotify
@@ -291,7 +291,7 @@ function SpotifyMini() {
         <p className="truncate text-xs text-[var(--muted)]">{data.playing.artists}</p>
       </div>
       <span className="ml-auto flex items-center gap-1 text-xs font-semibold text-[#1DB954]">
-        <Music4 className="size-3.5" />
+        <SpotifyIcon className="size-3.5" />
         Sonando
       </span>
     </div>
@@ -715,7 +715,7 @@ const { data: lastW } = await supabase
   return (
     <main className="min-h-dvh pb-40">
       {/* Barra superior */}
-      <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur">
+      <header className="sticky top-[env(safe-area-inset-top)] z-30 border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
           <button
             onClick={() => {

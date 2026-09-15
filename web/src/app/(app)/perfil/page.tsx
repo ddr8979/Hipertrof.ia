@@ -27,6 +27,7 @@ import { createClient } from "@/lib/supabase/client";
 import { playlistThumb, splitEmojiRuns } from "@/lib/utils";
 import { SpotifyNowCard, SpotifyConnectCard } from "@/components/spotify-now";
 import { ProfileTrackPlayer, SocialCircles, VerifiedBadge } from "@/components/profile-bits";
+import { SpotifyIcon } from "@/components/brand-icons";
 import { PlanBadge } from "@/components/plan-badge";
 import { NetDialog } from "@/components/net-dialog";
 import { Skeleton } from "@/components/ui/primitives";
@@ -422,7 +423,7 @@ export default function PerfilPage() {
       <section className="card p-5">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Music4 className="size-5 text-[var(--accent)]" />
+            <SpotifyIcon className="size-5" />
             <h2 className="font-display text-lg font-bold tracking-tight">Tema del perfil</h2>
           </div>
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
@@ -973,7 +974,7 @@ function TrackPicker({
       {value.name ? (
         <div className="flex items-center gap-2.5">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-ink)]">
-            <Music4 className="size-4" />
+            <SpotifyIcon className="size-4" />
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{value.name}</p>

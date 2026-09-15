@@ -13,6 +13,7 @@ import {
   ChevronRight,
   BookOpenText,
   Calculator,
+  User,
 } from "lucide-react";
 import { SpotifyIcon } from "@/components/brand-icons";
 import { createClient } from "@/lib/supabase/client";
@@ -271,7 +272,7 @@ export default function DashboardPage() {
             <span className="w-full break-words text-center text-xs font-semibold leading-tight">Progreso</span>
           </Link>
           <Link href="/perfil" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <SpotifyIcon className="size-5 text-[#1DB954]" />
+            <User className="size-5 text-[var(--accent)]" />
             <span className="w-full break-words text-center text-xs font-semibold leading-tight">Perfil</span>
           </Link>
         </div>

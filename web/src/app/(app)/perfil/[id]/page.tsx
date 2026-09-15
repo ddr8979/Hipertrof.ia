@@ -14,13 +14,13 @@ import {
   Lock,
   Ruler,
   MessageCircle,
-  Music4,
   Star,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { playlistThumb } from "@/lib/utils";
 import { SpotifyNowCard } from "@/components/spotify-now";
 import { ProfileTrackPlayer, SocialCircles, VerifiedBadge } from "@/components/profile-bits";
+import { SpotifyIcon } from "@/components/brand-icons";
 import { PlanBadge } from "@/components/plan-badge";
 import { Skeleton, Avatar } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/data";
@@ -532,7 +532,7 @@ export default function PublicProfilePage() {
           {/* Tema del perfil */}
           <section className="card p-5">
             <div className="mb-3 flex items-center gap-2">
-              <Music4 className="size-5 text-[var(--accent)]" />
+              <SpotifyIcon className="size-5" />
               <h2 className="font-display text-lg font-bold tracking-tight">Tema del perfil</h2>
             </div>
             <ProfileTrackPlayer

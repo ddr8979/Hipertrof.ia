@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { Music4, Pause, Play } from "lucide-react";
+import { Pause, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VerifiedBadge, ShimmerIcon } from "@/components/premium-icons";
 
@@ -169,7 +169,7 @@ export function ProfileTrackPlayer({
     return (
       <div className={cn("flex items-center gap-3 rounded-xl bg-[var(--surface-2)]/60 px-3 py-2.5", className)}>
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-3)] text-[var(--muted)]">
-          <Music4 className="size-4" />
+          <SpotifyIcon className="size-4" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-[var(--muted)]">Sin tema elegido</p>
@@ -190,7 +190,7 @@ export function ProfileTrackPlayer({
       )}
       {!coverUrl && (
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-3)] text-[var(--muted)]">
-          <Music4 className="size-4" />
+          <SpotifyIcon className="size-4" />
         </span>
       )}
       <div className="min-w-0 flex-1">
@@ -215,7 +215,7 @@ export function ProfileTrackPlayer({
           )}
         </button>
       )}
-      <Music4 className="size-4 shrink-0 text-[var(--muted)]" />
+      <SpotifyIcon className="size-4 shrink-0 text-[var(--muted)]" />
       {canPlay && (
         <audio
           ref={audioRef}
