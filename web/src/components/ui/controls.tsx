@@ -1,7 +1,15 @@
+// Controles de formulario reutilizables: Switch (interruptor) y Tabs (pestañas).
 "use client";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Interruptor tipo switch accesible (`role="switch"`).
+ * @param checked   Estado actual.
+ * @param onChange  Callback al alternar el estado.
+ * @param label     Etiqueta accesible (aria-label).
+ * @param disabled  Deshabilita la interacción.
+ */
 export function Switch({
   checked,
   onChange,
@@ -38,6 +46,13 @@ export function Switch({
   );
 }
 
+/**
+ * Barra de pestañas controlada, con scroll horizontal si desbordan.
+ * @param tabs      Lista de pestañas con id, label e icono opcional.
+ * @param value     Id de la pestaña activa.
+ * @param onChange  Callback al seleccionar una pestaña.
+ * @param className Clases extra para el contenedor.
+ */
 export function Tabs({
   tabs,
   value,

@@ -1,0 +1,656 @@
+===============================================================================
+HIPERTROF.IA — CONTEXTO COMPLETO DEL PROYECTO (para que una IA genere el esquema)
+===============================================================================
+
+INSTRUCCIONES PARA LA IA QUE RECIBA ESTE TEXTO
+------------------------------------------------
+A partir de los datos de abajo, generá:
+  1. Un DIAGRAMA ENTIDAD-RELACIÓN (ER) en Mermaid con TODAS las tablas,
+     columnas clave y relaciones (FK).
+  2. Un DIAGRAMA DE ARQUITECTURA en Mermaid (cliente Next/PWA ↔ Supabase ↔
+     integraciones externas), marcando canales (REST/RLS, RPC, Realtime,
+     Storage, route handlers).
+  3. Un MAPA DE RUTAS de la app (App Router) en Mermaid.
+  4. Un DIAGRAMA DE FLUJOS por caso de uso: auth, crear/ejecutar rutina,
+     finalizar entrenamiento, trainer↔alumno (invitación/aceptación),
+     chat/DM, social/feed, nutrición.
+  5. Una EXPLICACIÓN en lenguaje claro: qué hace cada módulo, cómo se
+     comunican, y qué está roto (sección "PROBLEMAS CONOCIDOS").
+  6. Un DIAGRAMA DE ESTADO del entrenador/alumno (pending/active/terminated).
+Marcá con color/ícono los objetos que el código usa pero NO están creados por
+las migraciones (sección DRIFT), porque son deuda real.
+
+IMPORTANTE: el stack real es Supabase (Postgres+RLS+Auth+Realtime+Storage).
+NO hay Prisma, NO hay SQLite de app, NO hay server actions, NO hay capas FSD.
+Algunos docs viejos (01-vision-general.md, 02-modelo-datos.md,
+02-arquitectura.md, 07-mapa-completo-web.md, CONTEXT.md) están desactualizados.
+
+
+===============================================================================
+1. QUÉ ES
+===============================================================================
+PWA "web-first" (instalable en iOS/Android, wrapper Capacitor) para ATLETAS y
+PERSONAL TRAINERS. Bloques:
+  - Entrenamiento: rutinas, ejecutar sesión (diario de cargas), ejercicios,
+    historial, progreso, calculadora, glosario.
+  - Trainer: vinculación trainer↔alumno, asignar rutinas/recetas, cursos,
+    suscripciones, mensajería.
+  - Social/vida: dashboard, feed, perfiles, recetas/nutrición, chat, música.
+
+Repositorio: /home/ddr/Documentos/HIPERTROFIA
+  - web/                     → app Next.js + Capacitor
+  - web/supabase/migrations/ → SQL = fuente de verdad del modelo
+  - docs/architecture/       → documentación
+  - web-legacy/, dev.db      → legado, IGNORAR
+
+
+===============================================================================
+2. STACK REAL
+===============================================================================
+- Framework: Next.js 16.3.1 (App Router, RSC), React 19.0.2, TypeScript.
+- UI: Tailwind CSS v4, lucide-react. Iconos SVG inline para marcas.
+- Backend/DB: Supabase = Postgres + RLS + Auth + Realtime + Storage + RPC.
+- Estado cliente: Zustand 5 (con persist) + TanStack Query 5.
+- Integraciones: Spotify OAuth PKCE, YouTube/oEmbed, Web Push (web-push).
+- Mobile: Capacitor 8.5 (Android; iOS PWA).
+- Deploy: Vercel.
+- Cliente Supabase: @supabase/ssr (browser, server, middleware) + service_role
+  en route handlers.
+
+Regla de oro: ~90% de los datos viaja DIRECTO del navegador a Supabase con RLS
+como control de acceso. Next.js NO es una API REST de dominio: solo hace SSR de
+layouts/auth y expone /api/* para integraciones externas.
+
+
+===============================================================================
+3. ESTRUCTURA DE CARPETAS (REAL)
+===============================================================================
+web/
+├── src/
+│   ├── app/
+│   │   ├── (app)/          # producto: auth obligatoria + AppShell
+│   │   ├── (auth)/         # login / registro
+│   │   ├── (session)/      # entrenar (pantalla completa, sin shell)
+│   │   ├── auth/callback/  # intercambio de código Supabase (OAuth/magic)
+│   │   ├── onboarding/     # alta guiada
+│   │   ├── api/            # route handlers SOLO integraciones
+│   │   ├── layout.tsx      # metadata + <Providers>
+│   │   ├── manifest.ts     # PWA manifest (/manifest.webmanifest)
+│   │   └── globals.css     # tokens, dark mode, safe-areas iOS
+│   ├── components/         # app-shell, ui/, providers, toggles, invites…
+│   ├── lib/
+│   │   ├── supabase/       # client.ts, server.ts, middleware.ts, admin.ts
+│   │   ├── workout-store.ts# Zustand persist (borrador de sesión)
+│   │   ├── plans.ts, templates.ts, glosario-data.ts, profile-meta.ts
+│   │   ├── spotify-token.ts
+│   │   └── utils.ts
+│   └── middleware.ts       # raíz src (auth + rate limit + headers)
+├── public/sw.js            # service worker
+├── supabase/migrations/    # migraciones SQL (ver sección 6)
+├── android/ · capacitor.config.ts
+├── next.config.ts · package.json
+└── .vercel
+
+
+===============================================================================
+4. RUTAS DE LA APP (App Router)
+===============================================================================
+Público / raíz:
+  /                         landing
+  /login  /registro         auth (grupo (auth))
+  /auth/callback            intercambio código sesión
+  /onboarding               alta guiada
+  /terminos  /privacidad    legales
+  /marketplace              público en nav (igual exige sesión)
+
+(app) — auth obligatoria + AppShell (bottom tab bar móvil + sidebar desktop):
+  /dashboard      /rutinas        /mensajes  /mensajes/[id]
+  /perfil         /perfil/[id]    /explorar  /social (redirect a
+  /ejercicios     /calculadora    /nutricion /glosario
+  /marketplace    /entrenadores   /historial /progreso
+  /ajustes        /facturacion
+
+(session) — pantalla completa, sin shell:
+  /entrenar
+
+Route handlers /api/*:
+  /api/oembed                 oEmbed YouTube/Apple Music (público)
+  /api/spotify/auth           inicia OAuth PKCE
+  /api/spotify/callback       canjea code → token
+  /api/spotify/data           datos de Spotify
+  /api/spotify/search         búsqueda
+  /api/spotify/share          compartir "reproduciendo"
+  /api/spotify/debug          ❌ eliminado (antes: sin auth, exponía prefijo client id)
+  /api/youtube/search         (huérfano, sin usos)
+  /api/push/register          guarda suscripción push
+  /api/push/send              envía push (protegido por x-hook-secret)
+  /api/trainer/role           POST: cambia role/is_trainer_approved con
+                              service_role (evita trigger de escalada)
+
+Nav del shell: components/app-shell.tsx. PRIMARY = dashboard, rutinas,
+mensajes, perfil. Botón "Más" abre un sheet.
+
+
+===============================================================================
+5. CLIENTES / CANALES
+===============================================================================
+- Browser client  → lib/supabase/client.ts (createBrowserClient)
+  CRUD de dominio desde componentes "use client".
+- Server client   → lib/supabase/server.ts (cookies) para SSR layouts/auth.
+- Middleware      → lib/supabase/middleware.ts (refresh token + getUser).
+- Admin client    → lib/supabase/admin.ts (service_role; bypassa RLS).
+- RPC Postgres    → supabase.rpc(...)
+- Realtime        → postgres_changes (chat/DM, reacciones, comentarios).
+- Storage buckets → avatars, banners, recipe-photos, dm-images.
+- Web Push        → web-push + service worker.
+- NO hay server actions.
+
+
+===============================================================================
+6. MODELO DE DATOS (migraciones = fuente de verdad)
+===============================================================================
+Migraciones en web/supabase/migrations/, en orden:
+  20260818000001_init_schema.sql
+  20260818000002_seed_catalog.sql         (246 ejercicios + 88 recetas)
+  20260818000003_streak_achievements.sql  (triggers racha/logros + RPC)
+  20260818000004_account_tools.sql        (export_my_data, delete_account)
+  20260818000005_nutrition_tools.sql      (food_*, daily_entries)
+  20260818000006_social_scope.sql         (scope, recipe en posts, privacidad)
+  20260818000007_fix_policy_recursion.sql (helpers SECURITY DEFINER)
+  20260818000008_user_recipes.sql         (recetas propias + bucket)
+  20260818000009_likes_days.sql           (post_likes, nombre de día)
+  20260818000010_author_visibility.sql
+  20260819000012_comments_routines_feed.sql (post_comments, routine en posts)
+  20260819000013_bestfriends_dm_images_security.sql
+  20260822000000_plans_calories_cover.sql
+  20260822000001_chat_viewonce.sql
+  20260912000000_message_reactions_rls.sql
+  20260916000000_fix_assigned_routines_visibility.sql   [P0-1, pendiente pegar]
+  20260916000001_trainer_invites.sql                    [invitaciones, pendiente]
+
+NOTA: extensiones pgcrypto. Trigger genérico set_updated_at() para updated_at.
+RLS activo en TODAS las tablas; aislamiento por auth.uid().
+
+--- 6.1 profiles (extiende auth.users; PK = auth.users.id) ---
+  id uuid PK → auth.users(id)
+  username text UNIQUE
+  display_name text
+  bio text (<=300)
+  avatar_url text
+  banner_url text
+  accent_color text default '#a3e635'
+  theme text ('system'|'light'|'dark') default 'system'
+  role text ('athlete'|'trainer'|'admin') default 'athlete'
+  is_admin boolean default false
+  is_trainer_approved boolean default false
+  is_public_profile boolean default true
+  show_playlists boolean default true
+  onboarded boolean default false
+  sex text ('male'|'female'|'other'|null)
+  age_years int (10..100)
+  height_cm int (100..250)
+  weight_kg numeric(5,1) (20..300)
+  activity_level text ('sedentary'|'light'|'moderate'|'very'|'extra')
+  diet_type text ('omnivoro'|'vegetariano'|'vegano'|'sin_gluten')
+  diet_goal text ('volumen'|'definicion'|'mantenimiento')
+  bmr_kcal int, tdee_kcal int
+  streak_count int default 0
+  max_streak int default 0
+  last_workout_at timestamptz
+  created_at, updated_at timestamptz
+  -- agregadas después:
+  food_preferences text[] default '{}'
+  food_restrictions text[] default '{}'
+  show_weight, show_height, show_followers, show_personal boolean default true
+  plan text default 'free'            -- 'free'|'plus'|'deluxe'
+  show_calories boolean default true
+  profile_track_cover text
+  -- DRIFT (usadas por /perfil pero NO migradas): is_verified,
+     instagram_handle, tiktok_handle, twitter_handle, spotify_handle,
+     profile_track_*
+
+--- 6.2 exercises (catálogo) ---
+  id text PK
+  name text UNIQUE
+  muscle_group text
+  primary_muscle text
+  equipment text
+  gif_url text
+  instructions text
+  is_custom boolean default false
+  author_id uuid → profiles(id)   (solo si is_custom)
+  created_at timestamptz
+
+--- 6.3 routines (plantillas) ---
+  id uuid PK default gen_random_uuid()
+  user_id uuid NOT NULL → profiles(id)
+  name text NOT NULL
+  description text
+  is_template boolean default false
+  is_public boolean default false
+  created_at, updated_at
+
+--- 6.4 routine_exercises ---
+  id uuid PK
+  routine_id uuid NOT NULL → routines(id) ON DELETE CASCADE
+  exercise_id text → exercises(id) ON DELETE SET NULL
+  order_index int default 0
+  target_sets int (1..20) default 3
+  target_reps text default '8-12'     -- ¡es TEXTO! (rango) — bug tipo string/number
+  rest_sec int (0..600) default 90
+  group_name text
+  color text
+  is_superset boolean default false
+  weight_unit text ('kg'|'lb') default 'kg'
+  created_at timestamptz
+
+--- 6.5 assigned_routines (trainer asigna rutina a alumno) ---
+  id uuid PK
+  routine_id uuid NOT NULL → routines(id) CASCADE
+  trainer_id uuid NOT NULL → profiles(id) CASCADE
+  athlete_id uuid NOT NULL → profiles(id) CASCADE
+  active boolean default true
+  start_date date, end_date date
+  created_at timestamptz
+  UNIQUE(athlete_id, routine_id); CHECK(trainer_id <> athlete_id)
+
+--- 6.6 workouts (sesión) ---
+  id uuid PK
+  user_id uuid NOT NULL → profiles(id) CASCADE
+  name text default 'Entrenamiento'
+  notes text
+  source_routine_id uuid → routines(id) SET NULL
+  started_at timestamptz default now()
+  ended_at timestamptz
+  duration_sec int
+  created_at timestamptz
+
+--- 6.7 workout_exercises ---
+  id uuid PK
+  workout_id uuid NOT NULL → workouts(id) CASCADE
+  exercise_id text → exercises(id) SET NULL
+  name text NOT NULL (snapshot)
+  order_index int default 0
+  notes text
+  created_at timestamptz
+
+--- 6.8 workout_sets (diario de cargas) ---
+  id uuid PK
+  workout_exercise_id uuid NOT NULL → workout_exercises(id) CASCADE
+  set_index int default 0
+  type text ('N'|'W'|'F'|'D') default 'N'   (normal/warmup/failure/drop)
+  weight_kg numeric(6,2) default 0
+  reps int (>=0) default 0
+  rpe numeric(2,1) (0..10)
+  completed boolean default false
+  created_at timestamptz
+
+--- 6.9 recipes (catálogo + propias) ---
+  id uuid PK
+  name text UNIQUE
+  description text
+  calories int (>=0)
+  protein_g int, carbs_g int, fats_g int
+  country_code text default 'UY'
+  category text, tags text, prep_minutes int, difficulty text
+  servings int default 1, diet_types text
+  created_at timestamptz
+  -- agregadas: user_id uuid → profiles(id) (NULL = catálogo),
+     steps text[] default '{}', photos text[] default '{}',
+     step_titles text[] default '{}'
+
+--- 6.10 meal_logs ---
+  id uuid PK
+  user_id uuid NOT NULL → profiles(id) CASCADE
+  recipe_id uuid → recipes(id) SET NULL
+  name text NOT NULL
+  calories int, protein_g numeric(6,1), carbs_g numeric(6,1), fats_g numeric(6,1)
+  notes text, eaten_at timestamptz, created_at timestamptz
+
+--- 6.11 daily_entries (cierre de jornada nutricional) ---
+  (creada en 20260818000005; consolida calorías/macros del día por usuario)
+
+--- 6.12 trainer_clients (vínculo trainer↔alumno) ---
+  id uuid PK
+  trainer_id uuid NOT NULL → profiles(id) CASCADE
+  athlete_id uuid NOT NULL → profiles(id) CASCADE
+  status text ('pending'|'active'|'terminated') default 'pending'
+  created_at timestamptz
+  UNIQUE(trainer_id, athlete_id); CHECK(trainer_id <> athlete_id)
+
+--- 6.13 trainer_invites (NUEVA: link/QR + aceptación) ---
+  id uuid PK
+  trainer_id uuid NOT NULL → profiles(id) CASCADE
+  code text UNIQUE (8 chars)
+  note text
+  max_uses int (NULL = ilimitado)
+  uses int default 0
+  revoked boolean default false
+  expires_at timestamptz
+  created_at timestamptz
+
+--- 6.14 followers (N-M perfiles) ---
+  follower_id uuid → profiles(id) CASCADE
+  following_id uuid → profiles(id) CASCADE
+  is_best_friend boolean default false
+  created_at timestamptz
+  PK(follower_id, following_id); CHECK(follower_id <> following_id)
+
+--- 6.15 achievements / user_achievements ---
+  achievements:  code text PK, name, description, icon, category, created_at
+  user_achievements: user_id → profiles, achievement_id → achievements(code),
+                     unlocked_at, PK(user_id, achievement_id)
+
+--- 6.16 feed_posts ---
+  id uuid PK
+  user_id uuid NOT NULL → profiles(id) CASCADE
+  type text ('workout'|'achievement'|'status'|'routine'|'recipe')
+  workout_id uuid → workouts(id) SET NULL
+  achievement_id text → achievements(code) SET NULL
+  caption text (<=280)
+  created_at timestamptz
+  -- agregadas: scope text default 'global' ('global'|'friends'),
+     recipe_id uuid → recipes(id) SET NULL, routine_id uuid → routines(id) SET NULL
+
+--- 6.17 post_likes ---
+  (creada en 20260818000009; like de usuario a feed_posts)
+
+--- 6.18 post_comments ---
+  (creada en 20260819000012; comentarios de feed_posts + Realtime)
+
+--- 6.19 message_reactions ---
+  (creada en 20260822000001; reacciones a mensajes)
+
+--- 6.20 user_connections (Spotify/Apple/YouTube) ---
+  id uuid PK
+  user_id uuid NOT NULL → profiles(id) CASCADE
+  provider text ('spotify'|'apple_music'|'youtube_music')
+  external_user_id text, access_token text, refresh_token text,
+  token_expires_at timestamptz, scope text, created_at, updated_at
+  UNIQUE(user_id, provider)
+
+--- 6.21 playlists ---
+  id uuid PK
+  user_id uuid NOT NULL → profiles(id) CASCADE
+  provider text ('spotify'|'apple_music'|'youtube_music')
+  external_id text, name text NOT NULL, artist text, cover_url text, url text,
+  played_at timestamptz, created_at timestamptz
+  -- agregada: thumbnail_url text
+
+--- 6.22 courses (marketplace de trainers) ---
+  id uuid PK
+  trainer_id uuid NOT NULL → profiles(id) CASCADE
+  title text NOT NULL, description text
+  price_uyu int (>=0) default 0
+  status text ('draft'|'published'|'archived') default 'draft'
+  cover_url text, content_url text
+  created_at, updated_at
+
+--- 6.23 course_enrollments ---
+  id uuid PK
+  course_id uuid NOT NULL → courses(id) CASCADE
+  athlete_id uuid NOT NULL → profiles(id) CASCADE
+  paid boolean default false, paid_at timestamptz, created_at
+  UNIQUE(course_id, athlete_id)
+
+--- ÍNDICES (principales) ---
+  routines(user_id); routine_exercises(routine_id);
+  assigned_routines(athlete_id), assigned_routines(trainer_id);
+  workouts(user_id, started_at desc);
+  meal_logs(user_id, eaten_at desc);
+  trainer_clients(trainer_id), trainer_clients(athlete_id);
+  followers(following_id); feed_posts(user_id, created_at desc);
+  playlists(user_id, provider); courses(status); course_enrollments(athlete_id)
+
+
+===============================================================================
+7. DRIFT — OBJETOS QUE EL CÓDIGO USA Y NO ESTABAN EN MIGRACIONES
+===============================================================================
+ACTUALIZACIÓN 2026-09-16: este drift fue FORMALIZADO en
+`web/supabase/migrations/20260818000011_drift_baseline.sql` (idempotente,
+ordenada antes de la migración 13). La lista de abajo se conserva como
+referencia de lo que faltaba. Pendiente: pegar la migración en staging y prod.
+
+  TABLA assigned_recipes   — usado por entrenadores/, nutricion/
+      (id, trainer_id → profiles, athlete_id → profiles, recipe_id → recipes,
+       active boolean, created_at) — inferido del código.
+  TABLA direct_messages    — usado por mensajes/, dm-notifications,
+      entrenadores/ (solo se hace ALTER en migración 13)
+      columnas usadas: id, sender_id, recipient_id, content, stars int,
+      created_at, read_at, image_url, view_once bool, media_type, video_url,
+      opened_at, expires_at, reply_to, deleted_for_everyone bool
+  TABLA push_subscriptions — api/push/register, api/push/send
+      (user_id, endpoint UNIQUE, p256dh, auth, created_at)
+  TABLA spotify_tokens     — api/spotify/*, lib/spotify-token
+      (user_id, access_token, refresh_token, expires_at, updated_at,
+       share_playing bool, …)
+  TABLA star_balances      — mensajes/[id] (user_id, balance int)
+  RPC get_conversations()  — app-shell (badge), mensajes (lista de conversaciones)
+  RPC send_message(p_recipient uuid, p_content text, p_stars int)
+  BUCKET dm-images         — mensajes/[id] (imágenes de chat, ver-once)
+  COLUMNAS profiles: is_verified, instagram_handle, tiktok_handle,
+      twitter_handle, spotify_handle, profile_track_*
+
+
+===============================================================================
+8. RPCs Y TRIGGERS
+===============================================================================
+DEFINIDOS EN MIGRACIONES:
+  set_updated_at()                       trigger genérico (updated_at)
+  is_admin()                             helper RLS
+  handle_new_user()                      crea profile al registrarse (auth)
+  is_following(follower, following)      helper SECURITY DEFINER (anti-recursión)
+  profile_is_public(profile)             helper
+  profile_show_followers(profile)        helper
+  handle_workout_insert()                trigger: al insertar workout → racha +
+                                         post en feed
+  unlock_achievements()                  evalúa/desbloquea logros tras entrenar
+  export_my_data()                       export JSON del usuario (RGPD)
+  delete_account()                       borra perfil + auth (cascade)
+  prevent_privilege_escalation()         trigger: revierte role/is_admin/
+                                         is_trainer_approved en UPDATE propio
+  protect_enrollment_payment()           trigger: impide auto-marcarse pagado
+  create_trainer_invite(note, days, max) NUEVO: trainer genera código
+  get_trainer_invite(code)               NUEVO: previsualiza invitación
+  accept_trainer_invite(code)            NUEVO: crea/activa vínculo atómico
+
+EN DRIFT (existen en prod, no en migraciones):
+  get_conversations(), send_message(...)
+
+TRIGGERS RELEVANTES:
+  - on auth.users INSERT → handle_new_user() crea fila en profiles.
+  - on workouts INSERT   → handle_workout_insert() (racha + feed).
+  - on profiles UPDATE   → prevent_privilege_escalation() (bloquea escalada).
+  - on course_enrollments UPDATE → protect_enrollment_payment().
+  Nota conocida: P2-14 protect_enrollment_payment usa un nombre de columna
+  posiblemente desalineado (`amount_paid`).
+
+
+===============================================================================
+9. RLS (resumen por tabla; RLS ON en todas)
+===============================================================================
+  profiles:  select (self | público | seguidores/trainer vía helpers),
+             insert (self), update (self), delete (self)
+  exercises: select (todos), resto (is_admin o autor custom)
+  routines:  select (user_id=self | is_public | asignada activa a self como
+             athlete o trainer) [P0-1], insert/update/delete (user_id=self)
+  routine_exercises: select (dueño de la rutina | pública | asignada) [P0-1],
+             insert/update/delete (dueño de la rutina)
+  assigned_routines: select (trainer_id=self | athlete_id=self),
+             insert (trainer_id=self AND athlete_id<>self),
+             update (trainer|athlete), delete (trainer)
+  workouts / workout_exercises / workout_sets: dueño (self)
+  recipes:   select (todos), insert/update/delete (is_admin)
+  meal_logs: dueño (self)
+  trainer_clients: select (trainer|athlete),
+             insert (trainer_id=self)   ← el alumno NO puede crear solicitud;
+             update (trainer|athlete), delete (trainer)
+  trainer_invites: select/insert/update/delete (trainer dueño | admin);
+             el alumno resuelve por RPC (no lee la tabla)
+  followers: select (público/según flags), insert/delete (self como follower)
+  achievements: select (todos), resto (is_admin)
+  user_achievements: select (self | según visibilidad del perfil),
+             insert/delete (self)
+  feed_posts: select (público | scope friends | autor),
+             insert/update/delete (autor)
+  user_connections / playlists: dueño (self) / visibilidad perfil
+  courses:   select (published | trainer dueño | admin),
+             insert (trainer_id=self), update/delete (dueño|admin)
+  course_enrollments: select (athlete self | trainer del curso),
+             insert (self), update (self), delete (self)
+  storage.objects: policies storage_media_* por bucket/owner
+  message_reactions / post_likes / post_comments: según dueño/post visible
+
+
+===============================================================================
+10. FLUJOS CLAVE (para diagramas de secuencia)
+===============================================================================
+10.1 AUTH
+  Proveedor: Google OAuth | Magic link | Email+password.
+  - OAuth/magic → /auth/callback → exchangeCodeForSession.
+  - Si profiles.onboarded=false → /onboarding; si true → destino `next`.
+  - middleware.ts: refresca token, rate-limit 60 req/min/IP, seguridad,
+    redirige a /login?next=<ruta+query>.
+  - (app)/layout.tsx: exige sesión y onboarded=true.
+  - ProfileSync (providers.tsx): carga profiles con select('*') + retry/backoff
+    y fallback desde el JWT. (Se eliminó el loader duplicado ProfileProvider.)
+
+10.2 CREAR/EDITAR RUTINA
+  /rutinas → editor con borrador en useState local → INSERT routines →
+  INSERT routine_exercises (o UPDATE + DELETE sobrantes). SIN TRANSACCIÓN:
+  si falla un paso quedan rutinas huérfanas/vacías.
+
+10.3 EJECUTAR ENTRENAMIENTO (/entrenar?routine=ID)
+  1. SELECT routines + routine_exercises + exercises (RLS; si no puede leer la
+     rutina asignada → sesión vacía).
+  2. Zustand startWorkout + addExercise por ejercicio; carga pesos del último
+     workout.
+  3. Usuario marca series (instantáneo, offline, persistido en localStorage).
+  4. "Finalizar": UPSERT workouts → trigger handle_workout_insert (racha+feed)
+     → INSERT workout_exercises (uno a uno) → INSERT workout_sets (batch) →
+     RPC unlock_achievements → discardWorkout.
+  Punto débil: hijos DESPUÉS del trigger y SIN transacción → reintentos
+  duplican series.
+
+10.4 TRAINER ↔ ALUMNO (nuevo, invitación + aceptación)
+  Trainer: /entrenadores → "Invitar" → RPC create_trainer_invite → link
+    {APP_URL}/entrenadores?invite=CODE + QR + Web Share.
+  Alumno: abre link (o tipea el código) → RPC get_trainer_invite (preview) →
+    RPC accept_trainer_invite → INSERT/UPDATE trainer_clients status=active.
+  Alta directa: trainer busca alumno → upsert trainer_clients status=pending →
+    el alumno acepta (update active) o rechaza (update terminated).
+  Trainer ve "Esperando aceptación" + cancelar.
+  NOTA histórica: antes el trainer insertaba status=active sin consentimiento,
+  y "Registrarme como trainer" fallaba por el trigger de escalada; ahora se usa
+  /api/trainer/role con service_role.
+
+10.5 CHAT / DM
+  /mensajes lista vía RPC get_conversations (refetch 15s) + Realtime para
+  nuevos mensajes. /mensajes/[id] envía con RPC send_message o INSERT
+  direct_messages (imagen → bucket dm-images), view-once, reacciones, borrado.
+  Push vía /api/push/send (protegido por x-hook-secret; hoy sin caller claro).
+
+10.6 SOCIAL / FEED
+  /explorar lista feed_posts (global o de seguidos), like (post_likes),
+  comentarios (post_comments + Realtime), compartir rutina/receta (scope),
+  seguir usuarios (followers). Perfil público/privado según flags.
+
+10.7 NUTRICIÓN
+  /nutricion: catálogo recipes, recetas propias (user_id, steps, photos),
+  meal_logs, daily_entries (cierre de día), macronutrientes; recetas asignadas
+  por trainer (assigned_recipes, en drift).
+
+10.8 SPOTIFY / MÚSICA
+  /api/spotify/auth (PKCE, state=user.id, cookie verifier) →
+  /api/spotify/callback → upsert spotify_tokens → /api/spotify/{data,search,
+  share}. lib/spotify-token.ts refresca el token. UI: components/spotify-now.tsx.
+
+
+===============================================================================
+11. ESTADO GLOBAL DEL CLIENTE
+===============================================================================
+  Store            Archivo                      Persiste      Contenido
+  Workout draft    lib/workout-store.ts         localStorage  sesión activa
+                   (clave 'hypertrofia-workout-draft')
+  Perfil           components/providers.tsx     no            perfil (Zustand)
+  Toasts           components/ui/toast.tsx      no            notificaciones
+  Query cache      components/providers.tsx     no            TanStack Query
+  Tema             next-themes                  sí            claro/oscuro/sist
+
+
+===============================================================================
+12. VARIABLES DE ENTORNO (usadas en el código)
+===============================================================================
+  NEXT_PUBLIC_SUPABASE_URL              client/server/admin/middleware
+  NEXT_PUBLIC_SUPABASE_ANON_KEY         client/server/middleware
+  SERVICE_ROLE_KEY / SUPABASE_SERVICE_ROLE_KEY   admin.ts, spotify-token.ts
+  NEXT_PUBLIC_APP_URL                   Spotify redirect, links de invitación
+  NEXT_PUBLIC_AUTH_PROVIDERS            p.ej. "google"
+  NEXT_PUBLIC_VAPID_PUBLIC_KEY          suscripción push (cliente)
+  VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY / VAPID_SUBJECT   push (server)
+  PUSH_HOOK_SECRET                      auth de /api/push/send
+  SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET
+  YOUTUBE_API_KEY                       (endpoint huérfano)
+  NODE_ENV
+Proyecto Supabase (ref): oiirsbzuufrcagcjvzpi
+
+
+===============================================================================
+13. PWA / OFFLINE / PUSH
+===============================================================================
+  Manifest      src/app/manifest.ts → /manifest.webmanifest (standalone,
+                start_url=/dashboard)
+  Service Worker public/sw.js: network-first para Supabase y navegación
+                (fallback shell), cache-first para estáticos.
+  Registro SW   components/sw-register.tsx (solo producción).
+  Push cliente  (app)/mensajes/page.tsx (pushManager.subscribe).
+  Push server   api/push/send/route.ts (web-push + VAPID, x-hook-secret).
+  Offline       borrador de workout en localStorage; NO hay banner navigator.onLine.
+  Capacitor     wrapper Android; iOS vía PWA instalada.
+
+
+===============================================================================
+14. PROBLEMAS CONOCIDOS (resumen; ver docs/architecture/06-… para detalle)
+===============================================================================
+P0 (bloqueantes):
+  P0-1 RLS de routines/routine_exercises no contemplaba assigned_routines →
+       el alumno no abría la rutina asignada (sesión vacía).
+       → migración 20260916000000 (pendiente de aplicar a la DB).
+  P0-2 El loader de perfil perdía role/plan/is_admin/is_trainer_approved.
+       → RESUELTO en código (select('*') + loader único).
+  P0-3 Trigger prevent_privilege_escalation revertía role → "Registrarme como
+       trainer" no hacía nada. → RESUELTO con /api/trainer/role (service_role).
+  P0-4 assigned_recipes no existe en migraciones → recetas asignadas muertas.
+  P0-5 tablas/RPC de mensajería/push no creadas por migraciones (drift).
+P1 (14 hallazgos) y P2 (20 hallazgos): ver documento 06.
+
+Otros puntos marcados:
+  - Crear/editar rutina y finalizar workout SIN transacción (riesgo duplicados).
+  - target_reps es TEXT (rango) pero el código lo trata como number.
+  - /api/spotify/debug sin auth (exponer prefijo client id) → ✅ eliminado.
+  - /api/youtube/search huérfano.
+  - Buckets/iconos faltantes, SW cachea respuestas autenticadas de Supabase.
+  - NFC en iOS no es viable desde PWA (requiere plugin nativo + entitlements).
+  - next build / npm / node -e crashean en el entorno actual
+    (Node v26 + glibc, "free(): invalid pointer"). El typecheck sí corre con:
+    MALLOC_CHECK_=0 ./node_modules/.bin/tsc --noEmit
+
+
+===============================================================================
+15. CONVENCIONES DE CÓDIGO
+===============================================================================
+  - Componentes de página: "use client" + TanStack Query para datos.
+  - Acceso a datos: createClient() (browser) directo a Supabase; RLS controla.
+  - Mutaciones: useMutation + invalidateQueries + toast(...).
+  - Estilos: Tailwind v4 con variables CSS de tokens
+    (var(--surface), var(--text), var(--accent), var(--danger)…),
+    clases utilitarias .card / .card-hover.
+  - UI base en components/ui/*: Button, Input/Field, Dialog, Sheet, toast,
+    primitives (Avatar, Skeleton, Spinner), data (EmptyState).
+  - Server: layouts y auth/callback; admin client para operaciones que
+    requieren bypassar RLS/trigger.
+  - Iconos: lucide-react.
+
+===============================================================================
+FIN
+===============================================================================

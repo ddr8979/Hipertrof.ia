@@ -1,10 +1,14 @@
+// Sistema de notificaciones toast basado en Zustand.
+// Expone el store `useToast`, la función imperativa `toast` y el contenedor `Toaster`.
 "use client";
 
 import { create } from "zustand";
 import { CheckCircle2, Info, X, AlertTriangle, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Tipo semántico del toast.
 type ToastType = "success" | "error" | "info" | "warning";
+// Estructura de una notificación individual.
 interface Toast {
   id: number;
   type: ToastType;
@@ -12,19 +16,23 @@ interface Toast {
   description?: string;
 }
 
+// Estado global de los toasts.
 interface ToastState {
   toasts: Toast[];
   push: (type: ToastType, title: string, description?: string) => void;
   dismiss: (id: number) => void;
 }
 
+// Contador incremental para ids únicos.
 let nextId = 1;
 
+// Store de Zustand con la lista de toasts y sus acciones.
 export const useToast = create<ToastState>((set) => ({
   toasts: [],
   push: (type, title, description) => {
     const id = nextId++;
     set((s) => ({ toasts: [...s.toasts, { id, type, title, description }] }));
+    // Autocierre tras 4.2s.
     setTimeout(() => {
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
     }, 4200);
@@ -33,10 +41,12 @@ export const useToast = create<ToastState>((set) => ({
     set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 }));
 
+/** Atajo imperativo para disparar un toast desde cualquier parte del código. */
 export function toast(type: ToastType, title: string, description?: string) {
   useToast.getState().push(type, title, description);
 }
 
+// Icono asociado a cada tipo de toast.
 const icons: Record<ToastType, React.ReactNode> = {
   success: <CheckCircle2 className="size-5 text-[var(--success)]" />,
   error: <XCircle className="size-5 text-[var(--danger)]" />,
@@ -44,6 +54,7 @@ const icons: Record<ToastType, React.ReactNode> = {
   info: <Info className="size-5 text-[var(--info)]" />,
 };
 
+/** Contenedor de toasts: se monta una vez y renderiza las notificaciones activas. */
 export function Toaster() {
   const { toasts, dismiss } = useToast();
   return (

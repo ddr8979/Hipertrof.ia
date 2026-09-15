@@ -3,8 +3,15 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+/**
+ * Store global (Zustand) del borrador de sesión de entrenamiento en curso.
+ * Se persiste en localStorage para sobrevivir recargas y cierres de pestaña.
+ */
+
+/** Tipo de serie: Normal, Warm-up (calentamiento), Fallo o Drop. */
 export type SetType = "N" | "W" | "F" | "D";
 
+/** Serie individual dentro de un ejercicio del borrador. */
 export type DraftSet = {
   key: string;
   type: SetType;
@@ -14,6 +21,7 @@ export type DraftSet = {
   completed: boolean;
 };
 
+/** Ejercicio del borrador con sus series y metadatos de descanso/notas. */
 export type DraftExercise = {
   key: string;
   exerciseId: string | null;
@@ -24,6 +32,7 @@ export type DraftExercise = {
   sets: DraftSet[];
 };
 
+/** Borrador completo de una sesión de entrenamiento. */
 export type WorkoutDraft = {
   id: string;
   name: string;
@@ -33,6 +42,7 @@ export type WorkoutDraft = {
   exercises: DraftExercise[];
 };
 
+/** Estado y acciones expuestos por el store. */
 type WorkoutState = {
   draft: WorkoutDraft | null;
   restEndsAt: number | null;
@@ -63,8 +73,10 @@ type WorkoutState = {
   adjustRest: (deltaSeconds: number) => void;
 };
 
+/** Genera claves únicas para ejercicios y series. */
 const uid = () => crypto.randomUUID();
 
+/** Crea `count` series vacías (tipo normal, sin peso/reps, sin completar). */
 function defaultSets(count: number): DraftSet[] {
   return Array.from({ length: count }, () => ({
     key: uid(),
@@ -76,6 +88,11 @@ function defaultSets(count: number): DraftSet[] {
   }));
 }
 
+/**
+ * Hook del borrador de entrenamiento. Persiste SOLO `draft` en localStorage bajo
+ * la clave "hypertrofia-workout-draft"; el estado de descanso (rest*) es efímero
+ * y queda fuera de `partialize` a propósito.
+ */
 export const useWorkoutStore = create<WorkoutState>()(
   persist(
     (set) => ({
@@ -84,6 +101,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       restExerciseKey: null,
       restTotal: null,
 
+      // Inicia un borrador nuevo (vacío) con los metadatos opcionales recibidos.
       startWorkout: (init) =>
         set({
           draft: {
@@ -100,6 +118,7 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       resumeWorkout: (draft) => set({ draft, restEndsAt: null, restExerciseKey: null, restTotal: null }),
 
+      // Marca el comienzo efectivo de la sesión (timestamp) solo si aún no empezó.
       startSession: () =>
         set((s) =>
           s.draft && !s.draft.startedAt
@@ -171,6 +190,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           };
         }),
 
+      // Agrega una serie vacía al final del ejercicio indicado.
       addSet: (exerciseKey) =>
         set((s) => ({
           draft: s.draft
@@ -191,6 +211,7 @@ export const useWorkoutStore = create<WorkoutState>()(
             : null,
         })),
 
+      // Elimina una serie puntual del ejercicio.
       removeSet: (exerciseKey, setKey) =>
         set((s) => ({
           draft: s.draft
@@ -205,6 +226,7 @@ export const useWorkoutStore = create<WorkoutState>()(
             : null,
         })),
 
+      // Aplica un patch parcial a una serie (peso, reps, rpe, completado, etc.).
       updateSet: (exerciseKey, setKey, patch) =>
         set((s) => ({
           draft: s.draft
@@ -224,6 +246,7 @@ export const useWorkoutStore = create<WorkoutState>()(
             : null,
         })),
 
+      // Inicia (o reinicia) el temporizador de descanso del ejercicio indicado.
       startRest: (exerciseKey, seconds) =>
         set({
           restEndsAt: Date.now() + seconds * 1000,
@@ -233,6 +256,7 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       stopRest: () => set({ restEndsAt: null, restExerciseKey: null, restTotal: null }),
 
+      // Ajusta el descanso en curso (±segundos), con un mínimo de 10s.
       adjustRest: (deltaSeconds) =>
         set((s) => {
           if (s.restEndsAt === null || s.restTotal === null) return {};
@@ -245,6 +269,7 @@ export const useWorkoutStore = create<WorkoutState>()(
     }),
     {
       name: "hypertrofia-workout-draft",
+      // Solo se persiste el borrador; el estado de descanso se descarta al recargar.
       partialize: (s) => ({
         draft: s.draft,
       }),

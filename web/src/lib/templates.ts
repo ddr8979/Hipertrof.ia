@@ -1,3 +1,4 @@
+/** Ejercicio dentro de una plantilla de rutina. `rest` está en segundos. */
 export type TemplateExercise = {
   name: string;
   sets: number;
@@ -5,6 +6,7 @@ export type TemplateExercise = {
   rest: number;
 };
 
+/** Plantilla de rutina predefinida ofrecida al usuario como punto de partida. */
 export type RoutineTemplate = {
   id: string;
   name: string;
@@ -15,6 +17,7 @@ export type RoutineTemplate = {
   exercises: TemplateExercise[];
 };
 
+/** Catálogo de plantillas listas para clonar (full body, PPL, fuerza 5×5, torso/pierna). */
 export const ROUTINE_TEMPLATES: RoutineTemplate[] = [
   {
     id: "fb-beginner",

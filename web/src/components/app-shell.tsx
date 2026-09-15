@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * app-shell.tsx
+ * Estructura de navegación principal de la app autenticada.
+ * Renderiza el sidebar de escritorio (lg+), la tab bar inferior móvil y el
+ * sheet "Más" con las secciones secundarias, además de elementos globales
+ * como notificaciones de DM y el timer de descanso.
+ */
+
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -33,6 +41,10 @@ import { ThemeToggle } from "@/components/brand-icons";
 import { SpotifyIcon } from "@/components/brand-icons";
 import { Sheet } from "@/components/ui/sheet";
 
+/**
+ * Tarjeta compacta con la canción que suena en Spotify del usuario.
+ * No renderiza nada si no está conectado, está oculto o no hay reproducción.
+ */
 function NowPlayingMini() {
   const { data } = useSpotifyNow();
   if (!data?.connected || data.hidden || !data.playing?.is_playing) return null;
@@ -67,6 +79,7 @@ function NowPlayingMini() {
   );
 }
 
+// Destinos principales: van en la tab bar móvil.
 const PRIMARY = [
   { href: "/dashboard", label: "Inicio", icon: Home },
   { href: "/rutinas", label: "Rutinas", icon: Dumbbell },
@@ -74,6 +87,7 @@ const PRIMARY = [
   { href: "/perfil", label: "Perfil", icon: User },
 ];
 
+// Destinos secundarios: visibles en el sidebar desktop y en el sheet "Más".
 const SECONDARY = [
   { href: "/calculadora", label: "Calculadora", icon: Calculator },
   { href: "/nutricion", label: "Alimentación", icon: Utensils },
@@ -87,12 +101,15 @@ const SECONDARY = [
   { href: "/ajustes", label: "Configuración", icon: Settings },
 ];
 
+// Lista completa usada por el sidebar y el sheet.
 const NAV = [...PRIMARY, ...SECONDARY];
 
+/** Determina si un href corresponde a la ruta actual (o a una subruta). */
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
+/** Ítem de la tab bar inferior móvil, memoizado para evitar re-renders. */
 const TabLink = memo(function TabLink({
   href,
   label,
@@ -127,6 +144,7 @@ const TabLink = memo(function TabLink({
   );
 });
 
+/** Enlace de navegación usado en el sidebar y el sheet "Más". */
 const NavLink = memo(function NavLink({
   href,
   label,
@@ -160,12 +178,17 @@ const NavLink = memo(function NavLink({
   );
 });
 
+/**
+ * Shell de la aplicación autenticada.
+ * Provee la navegación (sidebar/tab bar/sheet) y el contenedor del contenido.
+ */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const profile = useProfile((s) => s.profile);
   const [moreOpen, setMoreOpen] = useState(false);
 
+  // Cantidad total de mensajes directos sin leer; se refresca cada 30 s.
   const { data: unread } = useQuery({
     queryKey: ["unread_dm"],
     queryFn: async () => {
@@ -177,6 +200,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     refetchInterval: 30000,
   });
 
+  // Cierra la sesión en Supabase y vuelve al inicio.
   async function handleLogout() {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -213,6 +237,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
+          {/* Footer del sidebar: ahora suena + perfil + logout */}
           <div className="border-t border-[var(--border)] p-3">
             <NowPlayingMini />
             <div className="mt-2 flex items-center gap-2.5 rounded-xl px-2 py-2">

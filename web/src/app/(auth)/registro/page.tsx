@@ -1,6 +1,12 @@
+/**
+ * (auth)/registro/page.tsx
+ * Página de registro de cuenta dentro del grupo de rutas `(auth)`.
+ */
+
 import type { Metadata } from "next";
 import { AuthCard } from "@/components/auth/auth-card";
 
+// Proveedores OAuth habilitados, definidos por variable de entorno.
 const PROVIDERS = (process.env.NEXT_PUBLIC_AUTH_PROVIDERS ?? "google")
   .split(",")
   .map((p) => p.trim())
@@ -10,6 +16,7 @@ export const metadata: Metadata = {
   title: "Crear cuenta",
 };
 
+/** Página de registro con fondo decorativo. */
 export default function RegistroPage() {
   return (
     <main className="relative flex min-h-dvh items-center justify-center overflow-hidden px-4 py-10">

@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * Página de inicio (dashboard) del atleta.
+ * Muestra saludo según hora/fecha, racha, CTA al último entrenamiento, stats,
+ * widget de Spotify, rutinas recientes y un hub de accesos a las herramientas.
+ */
+
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -23,31 +29,38 @@ import { Skeleton, Avatar } from "@/components/ui/primitives";
 import { EmptyState, StatCard } from "@/components/ui/data";
 import { cn, formatDate, formatDuration, splitEmojiRuns } from "@/lib/utils";
 
+/** Dashboard principal del atleta: resumen de actividad y accesos rápidos. */
 export default function DashboardPage() {
   const profile = useProfile((s) => s.profile);
 
+  // Consulta agregada del dashboard: últimas sesiones, rutinas, fechas para la
+  // racha y playlists de Spotify. Todo se resuelve en un único queryFn.
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard"],
     queryFn: async () => {
       const supabase = createClient();
+      // Últimos 5 entrenamientos con conteo de ejercicios
       const { data: workouts } = await supabase
         .from("workouts")
         .select("id, name, started_at, ended_at, duration_sec, workout_exercises(count)")
         .order("started_at", { ascending: false })
         .limit(5);
 
+      // Últimas 6 rutinas con conteo de ejercicios
       const { data: routines } = await supabase
         .from("routines")
         .select("id, name, routine_exercises(count)")
         .order("updated_at", { ascending: false })
         .limit(6);
 
+      // Fechas de los últimos 90 entrenamientos (para calcular la racha)
       const { data: streakData } = await supabase
         .from("workouts")
         .select("started_at")
         .order("started_at", { ascending: false })
         .limit(90);
 
+      // Últimas 4 playlists/música vinculada
       const { data: playlists } = await supabase
         .from("playlists")
         .select("id, provider, name, artist, url, thumbnail_url")
@@ -70,6 +83,7 @@ export default function DashboardPage() {
     },
   });
 
+  // Racha actual y las primeras 7 sesiones usadas como "volumen semanal" del CTA
   const days = profile?.streak_count ?? 0;
   const weeklyVolume = data?.workouts?.slice(0, 7);
 
@@ -281,7 +295,10 @@ export default function DashboardPage() {
   );
 }
 
+/** Widget que muestra lo que suena en Spotify y permite vincular/ocultar la cuenta. */
 function SpotifyWidget() {
+  // Consulta el estado de Spotify del usuario autenticado. Si no está vinculado
+  // devuelve null; si está conectado se refresca cada 30 s para reflejar lo que sonaba.
   const { data: spotify, refetch } = useQuery({
     queryKey: ["spotify"],
     queryFn: async () => {
@@ -295,12 +312,14 @@ function SpotifyWidget() {
         playing?: { name: string; artists: string; cover: string | null; is_playing: boolean; is_recent?: boolean } | null;
       };
     },
+    // Solo hace polling si la cuenta está conectada a Spotify.
     refetchInterval: (query) => {
       const d = query.state.data as { connected?: boolean } | null | undefined;
       return d?.connected ? 30000 : false;
     },
   });
 
+  // Caso: conectado pero la cuenta de Spotify no tiene Premium (no se puede ver reproducción).
   if (spotify?.connected && spotify?.premiumRequired && !spotify?.hidden) {
     return (
       <section>
@@ -332,7 +351,9 @@ function SpotifyWidget() {
     );
   }
 
+  // Caso: conectado y visible -> muestra la canción actual o la última reproducida.
   if (spotify?.connected && !spotify?.hidden) {
+    // Se comparte salvo que haya una pausa explícita.
     const share = !spotify.playing || spotify.playing.is_playing;
     return (
       <section>
@@ -344,6 +365,7 @@ function SpotifyWidget() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
+                // Alterna el estado de visibilidad/compartido de Spotify vía API.
                 void (async () => {
                   const r = await fetch("/api/spotify/share", { method: "POST" });
                   if (r.ok) refetch();
@@ -404,6 +426,7 @@ function SpotifyWidget() {
     );
   }
 
+  // Caso: no vinculado (null) -> invita a conectar la cuenta de Spotify.
   if (spotify === null) {
     return (
       <section>
@@ -441,6 +464,7 @@ function SpotifyWidget() {
     );
   }
 
+  // Fallback: conectado pero oculto o sin datos de reproducción.
   return (
     <section>
       <div className="mb-3 flex items-center justify-between">

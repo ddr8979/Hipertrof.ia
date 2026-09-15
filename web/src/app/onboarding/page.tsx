@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * onboarding/page.tsx
+ * Flujo de onboarding en 5 pasos: identidad, cuerpo, objetivo, estilo y comida.
+ * Calcula BMR/TDEE, guarda el perfil en Supabase y aplica el acento elegido.
+ */
+
 import { useState } from "react";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
@@ -19,8 +25,10 @@ import { toast } from "@/components/ui/toast";
 import { useProfile } from "@/components/providers";
 import { cn } from "@/lib/utils";
 
+// Títulos de los pasos del asistente.
 const STEPS = ["Tu identidad", "Tu cuerpo", "Tu objetivo", "Tu estilo", "Tu comida"];
 
+// Paleta de acentos disponibles para el perfil.
 const ACCENTS = [
   "#b8f34a",
   "#ff5d8f",
@@ -39,6 +47,7 @@ const SEX = [
   { id: "other", label: "Otro" },
 ];
 
+// Opciones de actividad con su factor multiplicador para el TDEE.
 const ACTIVITY = [
   { id: "sedentary", label: "Sedentario", factor: 1.2, desc: "Poco o nada de ejercicio" },
   { id: "light", label: "Ligero", factor: 1.375, desc: "1-3 días por semana" },
@@ -82,12 +91,14 @@ const FOOD_RESTRICTIONS = [
   { id: "cerdo", label: "Cerdo" },
 ];
 
+/** Asistente de onboarding paso a paso. */
 export default function OnboardingPage() {
   const router = useRouter();
   const setProfile = useProfile((s) => s.setProfile);
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
 
+  // Estado único con todos los datos recogidos durante el flujo.
   const [form, setForm] = useState({
     displayName: "",
     username: "",
@@ -103,6 +114,7 @@ export default function OnboardingPage() {
     foodRestrictions: [] as string[],
   });
 
+  // Cálculo del metabolismo basal (BMR) y gasto diario (TDEE) según los datos.
   const kcal = (() => {
     const { sex, age, height, weight, activity } = form;
     const act = ACTIVITY.find((a) => a.id === activity)!;
@@ -113,6 +125,7 @@ export default function OnboardingPage() {
     return { bmr: Math.round(bmr), tdee: Math.round(bmr * act.factor) };
   })();
 
+  // Valida el paso actual y avanza; en el último paso, finaliza.
   function next() {
     if (step === 0) {
       const nameOk = z
@@ -138,6 +151,7 @@ export default function OnboardingPage() {
     else finish();
   }
 
+  // Persiste el perfil completo, aplica el acento y redirige al dashboard.
   async function finish() {
     setBusy(true);
     try {
@@ -194,6 +208,7 @@ export default function OnboardingPage() {
     }
   }
 
+  // Helper para actualizar un campo del formulario.
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
@@ -223,6 +238,7 @@ export default function OnboardingPage() {
         </div>
 
         <div className="card p-6 sm:p-8" key={step}>
+          {/* Paso 1: identidad (nombre y username) */}
           {step === 0 && (
             <div className="flex flex-col gap-5">
               <div className="flex items-center gap-3">
@@ -273,6 +289,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
+          {/* Paso 2: datos corporales y estimación de BMR/TDEE */}
           {step === 1 && (
             <div className="flex flex-col gap-5">
               <div className="flex items-center gap-3">
@@ -358,6 +375,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
+          {/* Paso 3: objetivo y nivel de actividad */}
           {step === 2 && (
             <div className="flex flex-col gap-5">
               <div className="flex items-center gap-3">
@@ -412,6 +430,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
+          {/* Paso 4: estilo (acento y preferencia alimentaria) */}
           {step === 3 && (
             <div className="flex flex-col gap-5">
               <div className="flex items-center gap-3">
@@ -473,6 +492,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
+          {/* Paso 5: preferencias y restricciones alimentarias */}
           {step === 4 && (
             <div className="flex flex-col gap-5">
               <div className="flex items-center gap-3">

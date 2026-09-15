@@ -1,12 +1,18 @@
+/**
+ * (session)/layout.tsx
+ * Layout a pantalla completa para las rutas de grupo `(session)` (p. ej.
+ * /entrenar). Exige sesión activa y no usa el AppShell.
+ */
+
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ProfileProvider } from "@/components/profile-provider";
 
 export const metadata: Metadata = {
   title: "Entrenar",
 };
 
+/** Guard de sesión para las pantallas de entrenamiento a pantalla completa. */
 export default async function SessionLayout({
   children,
 }: {
@@ -17,12 +23,8 @@ export default async function SessionLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Sin sesión: redirige al login.
   if (!user) redirect("/login");
 
-  return (
-    <>
-      <ProfileProvider />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }

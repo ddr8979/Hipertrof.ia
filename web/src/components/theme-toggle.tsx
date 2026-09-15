@@ -1,3 +1,4 @@
+// Controles de tema: selector list/compact (ThemeToggle) y switch simple (ThemeSwitch).
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,16 +7,20 @@ import { Sun, Moon, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/controls";
 
+// Tema soportado.
 type Theme = "light" | "dark" | "system";
 
+// Orden de ciclo de los temas.
 const THEME_ORDER: Theme[] = ["light", "dark", "system"];
 
+// Etiqueta en español de cada tema.
 const THEME_LABEL: Record<Theme, string> = {
   light: "Claro",
   dark: "Oscuro",
   system: "Sistema",
 };
 
+// Devuelve el icono correspondiente al tema.
 function themeIcon(theme: Theme, cls = "size-4") {
   switch (theme) {
     case "light":
@@ -27,12 +32,19 @@ function themeIcon(theme: Theme, cls = "size-4") {
   }
 }
 
+// Hook auxiliar para saber si ya se montó en cliente (evita hydration mismatch).
 function useMounted() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   return mounted;
 }
 
+/**
+ * Selector de tema.
+ * @param variant       "list" muestra tres botones; "compact" un único botón cíclico.
+ * @param label         Etiqueta visible (solo en variante list).
+ * @param onThemeChange Callback opcional al cambiar de tema.
+ */
 export function ThemeToggle({
   variant = "list",
   label,
@@ -69,6 +81,7 @@ export function ThemeToggle({
   }
 
   if (variant === "compact") {
+    // Botón único que cicla entre los temas.
     return (
       <button
         type="button"
@@ -92,6 +105,7 @@ export function ThemeToggle({
   return (
     <div className={cn("flex flex-col gap-1", className)}>
       {label && <span className="text-xs font-semibold text-[var(--muted)]">{label}</span>}
+      {/* Grupo de opciones de tema con semántica de radiogroup */}
       <div
         role="radiogroup"
         aria-label={label ?? "Tema"}
@@ -125,6 +139,7 @@ export function ThemeToggle({
   );
 }
 
+/** Interruptor simple claro/oscuro con etiqueta. */
 export function ThemeSwitch({
   label = "Modo oscuro",
   className,
@@ -134,6 +149,7 @@ export function ThemeSwitch({
 }) {
   const { setTheme, resolvedTheme } = useTheme();
   const mounted = useMounted();
+  // Solo considerar oscuro tras el montaje para evitar mismatch SSR.
   const isDark = mounted && resolvedTheme === "dark";
 
   return (

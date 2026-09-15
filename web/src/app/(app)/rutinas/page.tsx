@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * Página de rutinas.
+ * Lista las rutinas propias y la biblioteca de plantillas, permite crear/editar
+ * rutinas (INSERT/UPDATE en `routines` + `routine_exercises`), duplicar plantillas,
+ * compartir, eliminar y lanzar un entrenamiento con una rutina concreta.
+ */
+
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -67,6 +74,10 @@ type DraftEx = {
   color: string | null;
 };
 
+/**
+ * Fila editable de un ejercicio en el borrador de rutina.
+ * Permite ajustar series, reps y descanso, reordenar (↑/↓) y eliminar.
+ */
 function DraftRow({
   ex,
   index,
@@ -149,6 +160,10 @@ function DraftRow({
   );
 }
 
+/**
+ * Editor de rutina (alta y edición) dentro de un Dialog.
+ * Mantiene el borrador local de ejercicios y persiste en Supabase al guardar.
+ */
 function RoutineEditor({
   routine,
   onClose,
@@ -159,6 +174,7 @@ function RoutineEditor({
   onSaved: () => void;
 }) {
   const qc = useQueryClient();
+  // Borrador editable: nombre, descripción, lista de ejercicios y estado de UI.
   const [name, setName] = useState(routine?.name ?? "");
   const [description, setDescription] = useState(routine?.description ?? "");
   const [drafts, setDrafts] = useState<DraftEx[]>(
@@ -178,6 +194,7 @@ function RoutineEditor({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Agrega un ejercicio al borrador evitando duplicados y cierra el selector.
   function addExercise(ex: { id: string; name: string; gifUrl: string | null }) {
     if (drafts.some((d) => d.exerciseId === ex.id)) {
       toast("warning", "Ese ejercicio ya está en la rutina");
@@ -201,6 +218,7 @@ function RoutineEditor({
     setPickerOpen(false);
   }
 
+  // Persiste la rutina: valida, separa alta vs edición y sincroniza los ejercicios.
   async function save() {
     if (!name.trim()) {
       toast("warning", "Poné un nombre a la rutina");
@@ -220,6 +238,7 @@ function RoutineEditor({
 
       let routineId = routine?.id ?? null;
 
+      // Edición: actualiza la rutina y hace upsert/borrado de ejercicios por order_index.
       if (routineId) {
         const { error: er } = await supabase
           .from("routines")
@@ -274,6 +293,7 @@ const upserts = drafts.map((d, i) => {
           .upsert(upserts, { onConflict: "id" });
         if (ei) throw ei;
       } else {
+        // Alta: crea la rutina y luego inserta sus ejercicios.
         const { data: r, error: er } = await supabase
           .from("routines")
           .insert({ name: name.trim(), description: description.trim() || null, user_id: user.id })
@@ -392,13 +412,19 @@ const upserts = drafts.map((d, i) => {
   );
 }
 
+/**
+ * Vista principal de rutinas: pestañas "Mis rutinas" / "Biblioteca",
+ * carga de rutinas del usuario, duplicado de plantillas y borrado con confirmación.
+ */
 export default function RutinasPage() {
   const qc = useQueryClient();
   const router = useRouter();
   const [tab, setTab] = useState<"mine" | "library">("mine");
+  // `undefined` = cerrado, `null` = nueva rutina, objeto = edición.
   const [editing, setEditing] = useState<Routine | null | undefined>(undefined);
   const [deleteConfirm, setDeleteConfirm] = useState<Routine | null>(null);
 
+  // Carga las rutinas del usuario con sus ejercicios y datos del ejercicio asociado.
   const { data, isLoading } = useQuery({
     queryKey: ["routines"],
     queryFn: async () => {
@@ -418,6 +444,8 @@ export default function RutinasPage() {
     },
   });
 
+  // Duplica una plantilla de la biblioteca: crea la rutina y sus ejercicios,
+  // mapeando cada nombre de ejercicio a un id real de la tabla `exercises`.
   async function duplicateTemplate(template: (typeof ROUTINE_TEMPLATES)[number]) {
     try {
       const supabase = createClient();
@@ -469,10 +497,12 @@ export default function RutinasPage() {
     }
   }
 
+  // Abre el diálogo de confirmación de borrado.
   async function remove(routine: Routine) {
     setDeleteConfirm(routine);
   }
 
+  // Elimina definitivamente la rutina seleccionada y refresca la lista.
   async function confirmRemove() {
     if (!deleteConfirm) return;
     try {
@@ -488,6 +518,7 @@ export default function RutinasPage() {
     }
   }
 
+  // Separación de rutinas propias vs. plantillas guardadas.
   const mine = data?.filter((r) => !r.is_template) ?? [];
   const templates = data?.filter((r) => r.is_template) ?? [];
 
@@ -506,6 +537,7 @@ export default function RutinasPage() {
         </Button>
       </div>
 
+      {/* Pestañas: mis rutinas o biblioteca de plantillas */}
       <div className="flex gap-1.5">
         {[
           { id: "mine" as const, label: "Mis rutinas", icon: <LayoutList className="size-4" /> },
@@ -536,11 +568,13 @@ export default function RutinasPage() {
         mine.length ? (
           <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
             {mine.map((r) => {
+              // Agrupa los ejercicios por grupo muscular para mostrar los chips.
               const groups = new Map<string, number>();
               r.routine_exercises.forEach((e) => {
                 const m = e.exercise?.muscle_group ?? "Otro";
                 groups.set(m, (groups.get(m) ?? 0) + 1);
               });
+              // Total de series y estimación de duración (descanso + ~40 s de trabajo por serie).
               const totalSets = r.routine_exercises.reduce(
                 (a, e) => a + e.target_sets,
                 0
@@ -592,6 +626,7 @@ export default function RutinasPage() {
                         Entrenar
                       </Button>
                     </Link>
+                    {/* Compartir por Web Share API o copiar link al portapapeles */}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -649,6 +684,7 @@ export default function RutinasPage() {
         )
       ) : (
         <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+          {/* Tarjetas de plantillas predefinidas de la biblioteca */}
           {ROUTINE_TEMPLATES.map((t) => (
             <Card key={t.id} className="card-hover flex min-w-0 flex-col p-5">
               <div className="flex items-start justify-between gap-2">
@@ -695,6 +731,7 @@ export default function RutinasPage() {
         </div>
       )}
 
+      {/* Editor de rutina (nueva o existente) */}
       {editing !== undefined && (
         <RoutineEditor
           routine={editing}
@@ -703,6 +740,7 @@ export default function RutinasPage() {
         />
       )}
 
+      {/* Diálogo de confirmación para eliminar una rutina */}
       {deleteConfirm && (
         <Dialog
           open

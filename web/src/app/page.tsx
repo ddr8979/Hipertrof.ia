@@ -1,3 +1,9 @@
+/**
+ * page.tsx
+ * Landing pública de Hypertrof.ia. Server Component que detecta si hay sesión
+ * para adaptar los CTAs y presenta features, comunidad, entrenadores y footer.
+ */
+
 import Link from "next/link";
 import {
   Dumbbell,
@@ -12,6 +18,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
+/** Landing pública; consulta el usuario actual para personalizar la navegación. */
 export default async function LandingPage() {
   const supabase = await createClient();
   const {
@@ -20,6 +27,7 @@ export default async function LandingPage() {
 
   return (
     <main className="relative min-h-dvh overflow-hidden">
+      {/* Fondo decorativo: grilla y halo de acento */}
       <div className="bg-grid pointer-events-none absolute inset-0 opacity-70" />
       <div
         className="pointer-events-none absolute -top-40 left-1/2 h-[36rem] w-[60rem] -translate-x-1/2 rounded-full blur-3xl"

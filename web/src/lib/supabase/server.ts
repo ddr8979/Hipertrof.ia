@@ -1,6 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+/**
+ * Cliente de Supabase para Server Components / route handlers.
+ * Lee y sincroniza las cookies de sesión del request entrante.
+ */
 export async function createClient() {
   const cookieStore = await cookies();
 

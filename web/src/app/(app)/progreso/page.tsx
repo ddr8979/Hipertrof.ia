@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * Página de progreso.
+ * Analiza los entrenamientos de los últimos 12 meses para calcular volumen,
+ * sesiones, tiempo, 1RM estimado por ejercicio, récords personales y un heatmap
+ * anual de actividad. Los gráficos (recharts) se cargan de forma diferida.
+ */
+
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
@@ -61,6 +68,10 @@ type WorkoutRow = {
   }[];
 };
 
+/**
+ * Heatmap anual estilo GitHub: colorea cada día según la cantidad de sesiones.
+ * Recalcula el mapa de conteos por día y arma el grid de 53 semanas.
+ */
 function Heatmap({ dates }: { dates: string[] }) {
   const dayCount = useMemo(() => {
     const map = new Map<string, number>();
@@ -148,8 +159,10 @@ function Heatmap({ dates }: { dates: string[] }) {
 
 export default function ProgresoPage() {
   const profile = useProfile((s) => s.profile);
+  // Ejercicio elegido para la gráfica de 1RM (null = primero disponible).
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
 
+  // Carga los entrenamientos de los últimos 12 meses con ejercicios y series.
   const { data, isLoading } = useQuery({
     queryKey: ["progreso"],
     queryFn: async () => {
@@ -166,6 +179,7 @@ export default function ProgresoPage() {
     },
   });
 
+  // Totales del período: sesiones, volumen (sin series de calentamiento "W") y minutos.
   const stats = useMemo(() => {
     const sessions = data?.length ?? 0;
     let volume = 0;
@@ -181,6 +195,7 @@ export default function ProgresoPage() {
     return { sessions, volume, minutes };
   }, [data]);
 
+  // Volumen agregado por semana (últimas 12 semanas con datos).
   const weeklyVolume = useMemo(() => {
     const map = new Map<string, { week: string; kg: number }>();
     for (const w of data ?? []) {
@@ -200,6 +215,7 @@ export default function ProgresoPage() {
     return [...map.values()].slice(-12);
   }, [data]);
 
+  // Opciones del selector de ejercicio: solo los que aparecen en 2+ sesiones.
   const exerciseOptions = useMemo(() => {
     const map = new Map<string, { id: string; name: string; sessions: number }>();
     for (const w of data ?? []) {
@@ -214,8 +230,10 @@ export default function ProgresoPage() {
     return [...map.values()].filter((e) => e.sessions >= 2).sort((a, b) => b.sessions - a.sessions);
   }, [data]);
 
+  // Ejercicio activo: el elegido o el primero con más sesiones.
   const activeExercise = selectedExercise ?? exerciseOptions[0]?.id ?? null;
 
+  // Serie temporal del 1RM estimado del ejercicio activo (solo PRs nuevos o cambios).
   const prSeries = useMemo(() => {
     if (!activeExercise) return [];
     const series: { date: string; rm: number }[] = [];
@@ -241,6 +259,7 @@ export default function ProgresoPage() {
     return series;
   }, [data, activeExercise]);
 
+  // Top 5 de récords personales (mejor 1RM estimado por ejercicio).
   const topPRs = useMemo(() => {
     const map = new Map<string, { name: string; rm: number; date: string }>();
     for (const w of data ?? []) {
@@ -266,6 +285,7 @@ export default function ProgresoPage() {
     return [...map.values()].sort((a, b) => b.rm - a.rm).slice(0, 5);
   }, [data]);
 
+  // Fechas de inicio de cada sesión, usadas por el heatmap.
   const heatDates = useMemo(
     () => (data ?? []).map((w) => w.started_at),
     [data]

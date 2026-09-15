@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * Página de ejecución de entrenamiento (pantalla completa).
+ * Trabaja sobre el borrador de la sesión en el store de Zustand: carga una
+ * rutina (o reanuda un draft), registra series/pesos, cronometra la duración,
+ * y al finalizar persiste workout + workout_exercises + workout_sets en Supabase
+ * y desbloquea logros.
+ */
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -38,6 +45,7 @@ const ExercisePicker = dynamic(
   { ssr: false }
 );
 
+// Tipos de serie disponibles con su etiqueta.
 const SET_TYPES: { id: SetType; label: string }[] = [
   { id: "N", label: "Normal" },
   { id: "W", label: "Warmup" },
@@ -45,6 +53,7 @@ const SET_TYPES: { id: SetType; label: string }[] = [
   { id: "D", label: "Drop" },
 ];
 
+// Color por tipo de serie usado en los badges.
 const TYPE_COLORS: Record<SetType, string> = {
   N: "bg-[var(--surface-3)] text-[var(--text)]",
   W: "bg-[var(--info-soft)] text-[var(--info)]",
@@ -54,6 +63,11 @@ const TYPE_COLORS: Record<SetType, string> = {
 const getTypeColor = (type: string) => TYPE_COLORS[type as SetType] ?? TYPE_COLORS.N;
 
 
+/**
+ * Tarjeta de un ejercicio del borrador.
+ * Permite marcar/completar series, cambiar su tipo, editar peso/reps,
+ * agregar o eliminar series y dispara el temporizador de descanso.
+ */
 const ExerciseCard = memo(function ExerciseCard({
   exercise,
   routineRest,
@@ -76,6 +90,7 @@ const ExerciseCard = memo(function ExerciseCard({
     0
   );
 
+  // Alterna el estado completado de una serie; si se completa, inicia descanso.
   function toggleSet(index: number) {
     const set = exercise.sets[index];
     const completed = !set.completed;
@@ -235,6 +250,10 @@ const ExerciseCard = memo(function ExerciseCard({
   );
 });
 
+/**
+ * Mini-reproductor de Spotify durante el entrenamiento.
+ * Consulta /api/spotify/data periódicamente; muestra conectado, sonando o nada.
+ */
 function SpotifyMini() {
   const { data } = useQuery({
     queryKey: ["spotify_mini"],
@@ -391,6 +410,7 @@ export default function EntrenarPage() {
     }
   }, [routine, routineId, existingDraft, startWorkout, resumeWorkout, addExercise]);
 
+  // Crea el draft a partir de la rutina y precarga pesos del último entrenamiento.
   function applyRoutine(r: NonNullable<typeof routine>) {
     startWorkout({
       name: r.name,
@@ -457,6 +477,7 @@ const { data: lastW } = await supabase
     setRoutineConfirm(null);
   }
 
+  // Último entrenamiento guardado (para la opción "Repetir último").
   const { data: lastWorkout, isLoading: loadingLast } = useQuery({
     queryKey: ["last_workout"],
     queryFn: async () => {
@@ -493,6 +514,7 @@ const { data: lastW } = await supabase
     enabled: !draft && !routineId,
   });
 
+  // Arma un draft nuevo a partir del último entrenamiento (series sin completar).
   async function repeatLast() {
     if (!lastWorkout) return;
     const draft: WorkoutDraft = {
@@ -540,11 +562,13 @@ const { data: lastW } = await supabase
     return () => clearInterval(t);
   }, [draft?.startedAt]);
 
+  // Cantidad total de series del borrador.
   const totalSets = useMemo(
     () =>
       (draft?.exercises ?? []).reduce((a, e) => a + e.sets.length, 0),
     [draft?.exercises]
   );
+  // Cantidad de series completadas del borrador.
   const completedSets = useMemo(
     () =>
       (draft?.exercises ?? []).reduce(
@@ -554,6 +578,13 @@ const { data: lastW } = await supabase
     [draft?.exercises]
   );
 
+  /**
+   * Persiste la sesión completa:
+   * 1) upsert del workout con id determinístico (idempotente),
+   * 2) insert de workout_exercises mapeando ids,
+   * 3) insert en batch de workout_sets,
+   * 4) desbloqueo de logros y limpieza del store.
+   */
   async function finish() {
     if (!draft || saving) return;
     if (!draft.startedAt) {
@@ -659,6 +690,7 @@ const { data: lastW } = await supabase
   }
 
   if (!draft) {
+    // Pantalla de inicio: repetir último entrenamiento, empezar de cero o volver.
     return (
       <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-6">
         <SpotifyMini />
@@ -915,6 +947,7 @@ const { data: lastW } = await supabase
 
       <RestTimer />
 
+      {/* Confirmación: cargar rutina reemplazando la sesión en curso */}
       {routineConfirm && (
         <Dialog
           open
@@ -938,6 +971,7 @@ const { data: lastW } = await supabase
         </Dialog>
       )}
 
+      {/* Confirmación: salir guardando la sesión para continuar luego */}
       {exitConfirm && (
         <Dialog
           open

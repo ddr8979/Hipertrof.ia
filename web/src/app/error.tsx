@@ -1,7 +1,14 @@
 "use client";
 
+/**
+ * error.tsx
+ * Error boundary global del App Router. Muestra una pantalla de error y
+ * permite reintentar el renderizado.
+ */
+
 import { useEffect } from "react";
 
+/** Captura errores no controlados en el árbol raíz. */
 export default function GlobalError({
   error,
   reset,
@@ -9,6 +16,7 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // Registra el error para diagnóstico.
   useEffect(() => {
     console.error(error);
   }, [error]);

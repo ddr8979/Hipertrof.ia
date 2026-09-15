@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * providers.tsx
+ * Providers globales de la aplicación: TanStack Query, tema (next-themes) y
+ * sincronización de perfil (Zustand + Supabase). También registra el service
+ * worker de la PWA y aplica el color de acento del usuario.
+ */
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider, useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -8,6 +15,7 @@ import { Toaster } from "@/components/ui/toast";
 import { SWRegister } from "@/components/sw-register";
 import { createClient } from "@/lib/supabase/client";
 
+// Forma de la fila de `profiles` (con campos extra permitidos).
 export type ProfileRow = {
   id: string;
   display_name: string | null;
@@ -19,6 +27,11 @@ export type ProfileRow = {
   weight_kg?: number | null;
   tdee_kcal?: number | null;
   diet_goal?: string | null;
+  role?: "athlete" | "trainer" | "admin" | null;
+  plan?: "free" | "plus" | "deluxe" | null;
+  is_admin?: boolean | null;
+  is_trainer_approved?: boolean | null;
+  onboarded?: boolean | null;
 } & Record<string, unknown>;
 
 interface ProfileState {
@@ -26,11 +39,13 @@ interface ProfileState {
   setProfile: (p: ProfileRow | null) => void;
 }
 
+// Store global del perfil (compartido por componentes de toda la app).
 export const useProfile = create<ProfileState>((set) => ({
   profile: null,
   setProfile: (p) => set({ profile: p }),
 }));
 
+/** Crea un QueryClient con los valores por defecto de la app. */
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
@@ -45,6 +60,7 @@ function makeQueryClient() {
 
 let browserQueryClient: QueryClient | undefined;
 
+/** Devuelve un QueryClient estable: uno nuevo en servidor y singleton en browser. */
 function getQueryClient() {
   if (typeof window === "undefined") return makeQueryClient();
   if (!browserQueryClient) browserQueryClient = makeQueryClient();
@@ -78,6 +94,7 @@ function ThemeColorSync() {
   return null;
 }
 
+/** Aplica el color de acento del perfil como variable CSS global. */
 function AccentApplier() {
   const profile = useProfile((s) => s.profile);
 
@@ -96,6 +113,10 @@ function AccentApplier() {
   return null;
 }
 
+/**
+ * Mantiene el store de perfil en sincronía con la sesión de Supabase.
+ * Escucha cambios de auth y carga la fila de `profiles` con reintentos.
+ */
 function ProfileSync() {
   const setProfile = useProfile((s) => s.setProfile);
 
@@ -103,6 +124,7 @@ function ProfileSync() {
     const supabase = createClient();
     let active = true;
 
+    // Carga el perfil desde Supabase; si falla, usa metadata del JWT.
     async function load(userId: string | null, user: any = null) {
       if (!userId) {
         setProfile(null);
@@ -132,9 +154,7 @@ function ProfileSync() {
       for (let attempt = 0; attempt < 3 && active; attempt++) {
         const { data, error } = await supabase
           .from("profiles")
-          .select(
-            "id, display_name, username, avatar_url, accent_color, streak_count, max_streak, weight_kg, tdee_kcal, diet_goal"
-          )
+          .select("*")
           .eq("id", userId)
           .maybeSingle();
 
@@ -156,6 +176,7 @@ function ProfileSync() {
       if (active && user) setProfile(fallback);
     }
 
+    // Reacciona a login, refresco de token, actualización o cierre de sesión.
     const { data: sub } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === "SIGNED_OUT") {
@@ -173,12 +194,14 @@ function ProfileSync() {
       }
     );
 
+    // Carga inicial: usa la sesión cacheada y luego el usuario fresco.
     supabase.auth.getSession().then(async (s) => {
       const sessionUser = s.data.session?.user ?? null;
       const { data: fresh } = await supabase.auth.getUser();
       void load(sessionUser?.id ?? null, fresh?.user ?? sessionUser);
     });
 
+    // Limpieza: evita actualizaciones si el componente se desmonta.
     return () => {
       active = false;
       sub.subscription.unsubscribe();
@@ -188,6 +211,7 @@ function ProfileSync() {
   return null;
 }
 
+/** Envuelve la app con todos los providers globales. */
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(getQueryClient);
 

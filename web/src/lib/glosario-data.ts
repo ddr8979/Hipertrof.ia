@@ -1,3 +1,9 @@
+/**
+ * Datos del glosario de términos de entrenamiento, organizados por categoría.
+ * Solo contenido estático: definiciones, ejemplos y la categoría a la que pertenecen.
+ */
+
+/** Entrada individual del glosario. `example` es opcional. */
 export interface GlosarioItem {
   term: string;
   definition: string;
@@ -5,6 +11,7 @@ export interface GlosarioItem {
   example?: string;
 }
 
+/** Listado completo de términos, agrupado visualmente por categoría. */
 export const GLOSARIO_ITEMS: GlosarioItem[] = [
   // ── ENTRENAMIENTO ────────────────────────────────────────────────────────────
   {

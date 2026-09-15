@@ -1,15 +1,24 @@
+// Iconos premium animados: verificado, brillo (shimmer) y anillo de resplandor.
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { cn } from "@/lib/utils";
 
+// Suscripción vacía para detectar montaje sin causar render en servidor.
 const emptySubscribe = () => () => {};
 
+/**
+ * Insignia de cuenta verificada.
+ * Renderiza una versión estática en el servidor y una con degradado/animación
+ * tras el montaje, evitando desajustes de hidratación.
+ */
 export function VerifiedBadge({ size = 20, className }: { size?: number; className?: string }) {
   const [id] = useState(() => `vb-${Math.random().toString(36).slice(2, 8)}`);
+  // mounted=true solo en cliente; evita diferencias SSR/cliente.
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const animationRef = useRef<number | undefined>(undefined);
 
+  // Cancela cualquier animación pendiente al desmontar.
   useEffect(() => {
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
@@ -17,6 +26,7 @@ export function VerifiedBadge({ size = 20, className }: { size?: number; classNa
   }, []);
 
   if (!mounted) {
+    // Versión estática para SSR.
     return (
       <svg width={size} height={size} viewBox="0 0 24 24" className={cn("inline-block shrink-0", className)} aria-label="Verificado">
         <circle cx="12" cy="12" r="10" fill="#3897f0" />
@@ -26,6 +36,7 @@ export function VerifiedBadge({ size = 20, className }: { size?: number; classNa
   }
 
   return (
+    // Versión con degradado y anillo interior.
     <svg width={size} height={size} viewBox="0 0 24 24" className={cn("inline-block shrink-0", className)} aria-label="Verificado">
       <defs>
         <linearGradient id={`${id}-grad`} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -48,6 +59,11 @@ export function VerifiedBadge({ size = 20, className }: { size?: number; classNa
   );
 }
 
+/**
+ * Aplica un efecto de brillo deslizante sobre los hijos SVG.
+ * @param duration  Duración del ciclo en segundos.
+ * @param intensity Intensidad del contraste del degradado.
+ */
 export function ShimmerIcon({ 
   children, 
   className,
@@ -78,6 +94,11 @@ export function ShimmerIcon({
   );
 }
 
+/**
+ * Anillo con resplandor pulsante.
+ * @param color         Color base del resplandor.
+ * @param pulseDuration Duración del pulso en segundos.
+ */
 export function GlowRing({ 
   size = 20, 
   color = "currentColor", 

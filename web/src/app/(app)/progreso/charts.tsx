@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Gráficos de progreso (recharts) cargados de forma diferida desde `progreso/page.tsx`.
+ * Incluye el volumen semanal y la evolución del 1RM estimado.
+ */
+
 import {
   Area,
   AreaChart,
@@ -13,6 +18,7 @@ import {
 export type VolumePoint = { week: string; kg: number };
 export type RmPoint = { date: string; rm: number };
 
+// Estilo compartido del tooltip, basado en las variables de tema.
 const tooltipContentStyle = {
   background: "var(--surface)",
   border: "1px solid var(--border)",
@@ -20,6 +26,7 @@ const tooltipContentStyle = {
   fontSize: 13,
 };
 
+/** Gráfico de área con el volumen (kg) levantado por semana. */
 export function VolumeChart({ data }: { data: VolumePoint[] }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -61,6 +68,7 @@ export function VolumeChart({ data }: { data: VolumePoint[] }) {
   );
 }
 
+/** Gráfico de área con la evolución del 1RM estimado (kg). */
 export function RmChart({ data }: { data: RmPoint[] }) {
   return (
     <ResponsiveContainer width="100%" height="100%">

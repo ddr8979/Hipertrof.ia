@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * Página de perfil propio.
+ * Muestra el header (avatar, banner, datos y flags de visibilidad), el tema de
+ * perfil y las playlists. Permite editar el perfil, subir imágenes y gestionar
+ * playlists (Spotify/YouTube/Apple Music).
+ */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -40,11 +46,13 @@ import { useProfile } from "@/components/providers";
 import { ICONS, PROVIDERS } from "@/lib/profile-meta";
 import { cn, vibrate } from "@/lib/utils";
 
+// Logro desbloqueado con su fecha de obtención.
 type Achievement = {
   achievement: { code: string; name: string; description: string; icon: string; category: string };
   unlocked_at: string;
 };
 
+// Playlist vinculada al perfil (Spotify, Apple Music, YouTube Music, etc.).
 type Playlist = {
   id: string;
   provider: string;
@@ -58,6 +66,7 @@ export default function PerfilPage() {
   const profile = useProfile((s) => s.profile);
   const setProfile = useProfile((s) => s.setProfile);
   const qc = useQueryClient();
+  // Estados de los diálogos y del formulario de edición (todos los campos del perfil).
   const [editOpen, setEditOpen] = useState(false);
   const [playlistOpen, setPlaylistOpen] = useState(false);
   const [viewImg, setViewImg] = useState(false);
@@ -86,6 +95,7 @@ export default function PerfilPage() {
   const bannerInput = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<"avatar" | "banner" | null>(null);
 
+  // Playlists del usuario, ordenadas por fecha de creación.
   const { data: playlists } = useQuery({
     queryKey: ["playlists"],
     queryFn: async () => {
@@ -99,6 +109,7 @@ export default function PerfilPage() {
     },
   });
 
+  // Conteos de seguidores y seguidos (dos consultas en paralelo).
   const { data: netCounts } = useQuery({
     queryKey: ["net_counts"],
     queryFn: async () => {
@@ -117,6 +128,7 @@ export default function PerfilPage() {
     },
   });
 
+  // Sube avatar o banner a Storage, actualiza el perfil y refresca el store global.
   async function uploadImage(kind: "avatar" | "banner", file: File) {
     if (!profile) return;
     setUploading(kind);
@@ -150,6 +162,7 @@ export default function PerfilPage() {
     }
   }
 
+  // Guarda todos los campos editables del perfil (incluye flags de visibilidad).
   const saveProfile = useMutation({
     mutationFn: async () => {
       const supabase = createClient();
@@ -192,6 +205,7 @@ export default function PerfilPage() {
     onError: (e) => toast("error", "No se pudo guardar", e.message),
   });
 
+  // Agrega una playlist al perfil.
   const addPlaylist = useMutation({
     mutationFn: async (p: {
       provider: string;
@@ -219,6 +233,7 @@ export default function PerfilPage() {
     onError: (e) => toast("error", "No se pudo agregar", e.message),
   });
 
+  // Elimina una playlist del perfil.
   const removePlaylist = useMutation({
     mutationFn: async (id: string) => {
       const supabase = createClient();
@@ -726,6 +741,11 @@ export default function PerfilPage() {
   );
 }
 
+/**
+ * Formulario para agregar una playlist.
+ * Detecta automáticamente metadatos (título, miniatura, proveedor) a partir
+ * del enlace usando /api/oembed.
+ */
 function PlaylistForm({
   onSave,
 }: {
@@ -744,6 +764,7 @@ function PlaylistForm({
   const [provider, setProvider] = useState("spotify");
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
 
+  // Consulta /api/oembed para autocompletar los datos de la playlist.
   async function detect() {
     if (!url.trim()) return;
     setDetecting(true);
@@ -852,6 +873,7 @@ function PlaylistForm({
   );
 }
 
+// Miniatura de playlist con fallback a un segundo candidato de imagen.
 function PlaylistThumb({ src, meta }: { src: string; meta?: { color: string } }) {
   const [candidates, setCandidates] = useState<string[] | null>(null);
   const list = (candidates ?? (src ? [src, playlistThumb(src)].filter((x): x is string => !!x) : [])) as string[];
@@ -880,6 +902,11 @@ function PlaylistThumb({ src, meta }: { src: string; meta?: { color: string } })
 
 type TrackPick = { id: string; name: string; artist: string; preview: string; hasPreview?: boolean; cover?: string };
 
+/**
+ * Selector de canción para el "tema del perfil".
+ * Permite buscar en Spotify (debounced) o pegar un link directo; usa /api/spotify/search
+ * y /api/oembed. Muestra avisos cuando se requiere Spotify Premium del owner.
+ */
 function TrackPicker({
   value,
   onChange,
@@ -895,6 +922,7 @@ function TrackPicker({
   const [searchError, setSearchError] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Obtiene datos de un track de Spotify a partir de su URL vía oEmbed.
   async function fetchFromUrl(url: string): Promise<(TrackPick & { hasPreview: boolean }) | null> {
     try {
       const res = await fetch(`/api/oembed?url=${encodeURIComponent(url)}`);
@@ -913,6 +941,7 @@ function TrackPicker({
     }
   }
 
+  // Búsqueda con debounce: link de Spotify => oEmbed directo; texto => /api/spotify/search.
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
     if (!q.trim()) {

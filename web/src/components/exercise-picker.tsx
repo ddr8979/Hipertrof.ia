@@ -1,3 +1,5 @@
+// Selector de ejercicios en un diálogo: búsqueda por texto y filtros de
+// músculo/equipo, con grilla de resultados y marca de selección.
 "use client";
 
 import { useMemo, useState } from "react";
@@ -10,6 +12,7 @@ import { ExerciseMedia } from "@/components/exercise-media";
 import { cn, vibrate } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/primitives";
 
+// Fila de ejercicio tal como llega de Supabase.
 type ExerciseRow = {
   id: string;
   name: string;
@@ -19,6 +22,14 @@ type ExerciseRow = {
   gif_url: string | null;
 };
 
+/**
+ * Diálogo para buscar y seleccionar ejercicios.
+ * @param open        Visibilidad del diálogo.
+ * @param onClose     Cierra el diálogo.
+ * @param onPick      Callback al agregar un ejercicio.
+ * @param onRemove    Callback al quitar un ejercicio ya seleccionado.
+ * @param selectedIds Ids ya seleccionados (se muestran marcados).
+ */
 export function ExercisePicker({
   open,
   onClose,
@@ -37,12 +48,15 @@ export function ExercisePicker({
   onRemove?: (exerciseId: string) => void;
   selectedIds: string[];
 }) {
+  // Estado de búsqueda y filtros activos.
   const [search, setSearch] = useState("");
   const [muscle, setMuscle] = useState<string | null>(null);
   const [equipment, setEquipment] = useState<string | null>(null);
+  // Controlan la apertura de los diálogos de selección de filtro.
   const [muscleOpen, setMuscleOpen] = useState(false);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
 
+  // Catálogo completo de ejercicios (cacheado indefinidamente).
   const { data: exercises, isLoading } = useQuery({
     queryKey: ["exercises"],
     queryFn: async () => {
@@ -56,6 +70,7 @@ export function ExercisePicker({
     staleTime: Infinity,
   });
 
+  // Lista única y ordenada de músculos disponibles.
   const muscles = useMemo(() => {
     const s = new Set<string>();
     (exercises ?? []).forEach((e) => {
@@ -64,6 +79,7 @@ export function ExercisePicker({
     return [...s].sort();
   }, [exercises]);
 
+  // Lista única y ordenada de equipamiento disponible.
   const equipments = useMemo(() => {
     const s = new Set<string>();
     (exercises ?? []).forEach((e) => {
@@ -72,6 +88,7 @@ export function ExercisePicker({
     return [...s].sort();
   }, [exercises]);
 
+  // Ejercicios filtrados por músculo, equipo y texto de búsqueda.
   const filtered = useMemo(() => {
     if (!exercises) return [];
     const q = search.toLowerCase().trim();
@@ -249,12 +266,14 @@ export function ExercisePicker({
         </Dialog>
 
         {isLoading ? (
+          // Placeholders mientras carga el catálogo.
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {Array.from({ length: 9 }).map((_, i) => (
               <Skeleton key={i} className="h-32 animate-pulse rounded-2xl" />
             ))}
           </div>
         ) : (
+          // Grilla de resultados.
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {filtered.map((e: ExerciseRow, idx: number) => {
               const selected = selectedIds.includes(e.id);
@@ -262,6 +281,7 @@ export function ExercisePicker({
                 <button
                   key={e.id}
                   onClick={() => {
+                    // Vibración distinta al quitar vs. agregar.
                     vibrate(selected ? 6 : 8);
                     if (selected) {
                       onRemove?.(e.id);
@@ -292,8 +312,10 @@ export function ExercisePicker({
                   />
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-[var(--surface-2)]">
                     <ExerciseMedia url={e.gif_url} alt={e.name} />
+                    {/* Degradado sutil al hover */}
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
                     {selected && (
+                      // Indicador de seleccionado
                       <span className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-ink)] shadow-sm ring-2 ring-white/40">
                         <X className="size-3.5" />
                       </span>
@@ -315,6 +337,7 @@ export function ExercisePicker({
               );
             })}
             {filtered.length === 0 && (
+              // Mensaje cuando no hay coincidencias.
               <p className="col-span-full py-10 text-center text-sm text-[var(--muted)]">
                 Sin resultados para «{search}»{allFiltersActive ? " con esos filtros" : ""}
               </p>

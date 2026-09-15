@@ -1,3 +1,5 @@
+// Avisos de mensajes directos: escucha inserciones en `direct_messages` vía
+// Supabase Realtime (con polling de respaldo), suena, vibra y muestra un toast.
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -9,6 +11,7 @@ import { useProfile } from "@/components/providers";
 import { Avatar } from "@/components/ui/primitives";
 import { vibrate } from "@/lib/utils";
 
+// Mensaje entrante ya enriquecido con datos del perfil del remitente.
 type Incoming = {
   id: string;
   sender_id: string;
@@ -20,8 +23,10 @@ type Incoming = {
   avatar_url: string | null;
 };
 
+// Contexto de audio compartido para no recrearlo en cada aviso.
 let audioCtx: AudioContext | null = null;
 
+// Reproduce un breve sonido de dos notas al recibir un DM.
 function playDmSound() {
   try {
     const Ctor =
@@ -53,14 +58,23 @@ function playDmSound() {
   }
 }
 
+/**
+ * Escucha mensajes directos entrantes del usuario actual.
+ * Deduplica por id, emite sonido/vibración/notificación nativa y muestra
+ * una tarjeta efímera enlazada a la conversación.
+ */
 export function DmNotifications() {
   const me = useProfile((s) => s.profile);
   const pathname = usePathname();
+  // Mensaje actualmente mostrado en pantalla (null = sin aviso).
   const [incoming, setIncoming] = useState<Incoming | null>(null);
+  // Temporizador de autocierre del aviso.
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Ids ya notificados para evitar duplicados entre Realtime y polling.
   const seen = useRef<Set<string>>(new Set());
 
+  // Registra el aviso una sola vez por mensaje y programa su autocierre.
   const notify = useCallback((m: Incoming) => {
     if (seen.current.has(m.id)) return;
     seen.current.add(m.id);
@@ -82,6 +96,7 @@ export function DmNotifications() {
     timer.current = setTimeout(() => setIncoming(null), 5000);
   }, []);
 
+  // Suscripción Realtime a nuevos DMs + polling de respaldo cada 15s.
   useEffect(() => {
     if (!me?.id) return;
     const supabase = createClient();
@@ -118,6 +133,7 @@ export function DmNotifications() {
         }
       )
       .subscribe();
+    // Polling de respaldo por si Realtime no está disponible.
     const poll = setInterval(async () => {
       if (!me.id) return;
       const { data: fresh } = await supabase
@@ -155,15 +171,18 @@ export function DmNotifications() {
     };
   }, [me?.id]);
 
+  // Limpieza del temporizador al desmontar.
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
   }, []);
 
   if (!incoming) return null;
+  // No mostrar el aviso si ya estamos en esa conversación.
   const inChat = pathname === `/mensajes/${incoming.sender_id}`;
   if (inChat) return null;
 
   return (
+    // Tarjeta flotante enlazada a la conversación del remitente.
     <div className="fixed left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 animate-[fade-up_0.3s_cubic-bezier(0.16,1,0.3,1)_both]">
       <Link
         href={`/mensajes/${incoming.sender_id}`}

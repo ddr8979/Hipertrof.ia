@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * Página de Nutrición.
+ * Diario de comidas por día (meal_logs + daily_entries), cálculo de macros y
+ * objetivos según el perfil, sugerencias filtradas por restricciones/dieta,
+ * recetario (incluye recetas asignadas por el trainer) y recetas propias.
+ */
 import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { startOfDay, endOfDay, format, addDays } from "date-fns";
@@ -35,6 +41,7 @@ import { toast } from "@/components/ui/toast";
 import { useProfile } from "@/components/providers";
 import { cn } from "@/lib/utils";
 
+// Receta (del catálogo o propia) con macros, pasos y fotos.
 type Recipe = {
   id: string;
   name: string;
@@ -53,6 +60,7 @@ type Recipe = {
   photos: string[] | null;
 };
 
+// Registro de una comida consumida.
 type MealLog = {
   id: string;
   recipe_id: string | null;
@@ -65,8 +73,10 @@ type MealLog = {
   eaten_at: string;
 };
 
+// Momentos del día en los que se pueden registrar comidas.
 const MEAL_KEYS = ["Desayuno", "Almuerzo", "Merienda", "Cena", "Snack"] as const;
 
+// Palabras clave por restricción alimentaria; si un tag de la receta coincide, se descarta.
 const RESTRICTION_TAGS: Record<string, string[]> = {
   gluten: ["gluten"],
   lactosa: ["queso", "leche", "yogur", "crema", "manteca"],
@@ -104,6 +114,7 @@ const MACRO_COLORS = {
   fats: "text-[#22c55e]",
 } as const;
 
+// Muestra los macros (proteína, carbos, grasas) con su color característico.
 function MacroText({
   p,
   c,
@@ -147,6 +158,7 @@ function MacroText({
   );
 }
 
+// Devuelve la fecha (yyyy-MM-dd) de la última ocurrencia de un día de la semana.
 function lastOccurrence(weekdayIndex: number, ref: Date) {
   const diff = (ref.getDay() - weekdayIndex + 7) % 7;
   return format(addDays(ref, -diff), "yyyy-MM-dd");
@@ -155,6 +167,7 @@ function lastOccurrence(weekdayIndex: number, ref: Date) {
 export default function NutricionPage() {
   const profile = useProfile((s) => s.profile);
   const qc = useQueryClient();
+  // Estados de diálogos, filtros y día seleccionado del diario.
   const [pickerOpen, setPickerOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -175,6 +188,7 @@ export default function NutricionPage() {
   const [addDayOpen, setAddDayOpen] = useState(false);
   const [viewCookbookRecipe, setViewCookbookRecipe] = useState<Recipe | null>(null);
 
+  // Recetas propias del usuario.
   const { data: myRecipes } = useQuery({
     queryKey: ["my_recipes"],
     queryFn: async () => {
@@ -188,6 +202,7 @@ export default function NutricionPage() {
     },
   });
 
+  // Elimina una receta propia.
   const deleteRecipe = useMutation({
     mutationFn: async (id: string) => {
       const supabase = createClient();
@@ -201,6 +216,7 @@ export default function NutricionPage() {
     onError: (e) => toast("error", "No se pudo eliminar", e.message),
   });
 
+  // Comidas registradas del día seleccionado.
   const { data: logs, isLoading } = useQuery({
     queryKey: ["meal_logs", day],
     queryFn: async () => {
@@ -215,6 +231,7 @@ export default function NutricionPage() {
     },
   });
 
+  // Catálogo completo de recetas disponibles.
   const { data: recipes } = useQuery({
     queryKey: ["recipes"],
     queryFn: async () => {
@@ -228,6 +245,7 @@ export default function NutricionPage() {
     },
   });
 
+  // Recetas asignadas activas por el entrenador del atleta.
   const { data: trainerRecipes } = useQuery({
     queryKey: ["assigned_recipes"],
     queryFn: async () => {
@@ -254,6 +272,7 @@ export default function NutricionPage() {
     },
   });
 
+  // Días del diario (entradas), incluyendo si fueron culminados.
   const { data: dailyEntries } = useQuery({
     queryKey: ["daily_entries"],
     queryFn: async () => {
@@ -267,6 +286,7 @@ export default function NutricionPage() {
     },
   });
 
+  // Comidas de los últimos 30 días (para las calorías por día de la semana).
   const { data: weekLogs } = useQuery({
     queryKey: ["meal_logs", "week"],
     queryFn: async () => {
@@ -280,6 +300,7 @@ export default function NutricionPage() {
     },
   });
 
+  // Agrupa las calorías y proteína por fecha (yyyy-MM-dd) para el resumen semanal.
   const logsByDate = useMemo(() => {
     const map = new Map<string, { calories: number; protein: number }>();
     for (const l of weekLogs ?? []) {
@@ -292,6 +313,7 @@ export default function NutricionPage() {
     return map;
   }, [weekLogs]);
 
+  // Agrega (o actualiza) un día del diario a partir de un día de la semana.
   const addDay = useMutation({
     mutationFn: async ({ weekday, date }: { weekday: string; date: string }) => {
       const supabase = createClient();
@@ -314,6 +336,7 @@ export default function NutricionPage() {
     onError: (e) => toast("error", "No se pudo agregar el día", e.message),
   });
 
+  // Elimina un día del diario junto con sus comidas.
   const deleteDay = useMutation({
     mutationFn: async (date: string) => {
       const supabase = createClient();
@@ -336,6 +359,7 @@ export default function NutricionPage() {
     onError: (e) => toast("error", "No se pudo borrar el día", e.message),
   });
 
+  // Comidas de los últimos 14 días (para el historial de días culminados).
   const { data: pastLogs } = useQuery({
     queryKey: ["meal_logs", "past"],
     queryFn: async () => {
@@ -350,6 +374,7 @@ export default function NutricionPage() {
     },
   });
 
+  // Culmina o reabre un día (guarda/borra closed_at).
   const closeDay = useMutation({
     mutationFn: async ({ date, close }: { date: string; close: boolean }) => {
       const supabase = createClient();
@@ -370,6 +395,7 @@ export default function NutricionPage() {
     onError: (e) => toast("error", "No se pudo actualizar el día", e.message),
   });
 
+  // Registra una comida en el día actual (desde receta o manual).
   const addMeal = useMutation({
     mutationFn: async (m: {
       recipe_id?: string | null;
@@ -400,6 +426,7 @@ export default function NutricionPage() {
     onError: (e) => toast("error", "No se pudo agregar", e.message),
   });
 
+  // Elimina un registro de comida.
   const removeMeal = useMutation({
     mutationFn: async (id: string) => {
       const supabase = createClient();
@@ -413,6 +440,7 @@ export default function NutricionPage() {
     onError: (e) => toast("error", "No se pudo eliminar", e.message),
   });
 
+  // Totales de kcal y macros consumidos en el día.
   const totals = useMemo(
     () =>
       (logs ?? []).reduce<{ kcal: number; protein: number; carbs: number; fats: number }>(
@@ -427,6 +455,7 @@ export default function NutricionPage() {
     [logs]
   );
 
+  // Objetivos diarios: kcal según TDEE + objetivo de dieta, y macros según el peso.
   const targets = useMemo(() => {
     const tdee = profile?.tdee_kcal ?? 2500;
     const goalAdj =
@@ -439,13 +468,16 @@ export default function NutricionPage() {
     return { kcal, protein, fats, carbs };
   }, [profile]);
 
+  // Restricciones alimentarias del perfil (array normalizado a strings).
   const restrictions = useMemo(() => {
     const raw = profile?.food_restrictions;
     return Array.isArray(raw) ? raw.map(String) : [];
   }, [profile?.food_restrictions]);
 
+  // Tipo de dieta del perfil (omnivoro por defecto).
   const dietType = String(profile?.diet_type ?? "omnivoro");
 
+  // Recetas permitidas: filtra por tipo de dieta y descarta las que chocan con restricciones.
   const allowed = useMemo(() => {
     return (recipes ?? []).filter((r) => {
       const diets = (r.diet_types ?? "").split(",").map((x) => x.trim());
@@ -459,6 +491,7 @@ export default function NutricionPage() {
     });
   }, [recipes, dietType, restrictions]);
 
+  // Sugerencias: recetas permitidas que no comió hoy, ordenadas por preferencias o proteína.
   const suggestions = useMemo(() => {
     const prefs = profile?.food_preferences;
     const prefTags = Array.isArray(prefs) ? prefs.map(String) : [];
@@ -476,6 +509,7 @@ export default function NutricionPage() {
       .map((x) => x.r);
   }, [allowed, profile?.food_preferences, logs]);
 
+  // Recetas permitidas de la categoría seleccionada en el recetario.
   const cookbook = useMemo(() => {
     const cat = recipeCat;
     return allowed
@@ -483,6 +517,7 @@ export default function NutricionPage() {
       .sort((a, b) => b.protein_g - a.protein_g);
   }, [allowed, recipeCat]);
 
+  // Recetas permitidas filtradas por el buscador del picker.
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return allowed
@@ -495,6 +530,7 @@ export default function NutricionPage() {
       .slice(0, 24);
   }, [allowed, search]);
 
+  // Agrupa las comidas del día por momento (Desayuno, Almuerzo, ...).
   const byMeal = useMemo(() => {
     const map = new Map<string, MealLog[]>();
     for (const l of logs ?? []) {
@@ -509,6 +545,7 @@ export default function NutricionPage() {
     dailyEntries?.some((e) => e.entry_date === day && e.closed_at) ?? false;
   const currentDay = (dailyEntries ?? []).find((e) => e.entry_date === day);
 
+  // Agrupa las comidas de días pasados por fecha.
   const pastByDate = useMemo(() => {
     const map = new Map<string, MealLog[]>();
     for (const l of pastLogs ?? []) {
@@ -518,6 +555,7 @@ export default function NutricionPage() {
     return map;
   }, [pastLogs]);
 
+  // Fechas de días culminados que tienen comidas (para el historial).
   const entryDates = useMemo(() => {
     const closed = new Set(
       (dailyEntries ?? [])
@@ -529,6 +567,7 @@ export default function NutricionPage() {
     );
   }, [dailyEntries, pastByDate, todayStr, logs]);
 
+  // Porcentaje de progreso (acotado a 100) frente al objetivo.
   function progress(consumed: number, target: number) {
     return Math.min(100, Math.round((consumed / target) * 100));
   }
@@ -1352,6 +1391,9 @@ export default function NutricionPage() {
   );
 }
 
+/**
+ * Formulario para registrar una comida manual (sin receta).
+ */
 function ManualMealForm({
   onSave,
 }: {
@@ -1437,6 +1479,11 @@ function ManualMealForm({
   );
 }
 
+/**
+ * Formulario de receta propia (crear/editar).
+ * Maneja macros, pasos reordenables con título y foto por paso; sube las fotos
+ * a Storage (bucket recipe-photos) y guarda en `recipes`.
+ */
 function MyRecipeForm({
   open,
   onClose,
@@ -1494,6 +1541,7 @@ function MyRecipeForm({
     { id: "postre", label: "Postre" },
   ];
 
+  // Sube la foto de un paso al bucket recipe-photos y actualiza el estado local.
   async function handleStepPhoto(i: number, file: File | null) {
     if (!file || !profile) return;
     setUploadingStep(i);
@@ -1513,6 +1561,7 @@ function MyRecipeForm({
     }
   }
 
+  // Valida y guarda la receta (update si se edita, insert si es nueva).
   async function handleSave() {
     if (!profile) return;
     if (!name.trim()) {

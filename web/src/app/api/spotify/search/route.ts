@@ -1,3 +1,9 @@
+/**
+ * api/spotify/search/route.ts — Búsqueda de tracks en Spotify.
+ *
+ * Usa el token del usuario si está conectado (habilita previews de 30s);
+ * si no, cae a un token client_credentials que no expone `preview_url`.
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSpotifyToken, getClientCredentialsToken } from "@/lib/spotify-token";
@@ -11,12 +17,14 @@ type SpotifyTrackItem = {
   album?: { images?: { url: string }[] };
 };
 
+/** GET ?q=... → tracks normalizados + si hay previews disponibles. */
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q) {
     return NextResponse.json({ error: "Falta el parámetro q" }, { status: 400 });
   }
   const supabase = await createClient();
+  // Preferir token de usuario; si no hay, usar client_credentials.
   let token = (await getSpotifyToken(supabase))?.token ?? null;
   let tokenSource = "user";
   let canPreview = false;
@@ -35,6 +43,7 @@ export async function GET(req: NextRequest) {
     { headers: { Authorization: `Bearer ${token}` } }
   );
   if (!r.ok) {
+    // Log del error con la fuente del token para diagnosticar permisos.
     const errText = await r.text().catch(() => "");
     console.error(`[spotify/search] Spotify API error: ${r.status} ${errText} (token: ${tokenSource})`);
     return NextResponse.json({ error: "Error de Spotify", tracks: [], canPreview: false, details: errText }, { status: r.status });
@@ -42,6 +51,7 @@ export async function GET(req: NextRequest) {
   const d = (await r.json()) as {
     tracks?: { items?: SpotifyTrackItem[] };
   };
+  // Aplanar la respuesta de Spotify al formato interno.
   const tracks = (d.tracks?.items ?? [])
     .map((t) => ({
       id: t.id,

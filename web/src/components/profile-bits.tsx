@@ -1,3 +1,4 @@
+// Piezas del perfil: círculos de redes sociales y reproductor del tema elegido.
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
@@ -5,6 +6,7 @@ import { Pause, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VerifiedBadge, ShimmerIcon } from "@/components/premium-icons";
 
+// Handles de redes sociales del perfil.
 export type SocialHandles = {
   instagram_handle?: string | null;
   tiktok_handle?: string | null;
@@ -12,6 +14,7 @@ export type SocialHandles = {
   spotify_handle?: string | null;
 };
 
+// Iconos de redes con efecto shimmer.
 function InstagramIcon({ className }: { className?: string }) {
   return (
     <ShimmerIcon duration={4} intensity={0.12} className={className}>
@@ -24,6 +27,7 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
+// Icono de TikTok.
 function TikTikIcon({ className }: { className?: string }) {
   return (
     <ShimmerIcon duration={3.5} intensity={0.1} className={className}>
@@ -34,6 +38,7 @@ function TikTikIcon({ className }: { className?: string }) {
   );
 }
 
+// Icono de X (Twitter).
 function XIcon({ className }: { className?: string }) {
   return (
     <ShimmerIcon duration={3.8} intensity={0.12} className={className}>
@@ -44,6 +49,7 @@ function XIcon({ className }: { className?: string }) {
   );
 }
 
+// Icono de Spotify.
 function SpotifyIcon({ className }: { className?: string }) {
   return (
     <ShimmerIcon duration={4.2} intensity={0.15} className={className}>
@@ -54,6 +60,7 @@ function SpotifyIcon({ className }: { className?: string }) {
   );
 }
 
+// Definición de cada red: clave en SocialHandles, URL base, color y icono.
 const SOCIAL_DEFS = [
   {
     key: "instagram_handle",
@@ -85,6 +92,10 @@ const SOCIAL_DEFS = [
   },
 ] as const;
 
+/**
+ * Fila de círculos con las redes sociales configuradas en el perfil.
+ * Solo renderiza las que tienen handle y devuelve null si no hay ninguna.
+ */
 export function SocialCircles({
   handles,
   className,
@@ -93,6 +104,7 @@ export function SocialCircles({
   className?: string;
 }) {
   if (!handles) return null;
+  // Filtra solo las redes con handle presente.
   const list = SOCIAL_DEFS.filter((d) => handles[d.key]);
   if (!list.length) return null;
   return (
@@ -117,6 +129,11 @@ export function SocialCircles({
   );
 }
 
+/**
+ * Reproductor del tema elegido en el perfil.
+ * - Usa el preview de Spotify; si no hay track muestra un estado vacío.
+ * - El control de play se deshabilita mientras no haya preview.
+ */
 export function ProfileTrackPlayer({
   name,
   artist,
@@ -131,19 +148,23 @@ export function ProfileTrackPlayer({
   className?: string;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Estado de reproducción, error y carga del audio.
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Pausa el audio al desmontar.
   useEffect(() => {
     return () => {
       audioRef.current?.pause();
     };
   }, []);
 
+  // Hay tema si tiene nombre; se puede reproducir si además hay preview.
   const hasTrack = name;
   const canPlay = hasTrack && previewUrl;
 
+  // Alterna play/pausa controlando la promesa del navegador.
   const toggle = () => {
     const a = audioRef.current;
     if (!a || !canPlay) return;
@@ -166,6 +187,7 @@ export function ProfileTrackPlayer({
   };
 
   if (!hasTrack) {
+    // Estado vacío: sin tema elegido.
     return (
       <div className={cn("flex items-center gap-3 rounded-xl bg-[var(--surface-2)]/60 px-3 py-2.5", className)}>
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-3)] text-[var(--muted)]">
@@ -180,6 +202,7 @@ export function ProfileTrackPlayer({
   }
 
   return (
+    // Tarjeta del tema con portada, datos y control de reproducción.
     <div className={cn("flex items-center gap-3 rounded-xl bg-[var(--surface-2)]/60 px-3 py-2.5 transition-all duration-300 hover:bg-[var(--surface-2)]/80", className)}>
       {coverUrl && (
         <img

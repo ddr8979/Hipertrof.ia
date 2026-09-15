@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Página de chat directo entre dos usuarios.
+ * Carga mensajes + reacciones, se suscribe por Realtime a nuevos mensajes y
+ * reacciones, maneja imágenes (incluido envío view-once) y envío de estrellas.
+ */
 import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -15,6 +20,7 @@ import { useProfile } from "@/components/providers";
 import { ThemeToggle } from "@/components/brand-icons";
 import { vibrate, cn } from "@/lib/utils";
 
+// Mensaje directo tal como se guarda en direct_messages.
 type Message = {
   id: string;
   sender_id: string;
@@ -35,8 +41,10 @@ type MessageReaction = {
   created_at: string;
 };
 
+// Reacciones disponibles para los mensajes (selector largo-press / click derecho).
 const REACTION_OPTIONS = ["👍", "❤️", "😂", "🔥", "💪"] as const;
 
+// Formatea la hora del mensaje en formato local (es-UY, HH:mm).
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString("es-UY", {
     hour: "2-digit",
@@ -63,6 +71,7 @@ export default function ChatPage() {
   const [reactionTarget, setReactionTarget] = useState<Message | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Datos públicos del otro usuario (nombre, avatar, privacidad).
   const { data: other } = useQuery({
     queryKey: ["dm_other", otherId],
     queryFn: async () => {
@@ -83,6 +92,7 @@ export default function ChatPage() {
     },
   });
 
+  // Saldo de estrellas disponible para enviar.
   const { data: balance } = useQuery({
     queryKey: ["star_balance"],
     queryFn: async () => {
@@ -96,6 +106,7 @@ export default function ChatPage() {
     },
   });
 
+  // Mensajes entre ambos usuarios (en ambos sentidos), ordenados cronológicamente.
   const { data: messages, isLoading } = useQuery({
     queryKey: ["dm", otherId],
     queryFn: async () => {
@@ -128,6 +139,7 @@ export default function ChatPage() {
     messageIds.join(","),
   ];
 
+  // Reacciones de los mensajes cargados (se agrupan por mensaje más abajo).
   const { data: reactions = [] } = useQuery({
     queryKey: reactionQueryKey,
     queryFn: async () => {
@@ -143,6 +155,11 @@ export default function ChatPage() {
     enabled: !!me?.id && messageIds.length > 0,
   });
 
+  /**
+   * Suscripción Realtime al chat:
+   * - Nuevos mensajes: vibra, marca como leído e invalida queries.
+   * - Cambios en reacciones: revalida dm_reactions.
+   */
   useEffect(() => {
     if (!me?.id) return;
     const supabase = createClient();
@@ -222,6 +239,7 @@ export default function ChatPage() {
     return () => clearTimeout(timer);
   }, [otherId, me?.id, messages?.length, qc]);
 
+  // Envía un mensaje de texto (y estrellas si corresponde) vía RPC send_message.
   const send = useMutation({
     mutationFn: async () => {
       const supabase = createClient();
@@ -248,6 +266,7 @@ export default function ChatPage() {
     },
   });
 
+  // Sube la imagen a Storage y crea el mensaje; soporta el flag view-once.
   const sendWithImage = useMutation({
     mutationFn: async () => {
       if (!me?.id || !pendingImage) throw new Error("Sin imagen");
@@ -284,6 +303,7 @@ export default function ChatPage() {
     onSettled: () => setUploading(false),
   });
 
+  // Marca como abierta una imagen view-once recibida (solo una vez).
   const revealViewOnce = useMutation({
     mutationFn: async (msgId: string) => {
       const supabase = createClient();
@@ -300,6 +320,7 @@ export default function ChatPage() {
     },
   });
 
+  // Agrupa las reacciones por id de mensaje para renderizarlas debajo de cada uno.
   const reactionsByMessage = useMemo(() => {
     const grouped = new Map<string, MessageReaction[]>();
     for (const reaction of reactions) {
@@ -310,6 +331,7 @@ export default function ChatPage() {
     return grouped;
   }, [reactions]);
 
+  // Alterna una reacción del usuario actual (optimista): borra si es la misma, sino upsert.
   const toggleReaction = useMutation({
     mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
       if (!me?.id) throw new Error("No hay sesión activa");
@@ -368,8 +390,10 @@ export default function ChatPage() {
     },
   });
 
+  // El otro usuario tiene perfil privado: solo se puede ver lo que comparte.
   const muted = useMemo(() => other && other.is_public_profile === false, [other]);
 
+  // Valida y convierte la imagen elegida a dataURL para previsualizarla antes de enviar.
   function pickImage(file: File | undefined | null) {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
@@ -385,6 +409,7 @@ export default function ChatPage() {
     reader.readAsDataURL(file);
   }
 
+  // Detecta si el usuario está al fondo del scroll (para auto-scroll inteligente).
   function handleScroll() {
     if (!messagesContainerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
@@ -401,6 +426,7 @@ export default function ChatPage() {
     // nada: el layout se mantiene estático con 100dvh
   }
 
+  // Cancela el temporizador de larga pulsación en curso.
   function cancelLongPress() {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
@@ -408,6 +434,7 @@ export default function ChatPage() {
     }
   }
 
+  // Abre el selector de reacciones para un mensaje.
   function openReactionPicker(message: Message) {
     cancelLongPress();
     setReactionTarget(message);
@@ -441,6 +468,7 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-8rem)] lg:h-[calc(100dvh-10rem)] min-h-0">
+      {/* Cabecera: volver, perfil del otro usuario y toggle de tema */}
       <header className="flex items-center justify-between gap-3 shrink-0 px-4 py-3 border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur">
         <div className="flex items-center gap-2">
           <button
@@ -483,6 +511,7 @@ export default function ChatPage() {
         </div>
       </header>
 
+      {/* Hilo de mensajes (auto-scroll y larga pulsación para reaccionar) */}
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
@@ -557,6 +586,7 @@ export default function ChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Previsualización de la imagen pendiente + toggle view-once */}
       {pendingImage && (
         <div className="shrink-0 border-t border-[var(--border)] px-4 py-2 pb-[env(safe-area-inset-bottom)]">
           <div className="relative w-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-2">
@@ -595,6 +625,7 @@ export default function ChatPage() {
         </div>
       )}
 
+      {/* Pie de chat: adjuntar imagen, escribir, estrellas y enviar */}
       <footer className="shrink-0 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
         <div className="flex items-end gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl bg-[var(--surface-2)] p-2 sm:p-1.5">
@@ -671,6 +702,7 @@ export default function ChatPage() {
         </div>
       </footer>
 
+      {/* Selector de reacción rápida */}
       <Dialog
         open={!!reactionTarget}
         onClose={() => setReactionTarget(null)}
@@ -699,6 +731,10 @@ export default function ChatPage() {
   );
 }
 
+/**
+ * Resumen de reacciones de un mensaje: agrupa por emoji, cuenta y resalta
+ * las del usuario actual. Al tocar una, se alterna la reacción.
+ */
 function ReactionSummary({
   reactions,
   currentUserId,
@@ -754,6 +790,7 @@ function ReactionSummary({
   );
 }
 
+// Convierte un dataURL en Blob para subirlo a Supabase Storage.
 function dataUrlToBlob(dataUrl: string): Blob {
   const [head, body] = dataUrl.split(",");
   const mime = head.match(/data:(.*?);/)?.[1] ?? "image/jpeg";
@@ -763,6 +800,10 @@ function dataUrlToBlob(dataUrl: string): Blob {
   return new Blob([arr], { type: mime });
 }
 
+/**
+ * Renderiza una imagen del chat según su estado:
+ * propia, normal recibida, view-once ya abierta (oculta) o view-once sin abrir (blur + tap).
+ */
 function ViewOnceImage({
   msg,
   mine,

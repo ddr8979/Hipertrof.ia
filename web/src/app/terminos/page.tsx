@@ -1,6 +1,12 @@
+/**
+ * terminos/page.tsx
+ * Página estática con los Términos y Condiciones de Hypertrof.ia.
+ */
+
 import Link from "next/link";
 import { Dumbbell } from "lucide-react";
 
+/** Vista pública de los términos y condiciones. */
 export default function TerminosPage() {
   return (
     <main className="mx-auto max-w-3xl px-5 py-12">

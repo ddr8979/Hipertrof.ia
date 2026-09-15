@@ -1,8 +1,14 @@
+// Insignia que muestra el plan de suscripción del usuario.
 "use client";
 
 import { PLANS, type Plan } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
+/**
+ * Badge del plan con color de acento según su definición en PLANS.
+ * Devuelve null si el plan no existe en la configuración.
+ * @param size "sm" | "md" para el tamaño de la píldora.
+ */
 export function PlanBadge({
   plan,
   size = "sm",
@@ -13,6 +19,7 @@ export function PlanBadge({
   className?: string;
 }) {
   const p = (plan ?? "free") as Plan;
+  // Metadatos del plan (color, nombre); si no existe, no se renderiza.
   const meta = PLANS.find((x) => x.id === p);
   if (!meta) return null;
   return (
@@ -29,6 +36,7 @@ export function PlanBadge({
       }}
       title={`Plan ${meta.name}`}
     >
+      {/* Punto indicador para el plan deluxe */}
       {p === "deluxe" && <span className="size-1.5 rounded-full bg-current" />}
       {meta.name}
     </span>

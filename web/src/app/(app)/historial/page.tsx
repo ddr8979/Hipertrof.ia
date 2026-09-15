@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * Historial de entrenamientos.
+ * Lista paginada (infinite query) de sesiones con sus ejercicios y series,
+ * resumen global (sesiones, volumen y series), detalle expandible por sesión
+ * y un diálogo con el resumen completo de cada entrenamiento.
+ */
+
 import { useMemo, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
@@ -37,12 +44,15 @@ type WorkoutRow = {
   }[];
 };
 
+// Cantidad de sesiones por página para la carga incremental.
 const PAGE = 20;
 
 export default function HistorialPage() {
+  // Sesión seleccionada para el diálogo de resumen y sesión expandida en la lista.
   const [detail, setDetail] = useState<WorkoutRow | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  // Paginación infinita de entrenamientos, del más reciente al más antiguo.
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
       queryKey: ["historial"],
@@ -92,8 +102,10 @@ export default function HistorialPage() {
     },
   });
 
+  // Une todas las páginas cargadas en una única lista.
   const all = useMemo(() => data?.pages?.flat() ?? [], [data]);
 
+  // Volumen total (kg) sumando solo las series completadas.
   const totalVolume = useMemo(
     () =>
       all.reduce(
@@ -113,6 +125,7 @@ export default function HistorialPage() {
     [all]
   );
 
+  // Cantidad total de series registradas en las páginas cargadas.
   const totalSets = useMemo(
     () =>
       all.reduce(
@@ -122,6 +135,7 @@ export default function HistorialPage() {
     [all]
   );
 
+  // Calcula series y volumen de una sesión concreta (para las tarjetas y el detalle).
   function sessionStats(w: WorkoutRow) {
     const sets = w.workout_exercises.reduce((a, e) => a + e.workout_sets.length, 0);
     const volume = w.workout_exercises.reduce(
@@ -171,6 +185,7 @@ export default function HistorialPage() {
         </div>
       </div>
 
+      {/* Lista de sesiones: skeleton, vacío o tarjetas expandibles */}
       {isLoading ? (
         <div className="flex flex-col gap-3">
           <Skeleton className="h-28" />
@@ -245,6 +260,7 @@ export default function HistorialPage() {
                   />
                 </button>
 
+                {/* Ejercicios y series de la sesión expandida */}
                 {isExpanded && (
                   <div className="flex flex-col gap-4 border-t border-[var(--border)] p-4">
                     {w.workout_exercises.map((e) => {
@@ -302,6 +318,7 @@ export default function HistorialPage() {
             );
           })}
 
+          {/* Botón de paginación: carga las siguientes sesiones */}
           {hasNextPage && (
             <Button
               variant="outline"
@@ -314,6 +331,7 @@ export default function HistorialPage() {
         </div>
       )}
 
+      {/* Resumen completo de la sesión seleccionada */}
       {detail && (
         <Dialog
           open

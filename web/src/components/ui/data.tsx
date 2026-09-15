@@ -1,5 +1,10 @@
+// Componentes de visualización de datos: tarjeta de estadística,
+// anillo de progreso SVG y estado vacío.
 import { cn } from "@/lib/utils";
 
+/**
+ * Tarjeta compacta que muestra una métrica con etiqueta, valor y detalle opcional.
+ */
 export function StatCard({
   label,
   value,
@@ -27,6 +32,15 @@ export function StatCard({
   );
 }
 
+/**
+ * Anillo de progreso circular dibujado con SVG.
+ * Calcula el perímetro y usa `strokeDashoffset` para representar el avance.
+ * @param value     Valor actual.
+ * @param max       Valor máximo (100%).
+ * @param size      Tamaño en píxeles.
+ * @param stroke    Grosor del trazo.
+ * @param label     Texto central; si se omite muestra el porcentaje.
+ */
 export function ProgressRing({
   value,
   max,
@@ -42,12 +56,14 @@ export function ProgressRing({
   label?: string;
   className?: string;
 }) {
+  // Geometría del anillo: radio, circunferencia y fracción completada (0..1).
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const pct = max > 0 ? Math.min(value / max, 1) : 0;
   return (
     <div className={cn("relative inline-flex items-center justify-center", className)}>
       <svg width={size} height={size} className="-rotate-90">
+        {/* Círculo de fondo */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -56,6 +72,7 @@ export function ProgressRing({
           stroke="var(--surface-3)"
           strokeWidth={stroke}
         />
+        {/* Arco de progreso */}
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -76,6 +93,10 @@ export function ProgressRing({
   );
 }
 
+/**
+ * Estado vacío con icono, título, descripción y acción opcional.
+ * Se usa cuando una lista o sección no tiene contenido.
+ */
 export function EmptyState({
   icon,
   title,

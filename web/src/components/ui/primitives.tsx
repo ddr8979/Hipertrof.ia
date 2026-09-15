@@ -1,6 +1,11 @@
+// Primitivas de UI: Card, Badge, Avatar, Skeleton y Spinner.
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Contenedor tipo tarjeta con estilo base.
+ * @param hover Si true añade un efecto de elevación al pasar el cursor.
+ */
 export function Card({
   className,
   hover,
@@ -11,6 +16,10 @@ export function Card({
   );
 }
 
+/**
+ * Etiqueta pequeña con distintos tonos semánticos.
+ * @param tone Color según significado: neutral, accent, success, warn, danger, info.
+ */
 export function Badge({
   className,
   tone = "neutral",
@@ -38,6 +47,10 @@ export function Badge({
   );
 }
 
+/**
+ * Avatar circular con imagen y fallback a iniciales.
+ * Si la imagen falla o no hay `src`, muestra hasta dos iniciales.
+ */
 export function Avatar({
   src,
   alt,
@@ -52,6 +65,7 @@ export function Avatar({
   initialsText?: string | null;
 }) {
   const [failed, setFailed] = useState(false);
+  // Mostrar iniciales si no hay imagen o si falló su carga.
   const initialsValue = initialsText ?? alt;
   const showInitials = !src || failed;
   return (
@@ -81,6 +95,7 @@ export function Avatar({
   );
 }
 
+/** Bloque de carga con animación de pulso. */
 export function Skeleton({ className }: { className?: string }) {
   return (
     <div
@@ -92,6 +107,7 @@ export function Skeleton({ className }: { className?: string }) {
   );
 }
 
+/** Indicador de carga giratorio. */
 export function Spinner({ className }: { className?: string }) {
   return (
     <span

@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * Página Explorar (feed social).
+ * Muestra posts globales, de amigos y de mejores amigos, permite publicar
+ * estados, compartir recetas/rutinas, dar like, comentar (con Realtime),
+ * seguir atletas y buscar perfiles. También administra la lista de mejores amigos.
+ */
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -32,6 +38,7 @@ import { toast } from "@/components/ui/toast";
 import { useProfile } from "@/components/providers";
 import { cn, vibrate } from "@/lib/utils";
 
+// Autor de un post (perfil reducido para el feed).
 type Author = {
   id: string;
   display_name: string | null;
@@ -40,6 +47,7 @@ type Author = {
   accent_color: string | null;
 };
 
+// Publicación del feed con sus relaciones (workout, logro, receta, rutina, likes, comentarios).
 type FeedPost = {
   id: string;
   type: "workout" | "achievement" | "status" | "recipe" | "routine";
@@ -66,6 +74,7 @@ export type PublishScope = (typeof SCOPES)[number]["id"];
 export default function ExplorarPage() {
   const profile = useProfile((s) => s.profile);
   const qc = useQueryClient();
+  // Estados de UI: pestaña activa, publicación, diálogos y seguimientos pendientes.
   const [caption, setCaption] = useState("");
   const [scope, setScope] = useState<PublishScope>("global");
   const [tab, setTab] = useState<"global" | "amigos" | "mejores" | "buscar">("global");
@@ -93,6 +102,7 @@ export default function ExplorarPage() {
   const [bestEditOpen, setBestEditOpen] = useState(false);
   const [bestSearch, setBestSearch] = useState("");
 
+  // Feed principal: según la pestaña filtra por scope y por relación de seguimiento.
   const { data: feed, isLoading } = useQuery({
     queryKey: ["feed", tab],
     queryFn: async () => {
@@ -139,6 +149,7 @@ export default function ExplorarPage() {
     },
   });
 
+  // Lista de mejores amigos del usuario.
   const { data: bestFriends } = useQuery({
     queryKey: ["best_friends"],
     queryFn: async () => {
@@ -158,6 +169,7 @@ export default function ExplorarPage() {
     },
   });
 
+  // Personas que sigue el usuario (útil para el diálogo de mejores amigos).
   const { data: following } = useQuery({
     queryKey: ["following"],
     queryFn: async () => {
@@ -178,6 +190,7 @@ export default function ExplorarPage() {
     },
   });
 
+  // Catálogo de recetas para compartir en el feed.
   const { data: recipes } = useQuery({
     queryKey: ["recipes"],
     queryFn: async () => {
@@ -206,6 +219,7 @@ export default function ExplorarPage() {
 
   const myRecipes = (recipes ?? []).filter((r) => r.user_id === profile?.id);
 
+  // Rutinas propias para compartir en el feed.
   const { data: myRoutines } = useQuery({
     queryKey: ["my_routines_share"],
     queryFn: async () => {
@@ -230,6 +244,7 @@ export default function ExplorarPage() {
     },
   });
 
+  // Búsqueda de perfiles por nombre o username.
   const { data: results } = useQuery({
     queryKey: ["search_profiles", search],
     queryFn: async () => {
@@ -256,6 +271,7 @@ export default function ExplorarPage() {
     },
   });
 
+  // Búsqueda de perfiles dentro del diálogo de mejores amigos.
   const { data: bestResults } = useQuery({
     queryKey: ["best_search", bestSearch],
     queryFn: async () => {
@@ -281,6 +297,7 @@ export default function ExplorarPage() {
     },
   });
 
+  // Sigue / deja de seguir a un usuario.
   const toggleFollow = useMutation({
     mutationFn: async (targetId: string) => {
       const supabase = createClient();
@@ -331,6 +348,7 @@ export default function ExplorarPage() {
     },
   });
 
+  // Marca / desmarca a un seguido como mejor amigo.
   const toggleBest = useMutation({
     mutationFn: async ({ targetId, want }: { targetId: string; want: boolean }) => {
       const supabase = createClient();
@@ -367,6 +385,7 @@ export default function ExplorarPage() {
     onError: (e) => toast("error", "No se pudo actualizar", e.message),
   });
 
+  // Publica un post de tipo "status" con el texto y el scope elegidos.
   const publish = useMutation({
     mutationFn: async () => {
       const supabase = createClient();
@@ -394,6 +413,7 @@ export default function ExplorarPage() {
     onError: (e) => toast("error", "No se pudo publicar", e.message),
   });
 
+  // Comparte una receta en el feed (crea un post de tipo "recipe").
   const shareRecipe = useMutation({
     mutationFn: async (recipeId: string) => {
       const supabase = createClient();
@@ -414,6 +434,7 @@ export default function ExplorarPage() {
     onError: (e) => toast("error", "No se pudo compartir", e.message),
   });
 
+  // Comparte una rutina: la marca pública y crea el post de tipo "routine".
   const shareRoutine = useMutation({
     mutationFn: async (routineId: string) => {
       const supabase = createClient();
@@ -439,6 +460,7 @@ export default function ExplorarPage() {
     onError: (e) => toast("error", "No se pudo compartir la rutina", e.message),
   });
 
+  // Agrega un comentario a un post.
   const addComment = useMutation({
     mutationFn: async (postId: string) => {
       const supabase = createClient();
@@ -456,6 +478,7 @@ export default function ExplorarPage() {
     onError: (e) => toast("error", "No se pudo comentar", e.message),
   });
 
+  // Realtime: cuando se agrega un comentario al post abierto, revalida el feed.
   useEffect(() => {
     if (!openComments) return;
     const supabase = createClient();
@@ -479,6 +502,7 @@ export default function ExplorarPage() {
     };
   }, [openComments, qc]);
 
+  // Like optimista: actualiza la caché del feed al instante y revalida al final.
   const toggleLike = useMutation({
     mutationFn: async ({ postId, liked }: { postId: string; liked: boolean }) => {
       const supabase = createClient();
@@ -509,6 +533,7 @@ export default function ExplorarPage() {
     onSettled: () => qc.invalidateQueries({ queryKey: ["feed"] }),
   });
 
+  // Elimina una publicación propia.
   const deletePost = useMutation({
     mutationFn: async (postId: string) => {
       const supabase = createClient();
@@ -523,9 +548,11 @@ export default function ExplorarPage() {
     onError: (e) => toast("error", "No se pudo eliminar", e.message),
   });
 
+  // Refleja el estado de seguimiento mientras la mutación está en curso.
   const effectiveFollowing = (initial: boolean, id: string) =>
     pendingFollows.has(id) ? !initial : initial;
 
+  // Recetas filtradas por el buscador del diálogo de compartir.
   const filteredRecipes = (recipes ?? []).filter(
     (r) =>
       !recipeSearch ||
@@ -533,6 +560,7 @@ export default function ExplorarPage() {
       (r.category ?? "").toLowerCase().includes(recipeSearch.toLowerCase())
   );
 
+  // Nombre visible de un autor (display_name, username o fallback).
   const displayName = (a?: Author | null) =>
     a?.display_name || a?.username || "Atleta";
 
@@ -602,6 +630,7 @@ export default function ExplorarPage() {
 
       {tab !== "buscar" ? (
         <>
+          {/* Compositor de publicaciones */}
           <div className="card p-4">
             <Field label="">
               <textarea
@@ -661,6 +690,7 @@ export default function ExplorarPage() {
             </div>
           </div>
 
+          {/* Lista de publicaciones / estado vacío / esqueletos */}
           {isLoading ? (
             <div className="flex flex-col gap-3">
               <Skeleton className="h-32" />
@@ -1058,6 +1088,7 @@ export default function ExplorarPage() {
         </>
       ) : (
         <>
+          {/* Búsqueda de atletas */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--muted)]" />
             <Input
@@ -1239,6 +1270,7 @@ export default function ExplorarPage() {
         </div>
       </Dialog>
 
+      {/* Diálogo para compartir recetas, recetario o rutinas */}
       <Dialog
         open={recipeOpen || shareOpen}
         onClose={() => {
@@ -1365,6 +1397,7 @@ export default function ExplorarPage() {
         </div>
       </Dialog>
 
+      {/* Vista previa de receta */}
       {viewRecipe && (
         <Dialog open onClose={() => setViewRecipe(null)} title={viewRecipe.name}>
           <div className="flex flex-col gap-3">

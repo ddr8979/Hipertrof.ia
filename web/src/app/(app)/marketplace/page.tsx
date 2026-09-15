@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Página de Marketplace.
+ * Lista los cursos publicados por entrenadores verificados y permite
+ * inscribirse (registra la inscripción vía Supabase, pago pendiente).
+ */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Store, GraduationCap, Check, BadgeCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -9,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { useProfile } from "@/components/providers";
 
+// Curso publicado, con su entrenador y las inscripciones existentes.
 type Course = {
   id: string;
   title: string;
@@ -23,6 +29,7 @@ export default function MarketplacePage() {
   const profile = useProfile((s) => s.profile);
   const qc = useQueryClient();
 
+  // Query: trae los cursos con status "published" junto a su entrenador e inscripciones.
   const { data: courses, isLoading } = useQuery({
     queryKey: ["marketplace"],
     queryFn: async () => {
@@ -38,6 +45,7 @@ export default function MarketplacePage() {
     },
   });
 
+  // Mutación: inserta la inscripción del atleta actual en el curso (paid: false).
   const enroll = useMutation({
     mutationFn: async (courseId: string) => {
       const supabase = createClient();
@@ -82,6 +90,7 @@ export default function MarketplacePage() {
           description="Cuando los entrenadores publiquen cursos, aparecen acá."
         />
       ) : (
+        // Grilla de cursos publicados
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {courses?.map((c) => {
             const isMine = c.trainer?.id === profile?.id;

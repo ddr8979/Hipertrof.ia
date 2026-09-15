@@ -8,6 +8,9 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
+  // Cliente SSR efímero que lee las cookies del request. Cuando Supabase refresca
+  // el token, `setAll` reescribe tanto el request como la response para propagar
+  // las cookies nuevas a los Server Components.
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -30,11 +33,14 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Importante: no ejecutar código entre createServerClient y getUser().
+  // Este llamado también dispara el refresh de la sesión si corresponde.
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Cabeceras de seguridad (hardening)
+  // Cabeceras de seguridad (hardening) aplicadas a toda la respuesta.
+  // La CSP restringe explícitamente los orígenes permitidos para scripts, estilos,
+  // imágenes, media y conexiones (Supabase, Spotify, YouTube, ExerciseDB, Turnstile).
   const securityHeaders: [string, string][] = [
     ["X-Frame-Options", "DENY"],
     ["X-Content-Type-Options", "nosniff"],
@@ -52,8 +58,9 @@ export async function updateSession(request: NextRequest) {
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com data:",
-        "img-src 'self' blob: data: https://*.supabase.co http://127.0.0.1:54321 https://i.scdn.co https://*.scdn.co https://image-cdn-ak.spotifycdn.com https://i.ytimg.com https://img.youtube.com https://*.spotifycdn.com https://static.exercisedb.dev",
+        "img-src 'self' blob: data: https://*.supabase.co http://127.0.0.1:54321 https://api.qrserver.com https://i.scdn.co https://*.scdn.co https://image-cdn-ak.spotifycdn.com https://i.ytimg.com https://img.youtube.com https://*.spotifycdn.com https://static.exercisedb.dev",
         "media-src 'self' blob: data: https://static.exercisedb.dev",
+        "object-src 'none'",
         "connect-src 'self' https://*.supabase.co wss://*.supabase.co ws://localhost:54321 http://127.0.0.1:54321 wss://127.0.0.1:54321",
         "frame-ancestors 'none'",
         "base-uri 'self'",

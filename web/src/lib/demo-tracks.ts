@@ -1,3 +1,8 @@
+/**
+ * Canciones de ejemplo (metadatos de Spotify) usadas como fallback cuando no hay
+ * sesión de usuario o búsqueda real disponible. `cover` y `preview_url` apuntan a
+ * los CDN de Spotify.
+ */
 export const DEMO_TRACKS = [
   {
     id: "demo-1",
@@ -71,6 +76,10 @@ export const DEMO_TRACKS = [
   },
 ];
 
+/**
+ * Filtra las pistas demo por nombre o artista (case-insensitive)
+ * y devuelve como máximo `limit` resultados.
+ */
 export function getDemoTracks(query: string, limit = 8) {
   const q = query.toLowerCase();
   return DEMO_TRACKS

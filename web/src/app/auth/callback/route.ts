@@ -1,5 +1,26 @@
+/**
+ * auth/callback/route.ts — Callback de autenticación (OAuth / magic link).
+ *
+ * Intercambia el `code` de Supabase por una sesión y decide el destino.
+ * Contempla casos de carrera cuando el código ya fue consumido o la cookie
+ * de sesión aún se está escribiendo.
+ */
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+
+/**
+ * Normaliza el destino `next` para evitar open redirect.
+ * Sólo permite rutas relativas del mismo origen (empiezan con "/" pero no "//"
+ * ni "/\"), y rechaza saltos de línea (inyección de encabezados).
+ */
+function sanitizeNext(next: string | null): string {
+  if (typeof next !== "string" || next.length > 2048) return "/dashboard";
+  if (!next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) {
+    return "/dashboard";
+  }
+  if (next.includes("\n") || next.includes("\r")) return "/dashboard";
+  return next;
+}
 
 /**
  * Callback de OAuth / magic link: intercambia el código por sesión
@@ -8,7 +29,9 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  // Destino posterior al login; por defecto el dashboard.
+  const next = sanitizeNext(searchParams.get("next"));
+  // En local se reconstruye el redirect con el host reenviado.
   const isLocal = origin.includes("localhost") || origin.includes("127.0.0.1");
 
   if (code) {
@@ -17,6 +40,7 @@ export async function GET(request: Request) {
     if (!error) {
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development" || isLocal;
+      // En desarrollo el origin puede diferir del host real (proxy/túnel).
       if (isLocalEnv && forwardedHost) {
         return NextResponse.redirect(`http://${forwardedHost}${next}`);
       }
@@ -29,6 +53,7 @@ export async function GET(request: Request) {
       data: { user },
     } = await supabase.auth.getUser();
     if (user) {
+      // Redirige a onboarding si el perfil aún no completó el alta.
       const { data: profile } = await supabase
         .from("profiles")
         .select("onboarded")
@@ -46,6 +71,7 @@ export async function GET(request: Request) {
       data: { user: retryUser },
     } = await supabase.auth.getUser();
     if (retryUser) {
+      // El reintento sí encontró sesión: decidir destino según onboarding.
       const { data: profile } = await supabase
         .from("profiles")
         .select("onboarded")

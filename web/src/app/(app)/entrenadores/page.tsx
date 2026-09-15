@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * Panel de entrenadores.
+ * Para trainers: gestión de alumnos (solicitudes pending/active), asignación de
+ * rutinas y recetas, felicitaciones por mensaje directo y cursos.
+ * Para atletas: vinculación con entrenadores, aceptación de invitaciones y
+ * visualización de rutinas/recetas asignadas. Incluye cambio de rol vía /api/trainer/role.
+ */
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -24,6 +32,7 @@ import {
   ChartLine,
   ChevronRight,
   Pencil,
+  QrCode,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -35,6 +44,8 @@ import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 import { useProfile } from "@/components/providers";
+import { TrainerInviteDialog } from "@/components/trainer-invite-dialog";
+import { TrainerInviteAccept } from "@/components/trainer-invite-accept";
 import { cn } from "@/lib/utils";
 
 type ClientRow = {
@@ -77,6 +88,7 @@ type AssignedRecipeRow = {
   trainer: { id: string; display_name: string | null } | null;
 };
 
+// Mensajes predefinidos para felicitar a un alumno (se elige uno al azar).
 const CONGRATS = [
   "¡Felicitaciones! Estoy muy orgulloso de tu esfuerzo. ¡Seguí así! 💪",
   "¡Gran trabajo hoy! Cada sesión cuenta y la estás rompiendo. 🏆",
@@ -88,6 +100,7 @@ export default function EntrenadoresPage() {
   const profile = useProfile((s) => s.profile);
   const qc = useQueryClient();
   const router = useRouter();
+  // Estados de UI: creación de curso, alta de alumno, invitación y gestión de un alumno.
   const [courseOpen, setCourseOpen] = useState(false);
   const [cTitle, setCTitle] = useState("");
   const [cDesc, setCDesc] = useState("");
@@ -95,13 +108,16 @@ export default function EntrenadoresPage() {
 
   const [addOpen, setAddOpen] = useState(false);
   const [addSearch, setAddSearch] = useState("");
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const [manageFor, setManageFor] = useState<string | null>(null);
   const [manageTab, setManageTab] = useState<"routine" | "recipe">("routine");
   const [editRoutine, setEditRoutine] = useState<{ id: string; name: string } | null>(null);
 
+  // Determina si el usuario actual es trainer para mostrar el panel correspondiente.
   const isTrainer = profile?.role === "trainer";
 
+  // Alumnos vinculados al trainer (con datos del atleta).
   const { data: clients, isLoading } = useQuery({
     queryKey: ["trainer_clients"],
     queryFn: async () => {
@@ -117,6 +133,7 @@ export default function EntrenadoresPage() {
     },
   });
 
+  // Rutinas propias del trainer (candidatas a asignar a un alumno).
   const { data: myRoutines } = useQuery({
     queryKey: ["my_routines_min"],
     queryFn: async () => {
@@ -130,6 +147,7 @@ export default function EntrenadoresPage() {
     },
   });
 
+  // Cursos creados por el trainer (borradores, publicados o archivados).
   const { data: myCourses } = useQuery({
     queryKey: ["my_courses"],
     queryFn: async () => {
@@ -143,6 +161,7 @@ export default function EntrenadoresPage() {
     },
   });
 
+  // Entrenadores vinculados al usuario (como atleta), con su estado.
   const { data: myTrainers } = useQuery({
     queryKey: ["my_trainers"],
     queryFn: async () => {
@@ -156,6 +175,7 @@ export default function EntrenadoresPage() {
     },
   });
 
+  // Rutinas activas asignadas al atleta por algún entrenador.
   const { data: assigned } = useQuery({
     queryKey: ["assigned_routines"],
     queryFn: async () => {
@@ -170,6 +190,7 @@ export default function EntrenadoresPage() {
     },
   });
 
+  // Recetas activas asignadas al atleta por algún entrenador.
   const { data: assignedRecipes } = useQuery({
     queryKey: ["assigned_recipes"],
     queryFn: async () => {
@@ -184,6 +205,7 @@ export default function EntrenadoresPage() {
     },
   });
 
+  // Búsqueda de atletas por nombre o username (solo si hay texto).
   const { data: addResults } = useQuery({
     queryKey: ["search_athletes", addSearch],
     queryFn: async () => {
@@ -206,10 +228,12 @@ export default function EntrenadoresPage() {
     },
   });
 
+  // Set de ids de atletas que ya son alumnos (para no repetir la acción "Agregar").
   const clientIds = new Set((clients ?? []).map((c) => c.athlete?.id));
 
   const manageClient = (clients ?? []).find((c) => c.athlete?.id === manageFor);
 
+  // Rutinas asignadas al alumno actualmente gestionado (solo si hay alumno seleccionado).
   const { data: manageAssignedRoutines } = useQuery({
     queryKey: ["assigned_routines_athlete", manageFor],
     queryFn: async () => {
@@ -225,6 +249,7 @@ export default function EntrenadoresPage() {
     enabled: !!manageFor,
   });
 
+  // Recetas asignadas al alumno actualmente gestionado.
   const { data: manageAssignedRecipes } = useQuery({
     queryKey: ["assigned_recipes_athlete", manageFor],
     queryFn: async () => {
@@ -240,6 +265,7 @@ export default function EntrenadoresPage() {
     enabled: !!manageFor,
   });
 
+  // Ejercicios de la rutina que el trainer está editando (ordenados).
   const { data: editRoutineEx = [] } = useQuery<{
       id: string;
       target_sets: number;
@@ -262,6 +288,7 @@ export default function EntrenadoresPage() {
     enabled: !!editRoutine,
   });
 
+  // Guarda los cambios de una rutina asignada (nombre + series/reps/descanso de cada ejercicio).
   const saveEditedRoutine = useMutation({
     mutationFn: async ({
       name,
@@ -298,6 +325,7 @@ export default function EntrenadoresPage() {
     onError: (e) => toast("error", "No se pudo guardar", e.message),
   });
 
+  // Recetario completo (para elegir qué asignar al alumno).
   const { data: allRecipes } = useQuery({
     queryKey: ["recipes_all"],
     queryFn: async () => {
@@ -311,6 +339,7 @@ export default function EntrenadoresPage() {
     },
   });
 
+  // Actualiza el estado de la vinculación trainer<->alumno (aceptar/rechazar).
   const updateClient = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const supabase = createClient();
@@ -319,29 +348,41 @@ export default function EntrenadoresPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["trainer_clients"] });
+      qc.invalidateQueries({ queryKey: ["my_trainers"] });
+      qc.invalidateQueries({ queryKey: ["assigned_routines"] });
+      qc.invalidateQueries({ queryKey: ["assigned_recipes"] });
       toast("success", "Solicitud actualizada");
     },
     onError: (e) => toast("error", "No se pudo actualizar", e.message),
   });
 
+  // Crea (o reusa) una solicitud de vinculación en estado "pending".
   const addAlumno = useMutation({
     mutationFn: async (athleteId: string) => {
       const supabase = createClient();
-      const { error } = await supabase.from("trainer_clients").insert({
-        trainer_id: profile!.id,
-        athlete_id: athleteId,
-        status: "active",
-      });
+      const { error } = await supabase.from("trainer_clients").upsert(
+        {
+          trainer_id: profile!.id,
+          athlete_id: athleteId,
+          status: "pending",
+        },
+        { onConflict: "trainer_id,athlete_id" }
+      );
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
       setAddSearch("");
       qc.invalidateQueries({ queryKey: ["trainer_clients"] });
-      toast("success", "Alumno agregado", "Ya podés asignarle rutinas y recetas");
+      toast(
+        "success",
+        "Solicitud enviada",
+        "Tu alumno debe aceptar la invitación para vincularse"
+      );
     },
     onError: (e) => toast("error", "No se pudo agregar", e.message),
   });
 
+  // Quita (elimina la fila de) un alumno o cancela una invitación pendiente.
   const removeAlumno = useMutation({
     mutationFn: async (clientId: string) => {
       const supabase = createClient();
@@ -355,6 +396,7 @@ export default function EntrenadoresPage() {
     onError: (e) => toast("error", "No se pudo quitar", e.message),
   });
 
+  // Asigna una rutina propia a un alumno.
   const assignRoutine = useMutation({
     mutationFn: async (routineId: string) => {
       const supabase = createClient();
@@ -374,6 +416,7 @@ export default function EntrenadoresPage() {
     onError: (e) => toast("error", "No se pudo asignar", e.message),
   });
 
+  // Desasigna una rutina previamente asignada a un alumno.
   const unassignRoutine = useMutation({
     mutationFn: async (assignmentId: string) => {
       const supabase = createClient();
@@ -391,6 +434,7 @@ export default function EntrenadoresPage() {
     onError: (e) => toast("error", "No se pudo desasignar", e.message),
   });
 
+  // Asigna una receta del recetario a un alumno.
   const assignRecipe = useMutation({
     mutationFn: async (recipeId: string) => {
       const supabase = createClient();
@@ -410,6 +454,7 @@ export default function EntrenadoresPage() {
     onError: (e) => toast("error", "No se pudo asignar", e.message),
   });
 
+  // Desasigna una receta previamente asignada a un alumno.
   const unassignRecipe = useMutation({
     mutationFn: async (assignmentId: string) => {
       const supabase = createClient();
@@ -427,6 +472,7 @@ export default function EntrenadoresPage() {
     onError: (e) => toast("error", "No se pudo desasignar", e.message),
   });
 
+  // Envía una felicitación aleatoria por mensaje directo al alumno.
   const congrats = useMutation({
     mutationFn: async (athleteId: string) => {
       const supabase = createClient();
@@ -444,22 +490,27 @@ export default function EntrenadoresPage() {
     onError: (e) => toast("error", "No se pudo enviar", e.message),
   });
 
+  // Cambia el rol del usuario a trainer vía API y actualiza el perfil en el store.
   const becomeTrainer = useMutation({
     mutationFn: async () => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("profiles")
-        .update({ role: "trainer", is_trainer_approved: true })
-        .eq("id", profile!.id);
-      if (error) throw new Error(error.message);
+      const res = await fetch("/api/trainer/role", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ makeTrainer: true }),
+      });
+      const json = (await res.json()) as { error?: string; profile?: unknown };
+      if (!res.ok) throw new Error(json.error ?? "No se pudo registrar");
+      return json.profile ?? null;
     },
-    onSuccess: () => {
+    onSuccess: (updated) => {
+      if (updated) useProfile.getState().setProfile(updated as never);
       qc.invalidateQueries({ queryKey: ["profile"] });
       toast("success", "¡Ya sos personal trainer!", "Gestioná tus alumnos desde este panel");
     },
     onError: (e) => toast("error", "No se pudo registrar", e.message),
   });
 
+  // Crea un curso en estado "draft" para el trainer.
   const createCourse = useMutation({
     mutationFn: async () => {
       const supabase = createClient();
@@ -483,6 +534,7 @@ export default function EntrenadoresPage() {
     onError: (e) => toast("error", "No se pudo crear", e.message),
   });
 
+  // Cambia el estado de publicación de un curso (published/archived).
   const publishCourse = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const supabase = createClient();
@@ -496,6 +548,7 @@ export default function EntrenadoresPage() {
     onError: (e) => toast("error", "No se pudo actualizar", e.message),
   });
 
+  // Estado de carga inicial de la lista de alumnos.
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4">
@@ -506,6 +559,7 @@ export default function EntrenadoresPage() {
     );
   }
 
+  // Alumnos activos (los "pending" se muestran aparte como invitaciones).
   const activeClients = (clients ?? []).filter((c) => c.status === "active");
 
   return (
@@ -557,9 +611,14 @@ export default function EntrenadoresPage() {
                 <Users className="size-5 text-[var(--accent)]" />
                 <h2 className="font-display text-lg font-bold tracking-tight">Mis alumnos</h2>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
-                <UserPlus className="size-4" /> Agregar alumno
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setInviteOpen(true)}>
+                  <QrCode className="size-4" /> Invitar
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
+                  <UserPlus className="size-4" /> Agregar alumno
+                </Button>
+              </div>
             </div>
             {activeClients.length === 0 ? (
               <EmptyState
@@ -607,18 +666,15 @@ export default function EntrenadoresPage() {
                       </p>
                     </div>
                     {c.status === "pending" ? (
-                      <div className="flex gap-1.5">
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="text-xs font-medium text-[var(--muted)]">
+                          Esperando aceptación
+                        </span>
                         <button
-                          onClick={() => updateClient.mutate({ id: c.id, status: "active" })}
-                          className="flex size-8 items-center justify-center rounded-lg bg-[var(--success-soft)] text-[var(--success)]"
-                          title="Aceptar"
-                        >
-                          <Check className="size-4" />
-                        </button>
-                        <button
-                          onClick={() => updateClient.mutate({ id: c.id, status: "terminated" })}
-                          className="flex size-8 items-center justify-center rounded-lg bg-[var(--danger-soft)] text-[var(--danger)]"
-                          title="Rechazar"
+                          onClick={() => removeAlumno.mutate(c.id)}
+                          disabled={removeAlumno.isPending}
+                          className="flex size-8 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]"
+                          title="Cancelar invitación"
                         >
                           <X className="size-4" />
                         </button>
@@ -723,6 +779,8 @@ export default function EntrenadoresPage() {
         </>
       ) : (
         <>
+          <TrainerInviteAccept />
+
           {/* Mis entrenadores */}
           <section className="card p-5">
             <div className="mb-4 flex items-center gap-2">
@@ -733,7 +791,7 @@ export default function EntrenadoresPage() {
               <EmptyState
                 icon={<Dumbbell className="size-6" />}
                 title="No tenés entrenador"
-                description="Pedile a tu profe que te agregue como alumno desde su panel."
+                description="Pedile a tu profe su link o código de invitación y pegálo arriba para vincularte."
               />
             ) : (
               <div className="flex flex-col gap-2">
@@ -751,6 +809,26 @@ export default function EntrenadoresPage() {
                       </p>
                       <p className="text-xs capitalize text-[var(--muted)]">{t.status}</p>
                     </div>
+                    {t.status === "pending" && (
+                      <div className="flex shrink-0 gap-1.5">
+                        <button
+                          onClick={() => updateClient.mutate({ id: t.id, status: "active" })}
+                          disabled={updateClient.isPending}
+                          className="flex size-8 items-center justify-center rounded-lg bg-[var(--success-soft)] text-[var(--success)]"
+                          title="Aceptar"
+                        >
+                          <Check className="size-4" />
+                        </button>
+                        <button
+                          onClick={() => updateClient.mutate({ id: t.id, status: "terminated" })}
+                          disabled={updateClient.isPending}
+                          className="flex size-8 items-center justify-center rounded-lg bg-[var(--danger-soft)] text-[var(--danger)]"
+                          title="Rechazar"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1219,10 +1297,16 @@ export default function EntrenadoresPage() {
           </p>
         )}
       </Dialog>
+
+      <TrainerInviteDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </div>
   );
 }
 
+/**
+ * Editor embebido para modificar nombre y parámetros (series/reps/descanso)
+ * de los ejercicios de una rutina asignada, sin salir del panel del trainer.
+ */
 function RoutineEditor({
   routineId,
   name,
@@ -1245,6 +1329,7 @@ function RoutineEditor({
   ) => void;
   saving: boolean;
 }) {
+  // Borrador local de la rutina (nombre + ejercicios) antes de guardar.
   const [draftName, setDraftName] = useState(name);
   const [draft, setDraft] = useState(() =>
     exercises.map((e) => ({

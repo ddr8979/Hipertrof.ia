@@ -1,5 +1,11 @@
+/**
+ * not-found.tsx
+ * Página 404 mostrada cuando una ruta no existe o fue movida.
+ */
+
 import Link from "next/link";
 
+/** Vista 404 con acceso directo al dashboard. */
 export default function NotFound() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">

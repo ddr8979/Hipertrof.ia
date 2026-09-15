@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * Calculadora de calorías.
+ * Estima el metabolismo basal (BMR) y el gasto diario total (TDEE) con la fórmula
+ * Mifflin-St Jeor, calcula macros según el objetivo y guarda los datos en el perfil.
+ */
+
 import { useMemo, useState } from "react";
 import { Calculator, Flame, Activity, Target, Save } from "lucide-react";
 import { Field, Input, Select } from "@/components/ui/input";
@@ -9,6 +15,7 @@ import { useProfile } from "@/components/providers";
 import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 
+// Factores de actividad multiplicadores del TDEE.
 const ACTIVITY = [
   { value: 1.2, label: "Sedentario", desc: "Poco o nada de ejercicio" },
   { value: 1.375, label: "Ligero", desc: "1-3 días por semana" },
@@ -19,6 +26,7 @@ const ACTIVITY = [
 
 export default function CalculadoraPage() {
   const profile = useProfile((s) => s.profile);
+  // Estado del formulario, precargado con los datos del perfil cuando existen.
   const [sex, setSex] = useState<"male" | "female">(
     ((profile?.sex as "male" | "female" | null) ?? "male")
   );
@@ -35,6 +43,7 @@ export default function CalculadoraPage() {
   const [goal, setGoal] = useState<"cut" | "maintain" | "bulk">("maintain");
   const [saving, setSaving] = useState(false);
 
+  // Cálculo reactivo: valida rangos, aplica Mifflin-St Jeor y deriva macros por objetivo.
   const result = useMemo(() => {
     const a = Number(age);
     const w = Number(weight);
@@ -62,6 +71,7 @@ export default function CalculadoraPage() {
     };
   }, [sex, age, weight, height, activity, goal]);
 
+  // Persiste sexo, edad, peso, altura, BMR y TDEE en la tabla `profiles`.
   async function saveToProfile() {
     if (!result) return;
     setSaving(true);
@@ -209,6 +219,7 @@ export default function CalculadoraPage() {
         </Field>
       </div>
 
+      {/* Resultados: BMR, TDEE, calorías objetivo y distribución de macros */}
       {result ? (
         <div className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">

@@ -1,5 +1,9 @@
 import { createBrowserClient } from "@supabase/ssr";
 
+/**
+ * Cliente de Supabase para el navegador (Client Components).
+ * Usa la clave anónima pública y respeta las políticas RLS.
+ */
 export function createClient() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

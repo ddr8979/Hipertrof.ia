@@ -1,8 +1,15 @@
 "use client";
 
+/**
+ * (app)/error.tsx
+ * Error boundary del grupo `(app)`. Muestra el error dentro del shell y
+ * permite reintentar la sección.
+ */
+
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
+/** Captura errores de las rutas autenticadas. */
 export default function AppError({
   error,
   reset,
@@ -10,6 +17,7 @@ export default function AppError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // Registra el error para diagnóstico.
   useEffect(() => {
     console.error(error);
   }, [error]);

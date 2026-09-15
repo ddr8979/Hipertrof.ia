@@ -1,5 +1,11 @@
+/**
+ * (app)/loading.tsx
+ * Esqueleto de carga mostrado mientras se resuelven las rutas del grupo `(app)`.
+ */
+
 import { Skeleton } from "@/components/ui/primitives";
 
+/** Placeholder de carga con la forma general de una página. */
 export default function AppLoading() {
   return (
     <div className="flex flex-col gap-5" aria-busy="true" aria-live="polite">

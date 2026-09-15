@@ -1,21 +1,97 @@
-# Contextos de sesion (pueden contener secretos)
-CONTEXTO_SESION_*.md
+# =============================================================================
+# .gitignore raíz — Hipertrof.ia
+# Nada de secretos, entornos, builds, bases locales ni archivos viejos.
+# =============================================================================
 
-# Local environment files
+# --- Secretos y variables de entorno -----------------------------------------
+# Ignora cualquier archivo .env en cualquier carpeta...
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+*.env
+# ...salvo las plantillas, que SÍ deben versionarse.
+!.env.example
+!**/.env.example
 
-# SQLite databases
+# Claves y certificados
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Archivos de credenciales sueltos
+*credentials*
+*credenciales*
+*secret*.*
+!**/secret-scan*.md
+
+# --- Supabase local (secretos de desarrollo) ---------------------------------
+supabase/.env
+supabase/.temp/
+supabase/.branches/
+**/supabase/.env
+**/supabase/.temp/
+**/supabase/.branches/
+
+# --- Vercel ------------------------------------------------------------------
+.vercel/
+**/.vercel/
+.vercel.local.json
+
+# --- Código y scripts legacy / descartables ----------------------------------
+# web-legacy sigue en disco como referencia, pero NO se versiona.
+web-legacy/
+# scripts de prueba locales (pueden contener service_role)
+*-check.js
+*.local.js
+add_column.mjs
+edit-check.js
+movil-check.js
+pl-check.js
+pl-self.js
+
+# --- Contextos de sesión (pueden contener secretos o datos privados) ---------
+CONTEXTO_SESION_*.md
+docs/archive/
+
+# --- Bases de datos locales --------------------------------------------------
 *.db
 *.db-journal
 *.db-shm
 *.db-wal
+*.sqlite
+*.sqlite3
 
-# Node
+# --- Build / dependencias ----------------------------------------------------
 node_modules/
 .next/
 out/
 build/
+dist/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# --- Sistema operativo / editores --------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# --- Logs y temporales -------------------------------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env.local.bak
+*.bak
+*.tmp

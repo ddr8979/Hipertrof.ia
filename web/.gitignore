@@ -1,21 +1,54 @@
+# =============================================================================
+# web/.gitignore — nada de secretos, builds ni artefactos locales en git.
+# =============================================================================
+
+# Dependencias y builds
 node_modules
 .next
 out
+build
+dist
+
+# Variables de entorno: se ignora TODO .env* salvo la plantilla.
 .env*
 !.env.example
+
+# TypeScript / Next generados
 *.tsbuildinfo
 next-env.d.ts
+
+# Supabase local
 supabase/.branches
 supabase/.temp
-android
-.vercel
+supabase/.env
 
-# scripts de prueba local
+# Vercel
+.vercel
+*.vercel.json
+
+# Android nativo (se regenera con Capacitor)
+android
+
+# Scripts de prueba locales (pueden contener secretos como service_role)
 edit-check.js
 movil-check.js
 pl-check.js
 pl-self.js
+*-check.js
+*.local.js
+add_column.mjs
 
-# Contextos de sesion (pueden contener secretos)
+# Claves y certificados
+*.pem
+*.key
+*.p12
+*.keystore
+
+# Contextos de sesión (pueden contener secretos)
 CONTEXTO_SESION_*.md
-*.vercel.json
+
+# Sistema / temporales
+.DS_Store
+*.log
+*.bak
+*.tmp

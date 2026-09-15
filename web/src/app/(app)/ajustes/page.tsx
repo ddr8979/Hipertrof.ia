@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * Página de Ajustes.
+ * Centraliza la configuración de la cuenta: panel de entrenador, zona admin
+ * (promover/degradar trainers vía /api/trainer/role), apariencia, exportación
+ * de datos, cierre de sesión y eliminación de cuenta.
+ */
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +43,7 @@ export default function AjustesPage() {
   const [deleting, setDeleting] = useState(false);
   const [adminSearch, setAdminSearch] = useState("");
 
+  // Búsqueda de usuarios para la zona admin (solo si el usuario es admin).
   const { data: adminResults } = useQuery({
     queryKey: ["admin_search", adminSearch],
     queryFn: async () => {
@@ -60,6 +67,7 @@ export default function AjustesPage() {
     enabled: isAdmin,
   });
 
+  // Mutación: promueve o revierte el rol de trainer llamando a la API de servidor.
   const setTrainerRole = useMutation({
     mutationFn: async ({
       targetId,
@@ -68,15 +76,13 @@ export default function AjustesPage() {
       targetId: string;
       makeTrainer: boolean;
     }) => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          role: makeTrainer ? "trainer" : "athlete",
-          is_trainer_approved: makeTrainer,
-        })
-        .eq("id", targetId);
-      if (error) throw new Error(error.message);
+      const res = await fetch("/api/trainer/role", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetId, makeTrainer }),
+      });
+      const json = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "No se pudo actualizar");
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["admin_search"] });
@@ -88,6 +94,7 @@ export default function AjustesPage() {
     onError: (e) => toast("error", "No se pudo actualizar", e.message),
   });
 
+  // Exporta todos los datos del usuario vía RPC y los descarga como JSON.
   async function handleExport() {
     setExporting(true);
     try {
@@ -109,6 +116,7 @@ export default function AjustesPage() {
     }
   }
 
+  // Elimina la cuenta vía RPC, cierra sesión y vuelve al inicio.
   async function handleDelete() {
     setDeleting(true);
     try {
@@ -125,6 +133,7 @@ export default function AjustesPage() {
     }
   }
 
+  // Cierra sesión y redirige al inicio.
   async function handleLogout() {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -139,6 +148,7 @@ export default function AjustesPage() {
         <p className="mt-1 text-sm text-[var(--text-2)]">Tu cuenta y tus datos</p>
       </div>
 
+      {/* Panel de personal trainer (solo si tiene rol aprobado) */}
       {isTrainer && (
         <section className="card p-5">
           <div className="mb-3 flex items-center gap-2">
@@ -157,6 +167,7 @@ export default function AjustesPage() {
         </section>
       )}
 
+      {/* Zona admin: asignar/quitar rol de trainer */}
       {isAdmin && (
         <section className="card p-5">
           <div className="mb-3 flex items-center gap-2">
@@ -238,6 +249,7 @@ export default function AjustesPage() {
         </section>
       )}
 
+      {/* Apariencia: selector de tema (light/dark/auto) */}
       <section className="card p-5">
         <div className="mb-3 flex items-center gap-2">
           <Sun className="size-5 text-[var(--accent)]" />
@@ -251,6 +263,7 @@ export default function AjustesPage() {
         </div>
       </section>
 
+      {/* Tus datos: exportar toda la información en JSON */}
       <section className="card p-5">
         <div className="mb-3 flex items-center gap-2">
           <Download className="size-5 text-[var(--accent)]" />
@@ -265,6 +278,7 @@ export default function AjustesPage() {
         </Button>
       </section>
 
+      {/* Sesión: cerrar sesión */}
       <section className="card p-5">
         <div className="mb-3 flex items-center gap-2">
           <LogOut className="size-5 text-[var(--accent)]" />
@@ -275,6 +289,7 @@ export default function AjustesPage() {
         </Button>
       </section>
 
+      {/* Zona peligrosa: eliminación permanente de cuenta */}
       <section className="card border-[var(--danger)]/30 p-5">
         <div className="mb-3 flex items-center gap-2 text-[var(--danger)]">
           <ShieldAlert className="size-5" />

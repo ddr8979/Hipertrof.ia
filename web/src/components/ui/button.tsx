@@ -1,9 +1,14 @@
+// Botón base reutilizable con variantes visuales y tamaños.
+// Reenvía la ref al <button> nativo y admite estado de carga y ancho completo.
 import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
+// Variante visual del botón (jerarquía / intención).
 type Variant = "primary" | "secondary" | "ghost" | "outline" | "danger" | "accent";
+// Tamaño del botón; "icon" genera un cuadrado para iconos.
 type Size = "sm" | "md" | "lg" | "xl" | "icon";
 
+/** Props del botón: extiende las del <button> nativo y añade variantes propias. */
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
@@ -11,6 +16,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
 }
 
+// Mapeo de cada variante a sus clases Tailwind.
 const variantClasses: Record<Variant, string> = {
   primary:
     "bg-[var(--text)] text-[var(--bg)] hover:opacity-90 disabled:hover:opacity-100",
@@ -23,6 +29,7 @@ const variantClasses: Record<Variant, string> = {
   danger: "bg-[var(--danger)] text-white hover:brightness-110",
 };
 
+// Mapeo de cada tamaño a sus clases Tailwind.
 const sizeClasses: Record<Size, string> = {
   sm: "h-8 px-3 text-[13px] rounded-lg gap-1.5",
   md: "h-10 px-4 text-sm rounded-xl gap-2",
@@ -31,6 +38,11 @@ const sizeClasses: Record<Size, string> = {
   icon: "h-10 w-10 rounded-xl",
 };
 
+/**
+ * Botón accesible con estilos predefinidos.
+ * - Se deshabilita automáticamente cuando `loading` es true.
+ * - Muestra un spinner junto al contenido mientras carga.
+ */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     { className, variant = "primary", size = "md", loading, fullWidth, disabled, children, ...props },

@@ -1,8 +1,15 @@
+/**
+ * layout.tsx
+ * Layout raíz de la app (App Router). Define fuentes, metadata/SEO, viewport
+ * de PWA y envuelve todo el árbol con los providers globales.
+ */
+
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
+// Tipografías optimizadas por next/font, expuestas como variables CSS.
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -15,6 +22,7 @@ const space = Space_Grotesk({
   display: "swap",
 });
 
+// Metadata global: títulos, descripción, PWA, iconos y Open Graph.
 export const metadata: Metadata = {
   title: {
     default: "Hypertrof.ia — Entrená. Evolucioná. Conectá.",
@@ -48,6 +56,7 @@ export const metadata: Metadata = {
   },
 };
 
+// Configuración del viewport móvil/PWA (color de barra, escalas, safe areas).
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: dark)", color: "#0b0d0b" },
@@ -60,12 +69,14 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+/** Layout raíz: documento HTML, fuentes, preconnects y providers. */
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
+        {/* Preconexión a orígenes externos usados por la app (imágenes, Spotify) */}
         <link rel="preconnect" href="https://static.exercisedb.dev" crossOrigin="" />
         <link rel="preconnect" href="https://i.scdn.co" crossOrigin="" />
         <link rel="preconnect" href="https://api.spotify.com" crossOrigin="" />

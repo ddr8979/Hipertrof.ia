@@ -1,3 +1,4 @@
+// Diálogo de red social: muestra seguidores y seguidos de un usuario.
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 
+// Perfil mínimo mostrado en las listas.
 type NetProfile = {
   id: string;
   display_name: string | null;
@@ -16,11 +18,17 @@ type NetProfile = {
   avatar_url: string | null;
 };
 
+// Fila devuelta por la consulta: puede traer el perfil como follower o following.
 type NetRow = {
   follower?: NetProfile;
   following?: NetProfile;
 };
 
+/**
+ * Diálogo con pestañas de seguidores/seguidos.
+ * @param userId Id del usuario cuya red se consulta.
+ * @param isMine Si true el título se muestra en segunda persona ("Tu red").
+ */
 export function NetDialog({
   open,
   onClose,
@@ -35,6 +43,7 @@ export function NetDialog({
   const [tab, setTab] = useState<"followers" | "following">("followers");
   const qc = useQueryClient();
 
+  // Consulta la lista según la pestaña activa; se habilita solo al abrir.
   const { data: list, isLoading } = useQuery({
     queryKey: ["net", userId, tab],
     queryFn: async () => {
@@ -57,10 +66,12 @@ export function NetDialog({
     enabled: open,
   });
 
+  // Refresca la caché de la red cada vez que se abre el diálogo.
   useEffect(() => {
     if (open) qc.invalidateQueries({ queryKey: ["net"] });
   }, [open, qc]);
 
+  // Normaliza la fila a un perfil (venga como follower o following).
   const people = (list ?? [])
     .map((x) => x.follower ?? x.following)
     .filter((x): x is NonNullable<typeof x> => !!x);
@@ -79,6 +90,7 @@ export function NetDialog({
       }
     >
       <div className="flex flex-col gap-3">
+        {/* Selector de pestaña */}
         <div className="flex rounded-xl bg-[var(--surface-2)] p-1">
           {(
             [
@@ -101,6 +113,7 @@ export function NetDialog({
           ))}
         </div>
         <div className="flex max-h-96 flex-col gap-1.5 overflow-y-auto pr-1">
+          {/* Lista: loading / vacío / resultados */}
           {isLoading ? (
             <Skeleton className="h-20" />
           ) : people.length === 0 ? (

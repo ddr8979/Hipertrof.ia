@@ -1,3 +1,5 @@
+// Panel inferior deslizante (bottom sheet) para móvil.
+// Se renderiza con portal y solo es visible en pantallas < lg.
 "use client";
 
 import { useEffect } from "react";
@@ -5,8 +7,10 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Contador global para gestionar el bloqueo del scroll con varios sheets.
 let sheetOpenCount = 0;
 
+// Bloquea/restaura el scroll del body de forma referenciada.
 function lockBodyScroll(enabled: boolean) {
   if (typeof document === "undefined") return;
   if (enabled) {
@@ -18,6 +22,11 @@ function lockBodyScroll(enabled: boolean) {
   }
 }
 
+/**
+ * Bottom sheet modal para móvil.
+ * - Cierra con Escape o al tocar el fondo.
+ * - Bloquea el scroll del body mientras está abierto.
+ */
 export function Sheet({
   open,
   onClose,
@@ -31,6 +40,7 @@ export function Sheet({
   children: React.ReactNode;
   className?: string;
 }) {
+  // Cierra con Escape y bloquea el scroll mientras está abierto.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -48,6 +58,7 @@ export function Sheet({
 
   return createPortal(
     <div className="fixed inset-0 z-[95] flex flex-col justify-end lg:hidden">
+      {/* Fondo oscurecido: cierra al tocar */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-[2px] animate-[fade-in_0.2s_ease]"
         onClick={onClose}
@@ -63,6 +74,7 @@ export function Sheet({
         )}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--surface)]/95 px-5 py-3.5 backdrop-blur">
+          {/* Manija decorativa del sheet */}
           <span className="mx-auto h-1.5 w-10 rounded-full bg-[var(--border)]" aria-hidden />
           {title && (
             <h2 className="absolute left-5 font-display text-base font-bold tracking-tight">
@@ -77,6 +89,7 @@ export function Sheet({
             <X className="size-5" />
           </button>
         </div>
+        {/* Cuerpo del sheet */}
         <div className="p-4">{children}</div>
       </div>
     </div>,

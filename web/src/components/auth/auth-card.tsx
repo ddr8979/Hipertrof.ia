@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * auth-card.tsx
+ * Tarjeta reutilizable de autenticación para login y registro.
+ * Soporta email/contraseña, enlace mágico (OTP) y proveedores OAuth, con
+ * validación vía Zod y redirección segura mediante el parámetro `next`.
+ */
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -10,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 
+// Esquemas de validación de los campos del formulario.
 const emailSchema = z.string().trim().email("Ingresá un email válido");
 const passSchema = z.string().min(8, "La contraseña debe tener al menos 8 caracteres");
 const nameSchema = z
@@ -18,12 +26,33 @@ const nameSchema = z
   .min(2, "El nombre debe tener al menos 2 caracteres")
   .max(60, "El nombre es muy largo");
 
+// Metadatos de los botones OAuth (id del proveedor y etiqueta visible).
 const OAuth_BTN = [
   { id: "google", label: "Google" },
   { id: "apple", label: "Apple" },
   { id: "facebook", label: "Facebook" },
 ] as const;
 
+/** Devuelve el `next` de la URL solo si es una ruta interna segura. */
+function safeNext(): string | null {
+  if (typeof window === "undefined") return null;
+  const n = new URLSearchParams(window.location.search).get("next");
+  return n && n.startsWith("/") && !n.startsWith("//") ? n : null;
+}
+
+/** Construye la URL de callback de Supabase, preservando el `next` seguro. */
+function callbackUrl(): string {
+  const next = safeNext();
+  return `${location.origin}/auth/callback${
+    next ? `?next=${encodeURIComponent(next)}` : ""
+  }`;
+}
+
+/**
+ * Formulario de autenticación.
+ * @param mode      "login" o "registro" para alternar el comportamiento y los textos.
+ * @param providers Lista de proveedores OAuth habilitados.
+ */
 export function AuthCard({
   mode,
   providers,
@@ -42,16 +71,18 @@ export function AuthCard({
 
   const isLogin = mode === "login";
 
+  // Si ya hay sesión activa, redirige al destino seguro o al dashboard.
   useEffect(() => {
     const supabase = createClient();
     void supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
-        router.replace("/dashboard");
+        router.replace(safeNext() ?? "/dashboard");
         router.refresh();
       }
     });
   }, [router]);
 
+  // Login o registro con email y contraseña (valida antes de llamar a Supabase).
   async function handleEmailPass(e: React.FormEvent) {
     e.preventDefault();
     if (!isLogin && !agree) {
@@ -78,7 +109,7 @@ export function AuthCard({
         });
         if (error) throw new Error(prettyAuthError(error.message));
         toast("success", "Bienvenido de nuevo");
-        router.push("/dashboard");
+        router.push(safeNext() ?? "/dashboard");
         router.refresh();
       } else {
         const { data, error } = await supabase.auth.signUp({
@@ -102,13 +133,14 @@ export function AuthCard({
     }
   }
 
+  // Envía un enlace mágico (OTP) al email ingresado.
   async function handleMagicLink(e: React.FormEvent) {
     e.preventDefault();
     setBusy("magic");
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: `${location.origin}/auth/callback` },
+        options: { emailRedirectTo: callbackUrl() },
       });
       if (error) throw new Error(prettyAuthError(error.message));
       setMagicSent(true);
@@ -120,12 +152,13 @@ export function AuthCard({
     }
   }
 
+  // Inicia el flujo OAuth con el proveedor elegido.
   async function handleOAuth(provider: string) {
     setBusy(provider);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provider as "google" | "apple" | "facebook",
-        options: { redirectTo: `${location.origin}/auth/callback` },
+        options: { redirectTo: callbackUrl() },
       });
       if (error) throw new Error(prettyAuthError(error.message));
     } catch (err) {
@@ -134,6 +167,7 @@ export function AuthCard({
     }
   }
 
+  // Estado posterior al envío del enlace mágico: pantalla de confirmación.
   if (magicSent) {
     return (
       <div className="card animate-[fade-up_0.4s_ease] p-8 text-center">
@@ -176,6 +210,7 @@ export function AuthCard({
         </div>
       </div>
 
+      {/* Botones de OAuth (si hay proveedores habilitados) */}
       {providers.length > 0 && (
         <>
           <div className="grid gap-2.5">
@@ -302,6 +337,7 @@ export function AuthCard({
   );
 }
 
+/** Ícono SVG inline del proveedor OAuth indicado. */
 function OAuthIcon({ provider }: { provider: string }) {
   // SVG minimal de marcas (inline, sin dependencias)
   const paths: Record<string, React.ReactNode> = {
@@ -327,6 +363,7 @@ function OAuthIcon({ provider }: { provider: string }) {
   return <>{paths[provider]}</>;
 }
 
+/** Traduce los mensajes de error de Supabase Auth a español. */
 function prettyAuthError(msg: string): string {
   if (/invalid login credentials/i.test(msg)) return "Email o contraseña incorrectos";
   if (/user already registered/i.test(msg)) return "Ese email ya está registrado";
@@ -336,6 +373,7 @@ function prettyAuthError(msg: string): string {
   return msg;
 }
 
+/** Spinner a pantalla completa mostrado mientras carga la autenticación. */
 export function AuthLoading() {
   return (
     <div className="flex min-h-dvh items-center justify-center">

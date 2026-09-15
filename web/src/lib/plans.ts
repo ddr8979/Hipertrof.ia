@@ -1,5 +1,10 @@
+/** Identificadores de los planes de suscripción disponibles. */
 export type Plan = "free" | "plus" | "deluxe";
 
+/**
+ * Definición de los planes mostrados en la UI.
+ * `accent` es el color de marca y `popular` marca el plan destacado.
+ */
 export const PLANS: {
   id: Plan;
   name: string;
@@ -52,6 +57,7 @@ export const PLANS: {
   },
 ];
 
+/** Devuelve el nombre legible del plan; cae a "Free" si el id no existe. */
 export function planLabel(p: Plan): string {
   const f = PLANS.find((x) => x.id === p);
   return f?.name ?? "Free";

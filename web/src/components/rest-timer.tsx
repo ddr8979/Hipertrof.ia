@@ -1,3 +1,6 @@
+// Temporizador de descanso entre series.
+// Gestiona cuenta regresiva, alarma sonora con vibración y wake lock,
+// y muestra una barra inferior solo en la ruta de entrenamiento.
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,11 +10,13 @@ import { useWorkoutStore } from "@/lib/workout-store";
 import { Button } from "@/components/ui/button";
 import { cn, formatDuration } from "@/lib/utils";
 
+// Variables de módulo para la alarma, de modo que persista entre renders.
 let alarmCtx: AudioContext | null = null;
 let alarmTimer: ReturnType<typeof setInterval> | null = null;
 let alarmCycleCount = 0;
 const MAX_ALARM_CYCLES = 3; // ~10 segundos
 
+// Inicia el bucle de pitidos (hasta MAX_ALARM_CYCLES).
 function startAlarmLoop() {
   try {
     const Ctx =
@@ -49,6 +54,7 @@ function startAlarmLoop() {
   }
 }
 
+// Detiene el bucle y libera el contexto de audio.
 function stopAlarmLoop() {
   if (alarmTimer) {
     clearInterval(alarmTimer);
@@ -61,6 +67,11 @@ function stopAlarmLoop() {
   alarmCycleCount = 0;
 }
 
+/**
+ * Barra de descanso ligada al store del entrenamiento.
+ * No renderiza UI si no hay descanso activo o no estamos en /entrenar,
+ * pero la alarma sigue funcionando en segundo plano.
+ */
 export function RestTimer() {
   const pathname = usePathname();
   const router = useRouter();
@@ -70,8 +81,10 @@ export function RestTimer() {
   const draft = useWorkoutStore((s) => s.draft);
   const adjustRest = useWorkoutStore((s) => s.adjustRest);
   const stopRest = useWorkoutStore((s) => s.stopRest);
+  // "Ahora" se refresca por rAF mientras hay descanso activo.
   const [now, setNow] = useState(() => Date.now());
 
+  // Actualiza el reloj ~4 veces por segundo mientras haya descanso.
   useEffect(() => {
     if (restEndsAt === null) return;
     let raf = 0;
@@ -89,6 +102,7 @@ export function RestTimer() {
 
   const done = restEndsAt !== null && now >= restEndsAt;
 
+  // Al terminar dispara alarma y vibración; en caso contrario las corta.
   useEffect(() => {
     if (done && restEndsAt !== null) {
       // Ignorar rests ya expirados al montar (ej. recarga con restEndsAt viejo)
@@ -103,6 +117,7 @@ export function RestTimer() {
     }
   }, [done, restEndsAt]);
 
+  // Limpieza de la alarma al desmontar.
   useEffect(
     () => () => {
       stopAlarmLoop();
@@ -110,6 +125,7 @@ export function RestTimer() {
     []
   );
 
+  // Mantiene la pantalla encendida (wake lock) durante el descanso.
   useEffect(() => {
     if (restEndsAt === null) return;
     let wl: { release: () => Promise<void> } | null = null;
@@ -136,6 +152,7 @@ export function RestTimer() {
 
   if (restEndsAt === null) return null;
 
+  // Cálculos derivados: tiempo restante, total y porcentaje transcurrido.
   const remainingMs = Math.max(0, restEndsAt - now);
   const remaining = Math.ceil(remainingMs / 1000);
   const total = Math.max(1, restTotal ?? 90);
@@ -154,6 +171,7 @@ export function RestTimer() {
       )}
     >
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-3">
+        {/* Barra de progreso del descanso */}
         <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--surface-3)]">
           <div
             className={cn(
@@ -166,6 +184,7 @@ export function RestTimer() {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
+            {/* Etiqueta e indicación del ejercicio */}
             <p
               className={cn(
                 "text-xs font-semibold uppercase tracking-wider",
@@ -184,6 +203,7 @@ export function RestTimer() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Ajuste de ±15s */}
             {!done && (
               <button
                 onClick={() => adjustRest(-15)}
@@ -213,6 +233,7 @@ export function RestTimer() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Acciones: continuar/comenzar serie y silenciar */}
             {done && !inSession && draft && (
               <Button variant="accent" size="sm" onClick={() => router.push("/entrenar")}>
                 <Play className="size-4" /> Continuar entrenando

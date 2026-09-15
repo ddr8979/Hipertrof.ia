@@ -1,3 +1,9 @@
+/**
+ * api/spotify/callback/route.ts — Cierre del flujo OAuth PKCE de Spotify.
+ *
+ * Valida `state` contra el usuario en sesión, canjea el `code` por tokens
+ * usando el `code_verifier` de la cookie y persiste los tokens en Supabase.
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -5,13 +11,16 @@ const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID ?? "";
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET ?? "";
 const REDIRECT = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://hypertrofia.vercel.app"}/api/spotify/callback`;
 
+/** GET: valida el callback y guarda los tokens de Spotify del usuario. */
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
+  // Verifier PKCE guardado al iniciar el flujo.
   const verifier = req.cookies.get("spotify_verifier")?.value;
 
+  // Faltan parámetros o Spotify devolvió error.
   if (error || !code || !state || !verifier) {
     return NextResponse.redirect(new URL("/perfil?spotify=error", req.url));
   }
@@ -20,10 +29,12 @@ export async function GET(req: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  // El state debe coincidir con el usuario en sesión (anti-CSRF).
   if (!user || user.id !== state) {
     return NextResponse.redirect(new URL("/perfil?spotify=error", req.url));
   }
 
+  // Intercambio del código por access/refresh token.
   const body = new URLSearchParams({
     grant_type: "authorization_code",
     code,
@@ -47,6 +58,7 @@ export async function GET(req: NextRequest) {
     expires_in: number;
   };
 
+  // Persistir tokens; `expires_at` calculado para refrescar a tiempo.
   await supabase.from("spotify_tokens").upsert({
     user_id: user.id,
     access_token: t.access_token,
@@ -56,6 +68,7 @@ export async function GET(req: NextRequest) {
   });
 
   const res = NextResponse.redirect(new URL("/dashboard?spotify=ok", req.url));
+  // El verifier ya no se necesita: limpiar la cookie.
   res.cookies.delete("spotify_verifier");
   return res;
 }

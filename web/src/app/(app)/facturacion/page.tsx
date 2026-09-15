@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * Página de Facturación.
+ * Muestra los planes disponibles (PLANS) y permite seleccionar uno.
+ * La selección se guarda directamente en el campo `plan` del perfil
+ * (la pasarela de pago real queda para más adelante).
+ */
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CreditCard, Check, Crown, Star, Zap } from "lucide-react";
@@ -11,6 +17,7 @@ import { PlanBadge } from "@/components/plan-badge";
 import { PLANS, type Plan } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
+// Ícono asociado a cada plan según su id.
 const PLAN_ICONS: Record<string, typeof Star> = {
   free: Zap,
   plus: Star,
@@ -23,6 +30,7 @@ export default function FacturacionPage() {
   const current = (profile?.plan as Plan | undefined) ?? "free";
   const [pending, setPending] = useState<Plan | null>(null);
 
+  // Mutación: actualiza el plan del perfil y refresca la query del perfil.
   const selectPlan = useMutation({
     mutationFn: async (plan: Plan) => {
       const supabase = createClient();
@@ -56,6 +64,7 @@ export default function FacturacionPage() {
         necesitás el plan <strong>Plus</strong> (o Deluxe). Elegí tu plan y listo.
       </p>
 
+      {/* Tarjetas de planes */}
       <div className="grid gap-4 md:grid-cols-3">
         {PLANS.map((p) => {
           const Icon = PLAN_ICONS[p.id];

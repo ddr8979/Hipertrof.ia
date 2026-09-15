@@ -1,6 +1,12 @@
+/**
+ * privacidad/page.tsx
+ * Página estática con la Política de Privacidad de Hypertrof.ia.
+ */
+
 import Link from "next/link";
 import { Dumbbell } from "lucide-react";
 
+/** Vista pública de la política de privacidad. */
 export default function PrivacidadPage() {
   return (
     <main className="mx-auto max-w-3xl px-5 py-12">

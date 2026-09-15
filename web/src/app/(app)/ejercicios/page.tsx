@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * Biblioteca de ejercicios.
+ * Carga la tabla `exercises`, permite buscar por texto y filtrar por músculo
+ * y equipamiento, agrupa los resultados y muestra el detalle con técnica en video.
+ */
+
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dumbbell, Search, X, SlidersHorizontal, Wrench } from "lucide-react";
@@ -21,6 +27,7 @@ type Exercise = {
 };
 
 export default function EjerciciosPage() {
+  // Estado de búsqueda, filtros activos y ejercicio seleccionado para el detalle.
   const [q, setQ] = useState("");
   const [muscle, setMuscle] = useState<string | null>(null);
   const [equipment, setEquipment] = useState<string | null>(null);
@@ -28,6 +35,7 @@ export default function EjerciciosPage() {
   const [muscleOpen, setMuscleOpen] = useState(false);
   const [equipmentOpen, setEquipmentOpen] = useState(false);
 
+  // Carga completa de la biblioteca de ejercicios ordenada alfabéticamente.
   const { data: exercises, isLoading } = useQuery({
     queryKey: ["exercise_library"],
     queryFn: async () => {
@@ -41,6 +49,7 @@ export default function EjerciciosPage() {
     },
   });
 
+  // Lista única de músculos presentes, ordenada alfabéticamente.
   const muscles = useMemo(() => {
     const set = new Set<string>();
     (exercises ?? []).forEach((e) => {
@@ -49,6 +58,7 @@ export default function EjerciciosPage() {
     return [...set].sort();
   }, [exercises]);
 
+  // Lista única de equipamientos presentes, ordenada alfabéticamente.
   const equipments = useMemo(() => {
     const set = new Set<string>();
     (exercises ?? []).forEach((e) => {
@@ -57,6 +67,7 @@ export default function EjerciciosPage() {
     return [...set].sort();
   }, [exercises]);
 
+  // Aplica búsqueda + filtros y devuelve los resultados agrupados por músculo.
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
     const list = (exercises ?? []).filter((e) => {
@@ -78,6 +89,7 @@ export default function EjerciciosPage() {
     return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   }, [exercises, q, muscle, equipment]);
 
+  // Cantidad de filtros activos (se usa para el botón "Limpiar filtros").
   const activeCount = (muscle ? 1 : 0) + (equipment ? 1 : 0);
 
   return (
@@ -94,6 +106,7 @@ export default function EjerciciosPage() {
         </p>
       </header>
 
+      {/* Buscador de ejercicios por nombre o músculo */}
       <div className="relative w-full">
         <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[var(--muted)]" />
         <Input
@@ -104,6 +117,7 @@ export default function EjerciciosPage() {
         />
       </div>
 
+      {/* Botones de filtro por músculo y equipamiento */}
       <div className="flex w-full flex-wrap items-center gap-2">
         <button
           onClick={() => {
@@ -226,6 +240,7 @@ export default function EjerciciosPage() {
         </div>
       </Dialog>
 
+      {/* Resultados: skeleton, estado vacío o lista agrupada por músculo */}
       {isLoading ? (
         <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -295,6 +310,7 @@ export default function EjerciciosPage() {
         </div>
       )}
 
+      {/* Detalle del ejercicio seleccionado: video, etiquetas e instrucciones */}
       <Dialog
         open={!!selected}
         onClose={() => setSelected(null)}

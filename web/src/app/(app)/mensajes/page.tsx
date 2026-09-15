@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Página de Mensajes (lista de conversaciones).
+ * Obtiene las conversaciones vía RPC get_conversations, permite buscar
+ * usuarios para iniciar un chat nuevo y habilita las notificaciones push (PWA).
+ */
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,6 +20,7 @@ import { Avatar } from "@/components/ui/primitives";
 import { vibrate, cn } from "@/lib/utils";
 import { toast } from "@/components/ui/toast";
 
+// Conversación devuelta por la RPC get_conversations.
 type Conversation = {
   other_id: string;
   display_name: string | null;
@@ -25,6 +31,7 @@ type Conversation = {
   unread: number;
 };
 
+// Formatea una fecha como tiempo relativo corto en español (ahora, min, h, d).
 function timeAgo(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);
@@ -39,6 +46,7 @@ function timeAgo(iso: string | null): string {
   return d.toLocaleDateString("es-UY", { day: "numeric", month: "short" });
 }
 
+// Convierte la clave VAPID de base64url a Uint8Array para el push manager.
 function urlBase64ToUint8Array(base64: string): Uint8Array {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
   const b64 = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -51,6 +59,7 @@ export default function MensajesPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [q, setQ] = useState("");
 
+  // Lista de conversaciones (RPC get_conversations), con refetch periódico por si no hay Realtime.
   const { data: convos, isLoading } = useQuery({
     queryKey: ["conversations"],
     queryFn: async () => {
@@ -62,6 +71,7 @@ export default function MensajesPage() {
     refetchInterval: 15000,
   });
 
+  // Búsqueda de perfiles para iniciar una conversación nueva (mínimo 2 caracteres).
   const { data: results, isLoading: searching } = useQuery({
     queryKey: ["dm_search", q],
     queryFn: async () => {
@@ -83,6 +93,7 @@ export default function MensajesPage() {
   const notifState =
     typeof Notification !== "undefined" ? Notification.permission : "unsupported";
 
+  // Pide permiso de notificaciones, registra el service worker y guarda la suscripción push.
   async function enableNotifications() {
     try {
       const perm = await Notification.requestPermission();
@@ -131,6 +142,7 @@ export default function MensajesPage() {
         </div>
       </div>
 
+      {/* Lista de conversaciones o estado vacío */}
       {isLoading ? (
         <div className="flex flex-col gap-2">
           <Skeleton className="h-16" />
@@ -182,6 +194,7 @@ export default function MensajesPage() {
         </div>
       )}
 
+      {/* Diálogo de nuevo mensaje: buscador + resultados */}
       <Dialog open={newOpen} onClose={() => setNewOpen(false)} title="Nuevo mensaje">
         <div className="flex flex-col gap-3">
           <div className="relative">

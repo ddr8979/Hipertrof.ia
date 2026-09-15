@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Página de perfil público de otro atleta.
+ * Lee la vista `public_profiles` (respeta flags de privacidad), muestra sus
+ * playlists, tema, publicaciones y permite seguir / marcar como mejor amigo.
+ */
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -33,6 +38,7 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn, vibrate, splitEmojiRuns } from "@/lib/utils";
 
+// Perfil público con los campos que respeta la vista public_profiles.
 type PublicProfile = {
   id: string;
   display_name: string | null;
@@ -59,6 +65,7 @@ type PublicProfile = {
   profile_track_cover: string | null;
 } & Record<string, unknown>;
 
+// Publicación del feed que se muestra en el perfil público.
 type PublicPost = {
   id: string;
   type: string;
@@ -75,6 +82,7 @@ export default function PublicProfilePage() {
   const [netOpen, setNetOpen] = useState(false);
   const [viewImg, setViewImg] = useState(false);
 
+  // Perfil objetivo desde la vista public_profiles (puede ser null si es privado/inexistente).
   const { data: target, isLoading } = useQuery({
     queryKey: ["public_profile", id],
     queryFn: async () => {
@@ -90,6 +98,7 @@ export default function PublicProfilePage() {
     },
   });
 
+  // Cantidad de seguidores del perfil (requiere que el target exista).
   const { data: followersCount } = useQuery({
     queryKey: ["followers_count", id],
     queryFn: async () => {
@@ -103,6 +112,7 @@ export default function PublicProfilePage() {
     enabled: !!target,
   });
 
+  // Cantidad de seguidos del perfil.
   const { data: followingCount } = useQuery({
     queryKey: ["following_count", id],
     queryFn: async () => {
@@ -116,6 +126,7 @@ export default function PublicProfilePage() {
     enabled: !!target,
   });
 
+  // ¿El usuario actual sigue a este perfil?
   const { data: iFollow } = useQuery({
     queryKey: ["i_follow", id],
     queryFn: async () => {
@@ -132,6 +143,7 @@ export default function PublicProfilePage() {
     enabled: !!target && !!me?.id,
   });
 
+  // ¿Es mejor amigo? (solo tiene sentido si ya lo sigue).
   const { data: isBestFriend } = useQuery({
     queryKey: ["is_best_friend", id],
     queryFn: async () => {
@@ -148,6 +160,7 @@ export default function PublicProfilePage() {
     enabled: !!target && !!me?.id && !!iFollow,
   });
 
+  // Últimas publicaciones del usuario.
   const { data: posts } = useQuery({
     queryKey: ["user_posts", id],
     queryFn: async () => {
@@ -163,6 +176,7 @@ export default function PublicProfilePage() {
     enabled: !!target,
   });
 
+  // Playlists públicas del usuario.
   const { data: playlists } = useQuery({
     queryKey: ["user_playlists", id],
     queryFn: async () => {
@@ -184,6 +198,7 @@ export default function PublicProfilePage() {
     enabled: !!target,
   });
 
+  // Alterna seguir/dejar de seguir al perfil objetivo.
   const toggleFollow = useMutation({
     mutationFn: async () => {
       if (!me?.id || !target) return;
@@ -213,6 +228,7 @@ export default function PublicProfilePage() {
     onError: (e) => toast("error", "No se pudo actualizar", e.message),
   });
 
+  // Marca/desmarca al perfil como mejor amigo (requiere seguirlo primero).
   const toggleBestFriend = useMutation({
     mutationFn: async () => {
       if (!me?.id || !target || !iFollow) return;
@@ -487,6 +503,7 @@ export default function PublicProfilePage() {
         />
       ) : (
         <>
+          {/* Playlists del atleta */}
           {playlists && playlists.length > 0 && (
             <section className="card p-5">
               <div className="mb-4 flex items-center gap-2">
@@ -543,6 +560,7 @@ export default function PublicProfilePage() {
             />
           </section>
 
+          {/* Publicaciones recientes */}
           {(posts ?? []).length > 0 && (
             <section className="card p-5">
               <h2 className="font-display text-lg font-bold tracking-tight">Publicaciones</h2>

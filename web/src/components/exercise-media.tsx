@@ -1,8 +1,11 @@
+// Reproductor de media de un ejercicio: intenta WebM local y cae a GIF remoto
+// y, como último recurso, a un placeholder con la inicial del nombre.
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { exerciseGif, exerciseLocalWebm, cn } from "@/lib/utils";
 
+// Modo de render activo según los recursos disponibles.
 type Mode = "video" | "img" | "fallback";
 
 // iOS Safari < 17.4 no soporta WebM VP9. Detectamos soporte real en runtime.
@@ -16,6 +19,14 @@ function canPlayWebM(): boolean {
   return webmSupport;
 }
 
+/**
+ * Muestra el media de un ejercicio con estrategia de fallback.
+ * - WebM local con reproducción perezosa solo cuando entra en viewport.
+ * - GIF remoto si no hay WebM o si el video falla.
+ * - Placeholder con la inicial si no hay ningún recurso.
+ * @param eager Si true monta y reproduce de inmediato (sin esperar viewport).
+ * @param contain Si true usa object-contain; por defecto recorta con cover.
+ */
 export function ExerciseMedia({
   url,
   alt,
@@ -37,11 +48,13 @@ export function ExerciseMedia({
   const local = exerciseLocalWebm(url);
   const remote = exerciseGif(url);
 
+  // Modo inicial: video si el navegador soporta WebM y hay archivo local.
   const [mode, setMode] = useState<Mode>(() => {
     if (local && canPlayWebM()) return "video";
     if (remote) return "img";
     return "fallback";
   });
+  // Evita el parpadeo del skeleton del GIF durante la carga.
   const [imgOk, setImgOk] = useState(false);
   // mount: el video se monta UNA vez al entrar en viewport (no se desmonta -> sin flicker al scrollear)
   const [mounted, setMounted] = useState(eager ?? false);
@@ -54,6 +67,7 @@ export function ExerciseMedia({
     if (mode !== "video") return;
     const el = wrapRef.current;
     if (!el) return;
+    // Sin IntersectionObserver: marcar visible inmediatamente.
     if (typeof IntersectionObserver === "undefined") {
       queueMicrotask(() => {
         setMounted(true);

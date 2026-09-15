@@ -1,9 +1,11 @@
+// Muestra la reproducción actual de Spotify del usuario o de otro perfil.
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { SpotifyIcon } from "@/components/brand-icons";
 
+// Respuesta del endpoint /api/spotify/data.
 export type SpotifyNowData = {
   connected: boolean;
   hidden?: boolean;
@@ -11,6 +13,11 @@ export type SpotifyNowData = {
   playing?: { name: string; artists: string; cover: string | null; is_playing: boolean } | null;
 };
 
+/**
+ * Hook de consulta del estado de Spotify.
+ * Refresca cada 30s solo si la cuenta está conectada.
+ * @param userId Opcional; si se omite consulta el perfil propio ("me").
+ */
 export function useSpotifyNow(userId?: string) {
   return useQuery<SpotifyNowData | null>({
     queryKey: ["spotify_now", userId ?? "me"],
@@ -30,6 +37,11 @@ export function useSpotifyNow(userId?: string) {
   });
 }
 
+/**
+ * Tarjeta con el tema que se está reproduciendo.
+ * Devuelve null si no está conectado, está oculto o no hay reproducción
+ * (salvo en modo `compact`, que también muestra lo pausado).
+ */
 export function SpotifyNowCard({
   userId,
   compact,
@@ -41,6 +53,7 @@ export function SpotifyNowCard({
 
   if (!data || !data.connected) return null;
 
+  // Aviso cuando la cuenta de Spotify no es Premium.
   if (data.premiumRequired) {
     return (
       <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
@@ -60,6 +73,7 @@ export function SpotifyNowCard({
   if (data.hidden || !data.playing) return null;
 
   const p = data.playing;
+  // En modo normal, ocultar si no está sonando.
   if (!p.is_playing && !compact) return null;
 
   return (
@@ -86,6 +100,7 @@ export function SpotifyNowCard({
   );
 }
 
+/** Tarjeta para iniciar la conexión con Spotify; oculta si ya está conectado. */
 export function SpotifyConnectCard() {
   const { data } = useSpotifyNow();
   if (data && data.connected) return null;
