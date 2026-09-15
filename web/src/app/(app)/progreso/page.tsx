@@ -2,15 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import dynamic from "next/dynamic";
 import {
   startOfWeek,
   addDays,
@@ -36,6 +28,21 @@ import Link from "next/link";
 import { useProfile } from "@/components/providers";
 import { formatDuration, estimate1RM } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+
+function ChartFallback() {
+  return <div className="h-full w-full animate-pulse rounded-xl bg-[var(--surface-2)]" />;
+}
+
+// recharts pesa bastante: se carga recién en el cliente y bajo demanda.
+const VolumeChart = dynamic(() => import("./charts").then((m) => m.VolumeChart), {
+  ssr: false,
+  loading: () => <ChartFallback />,
+});
+
+const RmChart = dynamic(() => import("./charts").then((m) => m.RmChart), {
+  ssr: false,
+  loading: () => <ChartFallback />,
+});
 
 type WorkoutRow = {
   id: string;
@@ -350,50 +357,7 @@ export default function ProgresoPage() {
           <span className="text-xs text-[var(--muted)]">kg levantados</span>
         </div>
         <div className="h-52 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={weeklyVolume} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
-              <defs>
-                <linearGradient id="volGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="var(--accent)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-              <XAxis
-                dataKey="week"
-                tick={{ fill: "var(--muted)", fontSize: 11 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fill: "var(--muted)", fontSize: 11 }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v: number) => `${Math.round(v / 1000)}k`}
-                width={36}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                  fontSize: 13,
-                }}
-                labelStyle={{ color: "var(--text-2)", fontWeight: 600 }}
-                formatter={(v) => [
-                  `${Number(v).toLocaleString("es-UY")} kg`,
-                  "Volumen",
-                ]}
-              />
-              <Area
-                type="monotone"
-                dataKey="kg"
-                stroke="var(--accent)"
-                strokeWidth={2.5}
-                fill="url(#volGrad)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          <VolumeChart data={weeklyVolume} />
         </div>
       </section>
 
@@ -419,46 +383,7 @@ export default function ProgresoPage() {
           </div>
         </div>
         <div className="h-52 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={prSeries} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
-              <defs>
-                <linearGradient id="prGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="var(--accent)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-              <XAxis
-                dataKey="date"
-                tick={{ fill: "var(--muted)", fontSize: 11 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fill: "var(--muted)", fontSize: 11 }}
-                axisLine={false}
-                tickLine={false}
-                width={36}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                  fontSize: 13,
-                }}
-                labelStyle={{ color: "var(--text-2)", fontWeight: 600 }}
-                formatter={(v) => [`${v} kg`, "1RM estimado"]}
-              />
-              <Area
-                type="monotone"
-                dataKey="rm"
-                stroke="var(--accent)"
-                strokeWidth={2.5}
-                fill="url(#prGrad)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          <RmChart data={prSeries} />
         </div>
       </section>
 

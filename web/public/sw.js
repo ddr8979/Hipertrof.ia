@@ -1,6 +1,6 @@
-const SHELL_CACHE = "hypertrofia-shell-v5";
-const DATA_CACHE = "hypertrofia-data-v5";
-const RUNTIME_CACHE = "hypertrofia-runtime-v5";
+const SHELL_CACHE = "hypertrofia-shell-v6";
+const DATA_CACHE = "hypertrofia-data-v6";
+const RUNTIME_CACHE = "hypertrofia-runtime-v6";
 
 const SHELL_URLS = ["/", "/dashboard", "/manifest.webmanifest"];
 
@@ -76,17 +76,19 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (url.hostname.endsWith("supabase.co")) {
+    // Network-first: datos frescos cuando hay red, cache como respaldo offline.
     event.respondWith(
       (async () => {
         const cache = await caches.open(DATA_CACHE);
-        const cached = await cache.match(req);
-        const network = fetch(req)
-          .then((res) => {
-            if (res.ok) cache.put(req, res.clone());
-            return res;
-          })
-          .catch(() => null);
-        return cached || (await network) || new Response("", { status: 504 });
+        try {
+          const res = await fetch(req);
+          if (res.ok) cache.put(req, res.clone());
+          return res;
+        } catch {
+          const cached = await cache.match(req);
+          if (cached) return cached;
+          return new Response("", { status: 504 });
+        }
       })()
     );
     return;

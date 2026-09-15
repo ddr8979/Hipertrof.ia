@@ -24,7 +24,6 @@
     "react": "^19.0.2",
     "react-dom": "^19.0.2",
     "recharts": "^3.10.1",
-    "simple-icons": "^16.31.0",
     "tailwindcss": "^4.3.3",
     "web-push": "^3.6.7",
     "zod": "^4.4.3",
