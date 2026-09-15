@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "next-themes";
+import { ThemeProvider, useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { Toaster } from "@/components/ui/toast";
@@ -49,6 +49,33 @@ function getQueryClient() {
   if (typeof window === "undefined") return makeQueryClient();
   if (!browserQueryClient) browserQueryClient = makeQueryClient();
   return browserQueryClient;
+}
+
+// Mantiene el chrome del navegador / status bar de iOS en sincronía con el
+// tema elegido por el usuario (no solo con el del sistema).
+function ThemeColorSync() {
+  const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    if (!resolvedTheme) return;
+    const root = document.documentElement;
+    const bg =
+      getComputedStyle(root).getPropertyValue("--bg").trim() ||
+      (resolvedTheme === "dark" ? "#0b0d0b" : "#f5f6f3");
+
+    let meta = document.querySelector<HTMLMetaElement>(
+      'meta[name="theme-color"]:not([media])'
+    );
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.setAttribute("name", "theme-color");
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute("content", bg);
+    root.style.colorScheme = resolvedTheme === "dark" ? "dark" : "light";
+  }, [resolvedTheme]);
+
+  return null;
 }
 
 function AccentApplier() {
@@ -168,10 +195,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider
         attribute="class"
-        defaultTheme="dark"
+        defaultTheme="system"
         enableSystem
+        enableColorScheme
         disableTransitionOnChange
       >
+        <ThemeColorSync />
         <AccentApplier />
         <ProfileSync />
         <SWRegister />

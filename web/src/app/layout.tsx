@@ -24,6 +24,16 @@ export const metadata: Metadata = {
     "Diario de cargas inteligente, rutinas, nutrición y comunidad fitness. Tu progreso, tus métricas, tu perfil.",
   applicationName: "Hypertrof.ia",
   manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Hypertrof.ia",
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    telephone: false,
+    email: false,
+    address: false,
+  },
   icons: {
     icon: "/icon.svg",
     apple: "/apple-touch-icon.png",
