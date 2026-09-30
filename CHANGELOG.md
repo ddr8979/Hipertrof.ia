@@ -1,5 +1,49 @@
 # Changelog
 
+## 2026-09-19 — HUD móvil: píldora glass con Calculadora y Ejercicios
+
+- Nuevo `web/src/components/hud-nav.tsx`: la tab bar inferior pasó de barra
+  full-width a **píldora flotante glass** (`.glass` + rounded-full + sombra),
+  centrada, con safe-area, estilo WhatsApp/Reddit.
+- El HUD ahora incluye **Calculadora** y **Ejercicios** (movidos desde el sheet
+  "Más"); **Perfil** se movió al sheet "Más" para que quepan 6 ítems.
+- Reacción al dedo en touch: glow radial (accent) que sigue al puntero
+  (mutación directa de estilos, sin re-renders), `active:scale-90` por ítem y
+  `navigator.vibrate?.(8)` al tocar. Labels se ocultan bajo 360px de ancho.
+- Auto-ocultado en hilos de chat y durante el descanso en `/entrenar`
+  (la barra del `RestTimer` tiene prioridad).
+- Sidebar desktop sigue con los 15 destinos (NAV = HUD + secundarios).
+
+## 2026-09-19 — M0 hardening de código + M1 RPCs transaccionales
+
+### Seguridad (código)
+- Borrado `/api/spotify/debug` (endpoint público que usaba credenciales de Spotify).
+- Anti open redirect en `/auth/callback`: `next` validado con `sanitizeNext`
+  (solo rutas relativas de mismo origen; rechaza `//`, `/\`, CRLF, longitudes absurdas).
+- CSP en `lib/supabase/middleware.ts`: `object-src 'none'` + `api.qrserver.com` en
+  `img-src` (el QR de invitaciones dejaba de cargar).
+
+### Infraestructura / env
+- Nuevo `src/lib/env.ts`: validación `zod` fail-fast de todas las variables de
+  entorno (server-side only). `lib/supabase/admin.ts` rearmado sobre `env`.
+- Comentarios JSDoc en 85 archivos de `src/`.
+
+### M1 — RPCs transaccionales (pending por aplicar)
+- Migración `web/supabase/migrations/20260917000000_m1_workout_rpcs.sql`:
+  - `finish_workout(p_workout jsonb)`: persiste `workouts` + `workout_exercises` +
+    `workout_sets` en una sola transacción (reemplaza los 3 round-trips no atómicos
+    de `/entrenar`). Idempotent por `draft.id`; `user_id` via `auth.uid()`.
+  - `save_routine(p_routine jsonb)`: upsert atómico de `routines` + `routine_exercises`
+    (preparado para la página `/rutinas`).
+- Frontend: `(session)/entrenar/page.tsx` → `finish()` llama a `finish_workout`
+  (single RPC) en lugar del upsert multi-step.
+- **Pendiente por aplicar**: pegar la migración en el SQL Editor (staging → prod).
+
+### Estado
+- Typecheck: `MALLOC_CHECK_=0 tsc --noEmit` → exit 0.
+- Bloqueado (requiere vos): aplicar DDL (drift baseline + M1 + P0-1 + trainer_invites)
+  en el SQL Editor, y rotar `service_role`/Google/Spotify.
+
 ## 2026-09-16 (2) — M0: drift formalizado
 
 ### Base de datos

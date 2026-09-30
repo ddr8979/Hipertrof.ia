@@ -11,7 +11,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Home,
   Dumbbell,
   Utensils,
   User,
@@ -22,11 +21,7 @@ import {
   History,
   Compass,
   ChartLine,
-  MessageCircle,
   BookOpenText,
-  Calculator,
-  BicepsFlexed,
-  Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/components/providers";
@@ -36,9 +31,9 @@ import { useQuery } from "@tanstack/react-query";
 import { memo, useState } from "react";
 import { DmNotifications } from "@/components/dm-notifications";
 import { RestTimer } from "@/components/rest-timer";
+import { HudNav, HUD_ITEMS, isActive } from "@/components/hud-nav";
 import { useSpotifyNow } from "@/components/spotify-now";
 import { ThemeToggle } from "@/components/brand-icons";
-import { SpotifyIcon } from "@/components/brand-icons";
 import { Sheet } from "@/components/ui/sheet";
 
 /**
@@ -64,8 +59,20 @@ function NowPlayingMini() {
           className="size-9 shrink-0 rounded-lg object-cover"
         />
       ) : (
+        // eslint-disable-next-line @next/next/no-img-element
         <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#1DB954]/15">
-          <SpotifyIcon className="size-4" />
+          <svg
+            role="img"
+            viewBox="0 0 24 24"
+            width={16}
+            height={16}
+            aria-label="Spotify"
+            fill="#1ED760"
+            dangerouslySetInnerHTML={{
+              __html:
+                '<path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.55 0 12 0zm5.5 17.33c-.24.36-.66.48-1.02.24-2.82-1.74-6.36-2.1-10.56-1.14-.42.12-.78-.18-.9-.54-.12-.42.18-.78.54-.9 4.56-1.02 8.52-.6 11.64 1.32.42.18.48.66.3 1.02zm1.45-3.3c-.3.42-.84.6-1.26.3-3.24-1.98-8.16-2.58-11.94-1.38-.48.12-1.02-.12-1.14-.6-.12-.48.12-1.02.6-1.14C9.5 9.9 15 10.56 18.72 12.84c.36.18.54.78.24 1.2zm.13-3.36C15.24 8.4 8.82 8.16 5.16 9.3c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.72 1.62.54.3.72 1.02.42 1.56-.3.42-1.02.6-1.56.3z"></path>',
+            }}
+          />
         </span>
       )}
       <span className="flex min-w-0 flex-1 flex-col">
@@ -79,20 +86,15 @@ function NowPlayingMini() {
   );
 }
 
-// Destinos principales: van en la tab bar móvil.
-const PRIMARY = [
-  { href: "/dashboard", label: "Inicio", icon: Home },
-  { href: "/rutinas", label: "Rutinas", icon: Dumbbell },
-  { href: "/mensajes", label: "Mensajes", icon: MessageCircle },
-  { href: "/perfil", label: "Perfil", icon: User },
-];
+// Destinos del HUD (píldora inferior móvil): viven en hud-nav.tsx.
+const PRIMARY = HUD_ITEMS;
 
-// Destinos secundarios: visibles en el sidebar desktop y en el sheet "Más".
+// Destinos secundarios: sidebar desktop y sheet "Más" (incluye Perfil,
+// que ya no entra en la píldora por espacio).
 const SECONDARY = [
-  { href: "/calculadora", label: "Calculadora", icon: Calculator },
+  { href: "/perfil", label: "Perfil", icon: User },
   { href: "/nutricion", label: "Alimentación", icon: Utensils },
   { href: "/explorar", label: "Social", icon: Compass },
-  { href: "/ejercicios", label: "Ejercicios", icon: BicepsFlexed },
   { href: "/glosario", label: "Diccionario", icon: BookOpenText },
   { href: "/marketplace", label: "Marketplace", icon: Store },
   { href: "/entrenadores", label: "Entrenadores", icon: Users },
@@ -101,48 +103,8 @@ const SECONDARY = [
   { href: "/ajustes", label: "Configuración", icon: Settings },
 ];
 
-// Lista completa usada por el sidebar y el sheet.
+// Lista completa usada por el sidebar.
 const NAV = [...PRIMARY, ...SECONDARY];
-
-/** Determina si un href corresponde a la ruta actual (o a una subruta). */
-function isActive(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(href + "/");
-}
-
-/** Ítem de la tab bar inferior móvil, memoizado para evitar re-renders. */
-const TabLink = memo(function TabLink({
-  href,
-  label,
-  icon: Icon,
-  badge,
-}: {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badge?: number;
-}) {
-  const pathname = usePathname();
-  const active = isActive(pathname, href);
-  return (
-    <Link
-      href={href}
-      aria-label={label}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "relative flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-semibold transition-colors active:scale-95",
-        active ? "text-[var(--accent)]" : "text-[var(--muted)]"
-      )}
-    >
-      <Icon className="size-6" />
-      <span>{label}</span>
-      {badge ? (
-        <span className="absolute left-[calc(50%+6px)] top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[9px] font-bold text-white">
-          {badge > 9 ? "9+" : badge}
-        </span>
-      ) : null}
-    </Link>
-  );
-});
 
 /** Enlace de navegación usado en el sidebar y el sheet "Más". */
 const NavLink = memo(function NavLink({
@@ -280,36 +242,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      {/* Bottom tab bar (móvil, estilo iOS) */}
-      {!isChatThread && (
-        <nav
-          aria-label="Navegación principal"
-          className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur-xl lg:hidden"
-          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-        >
-          <div className="mx-auto flex max-w-lg items-stretch">
-            {PRIMARY.map((t) => (
-              <TabLink
-                key={t.href}
-                {...t}
-                badge={t.href === "/mensajes" ? (unread ?? 0) : undefined}
-              />
-            ))}
-            <button
-              type="button"
-              onClick={() => setMoreOpen(true)}
-              aria-label="Más opciones"
-              className={cn(
-                "relative flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-semibold transition-colors active:scale-95",
-                secondaryActive ? "text-[var(--accent)]" : "text-[var(--muted)]"
-              )}
-            >
-              <Menu className="size-6" />
-              <span>Más</span>
-            </button>
-          </div>
-        </nav>
-      )}
+      {/* HUD inferior: píldora flotante glass (móvil); se auto-oculta en
+          hilos de chat y durante el descanso en /entrenar. */}
+      <HudNav
+        moreActive={secondaryActive}
+        onMore={() => setMoreOpen(true)}
+        unread={unread ?? 0}
+      />
 
       {/* Sheet "Más" */}
       <Sheet open={moreOpen} onClose={() => setMoreOpen(false)} title="Más">
