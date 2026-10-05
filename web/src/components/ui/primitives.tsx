@@ -1,3 +1,4 @@
+"use client";
 // Primitivas de UI: Card, Badge, Avatar, Skeleton y Spinner.
 import { useState } from "react";
 import { cn } from "@/lib/utils";
