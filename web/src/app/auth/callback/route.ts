@@ -34,6 +34,16 @@ export async function GET(request: Request) {
   // En local se reconstruye el redirect con el host reenviado.
   const isLocal = origin.includes("localhost") || origin.includes("127.0.0.1");
 
+  // Supabase llega con `error` (sin `code`) cuando el proveedor falla
+  // (secret desactualizado, access_denied, state mismatch, etc.).
+  const oauthError = searchParams.get("error");
+  const oauthErrorDescription = searchParams.get("error_description");
+  if (oauthError) {
+    console.error(
+      `[auth/callback] error de OAuth: ${oauthError} — ${oauthErrorDescription ?? "(sin descripción)"}`
+    );
+  }
+
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -46,6 +56,8 @@ export async function GET(request: Request) {
       }
       return NextResponse.redirect(`${origin}${next}`);
     }
+
+    console.error(`[auth/callback] exchangeCodeForSession falló: ${error.message}`);
 
     // Si el canje falla puede ser porque el código ya se usó
     // (doble request del navegador/SW): verificar que la sesión esté activa.
@@ -83,7 +95,7 @@ export async function GET(request: Request) {
     }
   }
 
-  // Sin código: sesión ya en cookies (magic link directo)
+  // Sin código (o canje fallido): intentar con sesión ya presente en cookies.
   const supabase = await createClient();
   const {
     data: { user },
@@ -100,5 +112,9 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}${profile?.onboarded ? next : "/onboarding"}`);
   }
 
+  const paramKeys = [...searchParams.keys()].join(", ") || "(sin parámetros)";
+  console.warn(
+    `[auth/callback] sin sesión resultante (code=${code ? "sí" : "no"}, error=${oauthError ?? "no"}); params: ${paramKeys}`
+  );
   return NextResponse.redirect(`${origin}/login?error=callback`);
 }
