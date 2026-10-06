@@ -15,6 +15,9 @@ const PUBLIC_PATHS = [
   "/",
   "/login",
   "/registro",
+  // Callback de OAuth/magic link: llega ANTES de que exista sesión
+  // (el route handler valida el `code` y crea la sesión).
+  "/auth/callback",
   "/terminos",
   "/privacidad",
   "/marketplace",
