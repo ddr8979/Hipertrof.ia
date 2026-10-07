@@ -7,7 +7,7 @@
  * compartir, eliminar y lanzar un entrenamiento con una rutina concreta.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,6 +26,7 @@ import {
   ChevronDown,
   Share2,
   AlertCircle,
+  Users,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ import { Field, Input, Select } from "@/components/ui/input";
 import { ExercisePicker } from "@/components/exercise-picker";
 import { toast } from "@/components/ui/toast";
 import { ROUTINE_TEMPLATES } from "@/lib/templates";
+import { EntrenadoresView } from "../entrenadores/page";
 import { cn } from "@/lib/utils";
 
 type RoutineEx = {
@@ -419,7 +421,16 @@ const upserts = drafts.map((d, i) => {
 export default function RutinasPage() {
   const qc = useQueryClient();
   const router = useRouter();
-  const [tab, setTab] = useState<"mine" | "library">("mine");
+  const [tab, setTab] = useState<"mine" | "library" | "coach">("mine");
+
+  // Links de invitación (?invite=CODE) abren directo en la pestaña Entrenador.
+  // Se aplica en el siguiente frame para no encadenar renders sincrónicos.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    if (!p.get("invite")) return;
+    const id = requestAnimationFrame(() => setTab("coach"));
+    return () => cancelAnimationFrame(id);
+  }, []);
   // `undefined` = cerrado, `null` = nueva rutina, objeto = edición.
   const [editing, setEditing] = useState<Routine | null | undefined>(undefined);
   const [deleteConfirm, setDeleteConfirm] = useState<Routine | null>(null);
@@ -537,19 +548,20 @@ export default function RutinasPage() {
         </Button>
       </div>
 
-      {/* Pestañas: mis rutinas o biblioteca de plantillas */}
-      <div className="flex gap-1.5">
+      {/* Pestañas segmentadas: mis rutinas / biblioteca / entrenador */}
+      <div className="grid grid-cols-3 gap-1.5">
         {[
           { id: "mine" as const, label: "Mis rutinas", icon: <LayoutList className="size-4" /> },
           { id: "library" as const, label: "Biblioteca", icon: <BookOpen className="size-4" /> },
+          { id: "coach" as const, label: "Entrenador", icon: <Users className="size-4" /> },
         ].map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all",
+              "flex items-center justify-center gap-1.5 rounded-xl border px-1.5 py-2.5 text-[13px] font-semibold transition-all",
               tab === t.id
-                ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] shadow-[0_2px_8px_-4px_color-mix(in_srgb,var(--accent)_60%,transparent)]"
                 : "border-[var(--border)] text-[var(--text-2)] hover:text-[var(--text)]"
             )}
           >
@@ -559,7 +571,9 @@ export default function RutinasPage() {
         ))}
       </div>
 
-      {isLoading ? (
+      {tab === "coach" ? (
+        <EntrenadoresView embedded />
+      ) : isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2">
           <Skeleton className="h-40" />
           <Skeleton className="h-40" />

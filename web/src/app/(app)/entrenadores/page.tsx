@@ -18,18 +18,11 @@ import {
   Plus,
   Dumbbell,
   GraduationCap,
-  BookOpenText,
-  Calculator,
   Utensils,
   PartyPopper,
   Search,
   UserPlus,
   Trash2,
-  History,
-  Store,
-  LayoutList,
-  Settings,
-  ChartLine,
   ChevronRight,
   Pencil,
   QrCode,
@@ -96,7 +89,12 @@ const CONGRATS = [
   "¡Excelente constancia! Tu disciplina te está dando resultados. 👏",
 ];
 
-export default function EntrenadoresPage() {
+/**
+ * Vista completa de Entrenadores (panel trainer o vista de atleta).
+ * `embedded` oculta el título cuando se monta dentro de otra página
+ * (pestaña "Entrenador" de /rutinas).
+ */
+export function EntrenadoresView({ embedded = false }: { embedded?: boolean }) {
   const profile = useProfile((s) => s.profile);
   const qc = useQueryClient();
   const router = useRouter();
@@ -567,12 +565,14 @@ export default function EntrenadoresPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="font-display text-3xl font-bold tracking-tight">Entrenadores</h1>
-        <p className="mt-1 text-sm text-[var(--text-2)]">
-          {isTrainer ? "Panel de entrenador: alumnos, rutinas, recetas y cursos" : "Tus entrenadores, rutinas y recetas asignadas"}
-        </p>
-      </div>
+      {!embedded && (
+        <div>
+          <h1 className="font-display text-3xl font-bold tracking-tight">Entrenadores</h1>
+          <p className="mt-1 text-sm text-[var(--text-2)]">
+            {isTrainer ? "Panel de entrenador: alumnos, rutinas, recetas y cursos" : "Tus entrenadores, rutinas y recetas asignadas"}
+          </p>
+        </div>
+      )}
 
       {!isTrainer && (
         <div className="card flex flex-wrap items-center justify-between gap-3 p-4">
@@ -615,11 +615,11 @@ export default function EntrenadoresPage() {
                 <h2 className="font-display text-lg font-bold tracking-tight">Mis alumnos</h2>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setInviteOpen(true)}>
-                  <QrCode className="size-4" /> Invitar
+                <Button variant="ghost" size="sm" onClick={() => setAddOpen(true)} aria-label="Agregar alumno">
+                  <UserPlus className="size-4" />
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
-                  <UserPlus className="size-4" /> Agregar alumno
+                <Button variant="accent" size="sm" onClick={() => setInviteOpen(true)}>
+                  <QrCode className="size-4" /> Invitar
                 </Button>
               </div>
             </div>
@@ -683,26 +683,16 @@ export default function EntrenadoresPage() {
                         </button>
                       </div>
                     ) : c.status === "active" ? (
-                      <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                      <div className="flex shrink-0 items-center justify-end gap-1.5">
                         <Button
-                          variant="ghost"
+                          variant="accent"
                           size="sm"
                           onClick={() => {
                             setManageFor(c.athlete!.id);
                             setManageTab("routine");
                           }}
                         >
-                          <ClipboardList className="size-3.5" /> Rutina
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setManageFor(c.athlete!.id);
-                            setManageTab("recipe");
-                          }}
-                        >
-                          <Utensils className="size-3.5" /> Receta
+                          <ClipboardList className="size-3.5" /> Asignar
                         </Button>
                         <button
                           onClick={() => congrats.mutate(c.athlete!.id)}
@@ -914,52 +904,6 @@ export default function EntrenadoresPage() {
           </section>
         </>
       )}
-
-      {/* Hub de herramientas */}
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold tracking-tight">Herramientas</h2>
-          <span className="text-xs text-[var(--muted)]">para tu entrenamiento</span>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          <Link href="/ejercicios" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <Dumbbell className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Ejercicios</span>
-          </Link>
-          <Link href="/glosario" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <BookOpenText className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Diccionario</span>
-          </Link>
-          <Link href="/calculadora" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <Calculator className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Calculadora</span>
-          </Link>
-          <Link href="/progreso" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <ChartLine className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Progreso</span>
-          </Link>
-          <Link href="/historial" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <History className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Historial</span>
-          </Link>
-          <Link href="/marketplace" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <Store className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Marketplace</span>
-          </Link>
-          <Link href="/rutinas" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <LayoutList className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Mis Rutinas</span>
-          </Link>
-          <Link href="/nutricion" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <Utensils className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Alimentación</span>
-          </Link>
-          <Link href="/ajustes" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <Settings className="size-5 text-[var(--accent)]" />
-            <span className="w-full truncate text-xs font-semibold">Ajustes</span>
-          </Link>
-        </div>
-      </section>
 
       {/* Agregar alumno */}
       <Dialog open={addOpen} onClose={() => setAddOpen(false)} title="Agregar alumno">
@@ -1304,6 +1248,11 @@ export default function EntrenadoresPage() {
       <TrainerInviteDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </div>
   );
+}
+
+/** Ruta /entrenadores: la vista completa con su propio título. */
+export default function EntrenadoresPage() {
+  return <EntrenadoresView />;
 }
 
 /**

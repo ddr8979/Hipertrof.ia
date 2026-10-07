@@ -71,7 +71,7 @@ export function TrainerInviteDialog({
 
   // Arma el link definitivo una vez que hay código.
   useEffect(() => {
-    if (code) setLink(`${APP_URL}/entrenadores?invite=${code}`);
+    if (code) setLink(`${APP_URL}/rutinas?invite=${code}`);
   }, [code]);
 
   /** Copia el link al portapapeles y muestra feedback temporal. */

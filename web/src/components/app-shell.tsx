@@ -189,10 +189,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Contenido */}
         <main
           className={cn(
-            "mx-auto w-full min-w-0 flex-1 max-w-3xl px-4 pt-12 sm:px-6 sm:pt-16 lg:max-w-none lg:pb-14 lg:pt-10",
+            "mx-auto w-full min-w-0 flex-1 max-w-3xl px-4 pt-8 sm:px-6 sm:pt-12 lg:max-w-none lg:pb-14 lg:pt-10",
             isChatThread
               ? "pb-4"
-              : "pb-[calc(5rem_+_env(safe-area-inset-bottom))]"
+              : "pb-[calc(4.75rem_+_env(safe-area-inset-bottom))]"
           )}
         >
           {children}

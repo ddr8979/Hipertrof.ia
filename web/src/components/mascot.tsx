@@ -92,16 +92,21 @@ function MascotArt() {
         <circle cx="11" cy="98" r="7.5" fill="#fff" stroke="#161a12" strokeWidth={2} />
         <path d="M7 96 q4 3 8 1" fill="none" stroke="#161a12" strokeWidth={1.4} strokeLinecap="round" />
 
-        {/* Brazo derecho flexando */}
-        <path
-          d="M90 70 C100 66 106 58 106 50"
-          fill="none"
-          stroke="#161a12"
-          strokeWidth={5}
-          strokeLinecap="round"
-        />
-        <circle cx="107" cy="45" r="7.5" fill="#fff" stroke="#161a12" strokeWidth={2} />
-        <path d="M103 43 q4 3 8 1" fill="none" stroke="#161a12" strokeWidth={1.4} strokeLinecap="round" />
+        {/* Brazo derecho: flex + saludo periódico (gira desde el hombro) */}
+        <g
+          className="animate-[hi-wave_4.6s_ease-in-out_infinite]"
+          style={{ transformOrigin: "90px 70px" }}
+        >
+          <path
+            d="M90 70 C100 66 106 58 106 50"
+            fill="none"
+            stroke="#161a12"
+            strokeWidth={5}
+            strokeLinecap="round"
+          />
+          <circle cx="107" cy="45" r="7.5" fill="#fff" stroke="#161a12" strokeWidth={2} />
+          <path d="M103 43 q4 3 8 1" fill="none" stroke="#161a12" strokeWidth={1.4} strokeLinecap="round" />
+        </g>
         {/* Chispas del flex */}
         <g className="animate-[cs-spark_1.8s_ease-in-out_infinite]" style={{ transformOrigin: "116px 30px" }}>
           <path d="M116 24l1.5 4.5L122 30l-4.5 1.5L116 36l-1.5-4.5L110 30l4.5-1.5z" fill="var(--accent)" />

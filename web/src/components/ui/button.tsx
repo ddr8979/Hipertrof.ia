@@ -19,9 +19,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 // Mapeo de cada variante a sus clases Tailwind.
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-[var(--text)] text-[var(--bg)] hover:opacity-90 disabled:hover:opacity-100",
+    "bg-[var(--text)] text-[var(--bg)] hover:opacity-90 disabled:hover:opacity-100 shadow-[var(--shadow-md)]",
   accent:
-    "bg-[var(--accent)] text-[var(--accent-ink)] hover:brightness-110 disabled:hover:brightness-100 shadow-[0_4px_14px_-4px_var(--accent-soft)]",
+    "bg-[var(--accent)] text-[var(--accent-ink)] hover:brightness-110 disabled:hover:brightness-100 shadow-[0_6px_18px_-5px_color-mix(in_srgb,var(--accent)_55%,transparent),var(--shadow-sm)]",
   secondary: "bg-[var(--surface-2)] text-[var(--text)] hover:bg-[var(--surface-3)]",
   ghost: "bg-transparent text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]",
   outline:

@@ -64,14 +64,14 @@ const HudItem = memo(function HudItem({
       aria-label={ariaLabel ?? label}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "relative flex flex-col items-center justify-center gap-0.5 rounded-full px-2.5 py-1.5 transition-transform duration-150 active:scale-90",
+        "relative flex flex-col items-center justify-center gap-0.5 rounded-full px-2 py-1 transition-transform duration-150 active:scale-90",
         active
           ? "bg-[var(--accent-soft)] text-[var(--accent)]"
           : "text-[var(--muted)] hover:text-[var(--text-2)]"
       )}
     >
-      <Icon className="size-5.5" strokeWidth={active ? 2.4 : 2} />
-      <span className="hidden text-[9.5px] font-bold leading-none min-[360px]:block">
+      <Icon className="size-5" strokeWidth={active ? 2.4 : 2} />
+      <span className="hidden text-[9px] font-bold leading-none min-[360px]:block">
         {label}
       </span>
       {badge ? (
@@ -127,12 +127,19 @@ export function HudNav({
   if (hidden) return null;
 
   return (
+    <>
+      {/* Velo inferior: el contenido se desvanece bajo la píldora en vez de
+          pasar por debajo de forma cruda. */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-20 bg-gradient-to-t from-[var(--bg)] via-[color-mix(in_srgb,var(--bg)_75%,transparent)] to-transparent lg:hidden"
+      />
     <nav
       aria-label="Navegación principal"
       className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-40 -translate-x-1/2 lg:hidden"
     >
       <div
-        className="glass relative flex items-center gap-0.5 overflow-hidden rounded-full p-1.5 shadow-[var(--shadow-lg)]"
+        className="glass relative flex items-center gap-0.5 overflow-hidden rounded-full p-1 shadow-[var(--shadow-lg)]"
         onPointerDown={(e) => {
           holdRef.current = true;
           paint(e);
@@ -174,7 +181,7 @@ export function HudNav({
             aria-label="Perfil"
             aria-current={isActive(pathname, "/perfil") ? "page" : undefined}
             className={cn(
-              "relative flex flex-col items-center justify-center gap-0.5 rounded-full px-2.5 py-1.5 transition-transform duration-150 active:scale-90",
+              "relative flex flex-col items-center justify-center gap-0.5 rounded-full px-2 py-1 transition-transform duration-150 active:scale-90",
               isActive(pathname, "/perfil")
                 ? "bg-[var(--accent-soft)] text-[var(--accent)]"
                 : "text-[var(--muted)] hover:text-[var(--text-2)]"
@@ -185,15 +192,15 @@ export function HudNav({
               <img
                 src={avatarUrl}
                 alt=""
-                className="size-5.5 rounded-full object-cover"
+                className="size-5 rounded-full object-cover"
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <span className="flex size-5.5 items-center justify-center rounded-full bg-[var(--accent-soft)] font-display text-[11px] font-bold text-[var(--accent)]">
+              <span className="flex size-5 items-center justify-center rounded-full bg-[var(--accent-soft)] font-display text-[11px] font-bold text-[var(--accent)]">
                 {(avatarName ?? "U").trim().charAt(0).toUpperCase()}
               </span>
             )}
-            <span className="hidden text-[9.5px] font-bold leading-none min-[360px]:block">
+            <span className="hidden text-[9px] font-bold leading-none min-[360px]:block">
               Perfil
             </span>
           </Link>
@@ -208,13 +215,14 @@ export function HudNav({
                 : "text-[var(--muted)] hover:text-[var(--text-2)]"
             )}
           >
-            <Menu className="size-5.5" strokeWidth={2} />
-            <span className="hidden text-[9.5px] font-bold leading-none min-[360px]:block">
+            <Menu className="size-5" strokeWidth={2} />
+            <span className="hidden text-[9px] font-bold leading-none min-[360px]:block">
               Más
             </span>
           </button>
         </div>
       </div>
     </nav>
+    </>
   );
 }

@@ -129,12 +129,12 @@ as $$
 $$;
 
 -- Acepta una invitación: crea/activa el vínculo trainer_clients de forma atómica.
+-- Devuelve jsonb (no returns table): un OUT param llamado `trainer_id`
+-- chocaba con la columna `trainer_id` del INSERT → "column reference
+-- trainer_id is ambiguous". El front solo lee el error, no la data.
+drop function if exists public.accept_trainer_invite(text);
 create or replace function public.accept_trainer_invite(p_code text)
-returns table (
-  trainer_id uuid,
-  trainer_name text,
-  status text
-)
+returns jsonb
 language plpgsql
 security definer
 set search_path = public
@@ -148,8 +148,8 @@ begin
   end if;
 
   select * into v_inv
-  from public.trainer_invites
-  where code = upper(trim(p_code)) and not revoked
+  from public.trainer_invites i
+  where i.code = upper(trim(p_code)) and not i.revoked
   for update;
 
   if not found then
@@ -165,19 +165,24 @@ begin
     raise exception 'No podés aceptar tu propia invitación';
   end if;
 
-  insert into public.trainer_clients (trainer_id, athlete_id, status)
-  values (v_inv.trainer_id, v_uid, 'active')
-  on conflict (trainer_id, athlete_id)
-  do update set status = 'active';
+  insert into public.trainer_clients as tc (trainer_id, athlete_id, status)
+    values (v_inv.trainer_id, v_uid, 'active')
+    on conflict (tc.trainer_id, tc.athlete_id)
+    do update set status = 'active';
 
-  update public.trainer_invites
-  set uses = uses + 1
-  where id = v_inv.id;
+  update public.trainer_invites i2
+    set uses = i2.uses + 1
+    where i2.id = v_inv.id;
 
-  return query
-    select v_inv.trainer_id, p.display_name, 'active'::text
+  return (
+    select jsonb_build_object(
+      'trainer_id', v_inv.trainer_id,
+      'trainer_name', p.display_name,
+      'status', 'active'
+    )
     from public.profiles p
-    where p.id = v_inv.trainer_id;
+    where p.id = v_inv.trainer_id
+  );
 end;
 $$;
 
