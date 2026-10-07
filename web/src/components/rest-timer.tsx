@@ -3,7 +3,7 @@
 // y muestra una barra inferior solo en la ruta de entrenamiento.
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Minus, Plus, Play, Square } from "lucide-react";
 import { useWorkoutStore } from "@/lib/workout-store";
@@ -102,14 +102,22 @@ export function RestTimer() {
 
   const done = restEndsAt !== null && now >= restEndsAt;
 
+  // true si vimos un descanso aún NO vencido: permite distinguir
+  // "terminó ahora" (alarma) de "recarga con restEndsAt viejo" (silencio).
+  const seenFresh = useRef(false);
+  useEffect(() => {
+    if (restEndsAt !== null && !done) seenFresh.current = true;
+  }, [done, restEndsAt]);
+
   // Al terminar dispara alarma y vibración; en caso contrario las corta.
   useEffect(() => {
     if (done && restEndsAt !== null) {
-      // Ignorar rests ya expirados al montar (ej. recarga con restEndsAt viejo)
-      if (restEndsAt <= Date.now()) {
+      if (!seenFresh.current) {
+        // Se montó con un descanso ya vencido (p.ej. recarga) → cortar sin alarma.
         stopRest();
         return;
       }
+      seenFresh.current = false;
       startAlarmLoop();
       navigator.vibrate?.([400, 150, 400, 150, 400]);
     } else {

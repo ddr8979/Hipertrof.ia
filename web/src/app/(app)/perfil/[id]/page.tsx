@@ -386,7 +386,7 @@ export default function PublicProfilePage() {
                       {s.text}
                     </span>
                   ) : (
-                    <span key={i} className="text-white">
+                    <span key={i} className="text-[var(--text)]">
                       {s.text}
                     </span>
                   )

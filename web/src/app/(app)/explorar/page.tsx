@@ -34,6 +34,7 @@ import { EmptyState } from "@/components/ui/data";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm";
 import { toast } from "@/components/ui/toast";
 import { useProfile } from "@/components/providers";
 import { cn, vibrate } from "@/lib/utils";
@@ -534,6 +535,8 @@ export default function ExplorarPage() {
   });
 
   // Elimina una publicación propia.
+  const [confirmDelPost, setConfirmDelPost] = useState<string | null>(null);
+
   const deletePost = useMutation({
     mutationFn: async (postId: string) => {
       const supabase = createClient();
@@ -803,7 +806,7 @@ export default function ExplorarPage() {
                       </div>
                       {isMine && (
                         <button
-                          onClick={() => deletePost.mutate(p.id)}
+                          onClick={() => setConfirmDelPost(p.id)}
                           aria-label="Eliminar publicación"
                           className="rounded-lg p-2 text-[var(--muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--danger)]"
                         >
@@ -1445,6 +1448,20 @@ export default function ExplorarPage() {
           </div>
         </Dialog>
       )}
+
+      <ConfirmDialog
+        open={confirmDelPost !== null}
+        onClose={() => setConfirmDelPost(null)}
+        busy={deletePost.isPending}
+        title="Eliminar publicación"
+        message="¿Eliminar esta publicación? Esta acción no se puede deshacer."
+        onConfirm={() => {
+          if (!confirmDelPost) return;
+          const id = confirmDelPost;
+          setConfirmDelPost(null);
+          deletePost.mutate(id);
+        }}
+      />
     </div>
   );
 }

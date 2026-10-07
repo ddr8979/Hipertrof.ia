@@ -16,6 +16,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
+import { Mascot } from "@/components/mascot";
 
 // Esquemas de validación de los campos del formulario.
 const emailSchema = z.string().trim().email("Ingresá un email válido");
@@ -193,7 +194,9 @@ export function AuthCard({
   }
 
   return (
-    <div className="card animate-[fade-up_0.4s_ease] p-6 sm:p-8">
+    <>
+      <Mascot mode={isLogin ? "login" : "registro"} />
+      <div className="card animate-[fade-up_0.4s_ease] p-6 sm:p-8">
       <div className="mb-6 flex items-center gap-3">
         <div className="flex size-11 items-center justify-center rounded-2xl bg-[var(--accent)] text-[var(--accent-ink)]">
           <Dumbbell className="size-6" />
@@ -333,7 +336,8 @@ export function AuthCard({
           {isLogin ? "Registrate" : "Iniciá sesión"}
         </Link>
       </p>
-    </div>
+      </div>
+    </>
   );
 }
 

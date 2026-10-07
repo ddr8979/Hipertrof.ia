@@ -6,15 +6,12 @@
  * La selección se guarda directamente en el campo `plan` del perfil
  * (la pasarela de pago real queda para más adelante).
  */
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { CreditCard, Check, Crown, Star, Zap } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/components/providers";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/toast";
 import { PlanBadge } from "@/components/plan-badge";
 import { PLANS, type Plan } from "@/lib/plans";
+import { ComingSoon } from "@/components/coming-soon";
 import { cn } from "@/lib/utils";
 
 // Ícono asociado a cada plan según su id.
@@ -26,26 +23,7 @@ const PLAN_ICONS: Record<string, typeof Star> = {
 
 export default function FacturacionPage() {
   const profile = useProfile((s) => s.profile);
-  const qc = useQueryClient();
   const current = (profile?.plan as Plan | undefined) ?? "free";
-  const [pending, setPending] = useState<Plan | null>(null);
-
-  // Mutación: actualiza el plan del perfil y refresca la query del perfil.
-  const selectPlan = useMutation({
-    mutationFn: async (plan: Plan) => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("profiles")
-        .update({ plan })
-        .eq("id", profile!.id);
-      if (error) throw new Error(error.message);
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["profile"] });
-      toast("success", "Plan actualizado", "Ya podés usar las funciones de tu plan");
-    },
-    onError: (e) => toast("error", "No se pudo actualizar el plan", e.message),
-  });
 
   return (
     <div className="flex flex-col gap-5">
@@ -61,15 +39,19 @@ export default function FacturacionPage() {
 
       <p className="mx-auto max-w-md text-center text-sm leading-relaxed text-[var(--text-2)]">
         Para registrarte como <strong>personal trainer</strong> y acceder a la gestión de alumnos,
-        necesitás el plan <strong>Plus</strong> (o Deluxe). Elegí tu plan y listo.
+        necesitás el plan <strong>Plus</strong> (o Deluxe).
       </p>
+
+      <ComingSoon
+        title="Pasarela de pago en construcción"
+        description="La facturación con pagos reales viene muy pronto. Por ahora los planes son una vista previa."
+      />
 
       {/* Tarjetas de planes */}
       <div className="grid gap-4 md:grid-cols-3">
         {PLANS.map((p) => {
           const Icon = PLAN_ICONS[p.id];
           const isCurrent = current === p.id;
-          const isPending = pending === p.id;
           return (
             <div
               key={p.id}
@@ -129,25 +111,14 @@ export default function FacturacionPage() {
               <Button
                 variant={isCurrent ? "outline" : "accent"}
                 className="mt-5"
-                disabled={isCurrent || selectPlan.isPending}
-                onClick={() => {
-                  setPending(p.id);
-                  selectPlan.mutate(p.id, {
-                    onSettled: () => setPending(null),
-                  });
-                }}
+                disabled
               >
-                {isPending ? "Procesando…" : isCurrent ? "Plan actual" : `Elegir ${p.name}`}
+                {isCurrent ? "Plan actual" : "Próximamente"}
               </Button>
             </div>
           );
         })}
       </div>
-
-      <p className="mx-auto max-w-md text-center text-xs text-[var(--muted)]">
-        Por ahora la selección de plan se registra directo en tu perfil. La pasarela de pago real se
-        conecta cuando quieras activarla.
-      </p>
     </div>
   );
 }

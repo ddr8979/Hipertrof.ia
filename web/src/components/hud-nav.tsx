@@ -87,11 +87,15 @@ export function HudNav({
   moreActive,
   onMore,
   unread = 0,
+  avatarUrl,
+  avatarName,
 }: {
   /** Resalta el botón "Más" si la ruta activa está en el sheet secundario. */
   moreActive: boolean;
   onMore: () => void;
   unread?: number;
+  avatarUrl?: string | null;
+  avatarName?: string | null;
 }) {
   const pathname = usePathname();
   const restActive = useWorkoutStore((s) => s.restEndsAt !== null);
@@ -165,6 +169,34 @@ export function HudNav({
               badge={t.href === "/mensajes" ? unread : undefined}
             />
           ))}
+          <Link
+            href="/perfil"
+            aria-label="Perfil"
+            aria-current={isActive(pathname, "/perfil") ? "page" : undefined}
+            className={cn(
+              "relative flex flex-col items-center justify-center gap-0.5 rounded-full px-2.5 py-1.5 transition-transform duration-150 active:scale-90",
+              isActive(pathname, "/perfil")
+                ? "bg-[var(--accent-soft)] text-[var(--accent)]"
+                : "text-[var(--muted)] hover:text-[var(--text-2)]"
+            )}
+          >
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarUrl}
+                alt=""
+                className="size-5.5 rounded-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <span className="flex size-5.5 items-center justify-center rounded-full bg-[var(--accent-soft)] font-display text-[11px] font-bold text-[var(--accent)]">
+                {(avatarName ?? "U").trim().charAt(0).toUpperCase()}
+              </span>
+            )}
+            <span className="hidden text-[9.5px] font-bold leading-none min-[360px]:block">
+              Perfil
+            </span>
+          </Link>
           <button
             type="button"
             onClick={onMore}

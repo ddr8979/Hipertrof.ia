@@ -358,7 +358,7 @@ export default function PerfilPage() {
                       {s.text}
                     </span>
                   ) : (
-                    <span key={i} className="text-white">
+                    <span key={i} className="text-[var(--text)]">
                       {s.text}
                     </span>
                   )
@@ -679,7 +679,7 @@ export default function PerfilPage() {
                   >
                     <span
                       className={cn(
-                        "absolute top-0.5 size-5 rounded-full bg-white transition-all",
+                        "absolute top-0.5 size-5 rounded-full bg-[var(--surface)] transition-all",
                         t.key ? "left-[22px]" : "left-0.5"
                       )}
                     />

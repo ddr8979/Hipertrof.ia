@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/data";
 import { Button } from "@/components/ui/button";
+import { ComingSoon } from "@/components/coming-soon";
 import { toast } from "@/components/ui/toast";
 import { useProfile } from "@/components/providers";
 
@@ -83,6 +84,11 @@ export default function MarketplacePage() {
         <p className="mt-1 text-sm text-[var(--text-2)]">Cursos y programas de entrenadores verificados</p>
       </div>
 
+      <ComingSoon
+        title="Marketplace en construcción"
+        description="Inscripciones, pagos y detalle de cursos llegan pronto. Mientras tanto, mirá lo que se viene."
+      />
+
       {(courses ?? []).length === 0 ? (
         <EmptyState
           icon={<Store className="size-6" />}
@@ -129,8 +135,8 @@ export default function MarketplacePage() {
                       <Check className="size-4" /> Inscripto
                     </span>
                   ) : (
-                    <Button variant="accent" size="sm" onClick={() => enroll.mutate(c.id)} disabled={enroll.isPending}>
-                      Inscribirme
+                    <Button variant="accent" size="sm" disabled>
+                      Próximamente
                     </Button>
                   )}
                 </div>

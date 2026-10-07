@@ -216,6 +216,7 @@ export default function EntrenadoresPage() {
         .from("profiles")
         .select("id, display_name, username, avatar_url, streak_count, is_public_profile")
         .or(`display_name.ilike.%${q}%,username.ilike.%${q}%`)
+        .eq("is_public_profile", true)
         .limit(15);
       return (data ?? []) as {
         id: string;
@@ -243,6 +244,7 @@ export default function EntrenadoresPage() {
         .from("assigned_routines")
         .select("id, active, routine:routines(id, name)")
         .eq("athlete_id", manageFor)
+        .eq("trainer_id", profile!.id)
         .order("created_at", { ascending: false });
       return (data ?? []) as unknown as AssignedRow[];
     },
@@ -259,6 +261,7 @@ export default function EntrenadoresPage() {
         .from("assigned_recipes")
         .select("id, active, recipe:recipes(id, name, calories, protein_g)")
         .eq("athlete_id", manageFor)
+        .eq("trainer_id", profile!.id)
         .order("created_at", { ascending: false });
       return (data ?? []) as unknown as AssignedRecipeRow[];
     },
@@ -1359,9 +1362,10 @@ function RoutineEditor({
             <div className="mt-2 grid grid-cols-3 gap-2">
               {(["sets", "reps", "rest"] as const).map((k) => {
                 const val = k === "sets" ? ex.target_sets : k === "reps" ? ex.target_reps : ex.rest_sec;
+                const field = k === "sets" ? "target_sets" : k === "reps" ? "target_reps" : "rest_sec";
                 const set = (v: number) =>
                   setDraft((prev) =>
-                    prev.map((p) => (p.id === ex.id ? { ...p, [k]: v } : p))
+                    prev.map((p) => (p.id === ex.id ? { ...p, [field]: v } : p))
                   );
                 return (
                   <label key={k} className="flex flex-col gap-1">

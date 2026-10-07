@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEven
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Star, Send, Trash2, ImagePlus, X, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Star, Send, Lock, ImagePlus, X, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";
@@ -504,7 +504,7 @@ export default function ChatPage() {
               aria-label="Perfil privado"
               className="rounded-xl p-2 text-[var(--muted)]"
             >
-              <Trash2 className="size-4" />
+              <Lock className="size-4" />
             </button>
           )}
           <ThemeToggle variant="compact" />

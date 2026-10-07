@@ -609,67 +609,36 @@ const { data: lastW } = await supabase
         Math.floor((Date.now() - new Date(draft.startedAt).getTime()) / 1000)
       );
 
-      // Idempotent: usar draft.id como workout_id (generado al startWorkout)
-      const workoutId = draft.id;
-
-      // 1. Insert workout con ID determinístico
-      const { error: we } = await supabase.from("workouts").upsert({
-        id: workoutId,
-        user_id: user.id,
+      // Persistencia atómica: un único RPC persiste workout + ejercicios + sets
+      // en una transacción, evitando huérfanos/duplicados de la vía cliente
+      // multi-roundtrip. `user_id` lo setea el servidor con auth.uid() (no se
+      // confía del cliente).
+      const payload = {
+        id: draft.id,
         name: draft.name,
-        notes: draft.notes || null,
+        notes: draft.notes,
         source_routine_id: draft.sourceRoutineId,
         started_at: draft.startedAt,
         ended_at: endedAt,
         duration_sec: durationSec,
-      });
-      if (we) throw we;
-
-      // 2. Insert workout_exercises uno por uno para mapear IDs correctamente
-      const wEId = new Map<string, string>();
-      for (const e of draft.exercises) {
-        const { data: wE, error: we2 } = await supabase
-          .from("workout_exercises")
-          .insert({
-            workout_id: workoutId,
-            exercise_id: e.exerciseId,
-            name: e.name,
-            order_index: draft.exercises.indexOf(e),
-            notes: e.notes || null,
-          })
-          .select("id")
-          .single();
-        if (we2 || !wE) throw we2 ?? new Error("No se creó workout_exercise");
-        wEId.set(e.key, wE.id);
-      }
-
-      // 3. Insert sets en batch (ya tenemos los workout_exercise_id correctos)
-      const sets: {
-        workout_exercise_id: string;
-        set_index: number;
-        type: string;
-        weight_kg: number;
-        reps: number;
-        rpe: number | null;
-        completed: boolean;
-      }[] = [];
-      draft.exercises.forEach((e) =>
-        e.sets.forEach((s, i) => {
-          const weId = wEId.get(e.key);
-          if (!weId) throw new Error("Missing workout_exercise_id for " + e.key);
-          sets.push({
-            workout_exercise_id: weId,
-            set_index: i,
+        exercises: draft.exercises.map((e) => ({
+          exercise_id: e.exerciseId,
+          name: e.name,
+          notes: e.notes,
+          sets: e.sets.map((s) => ({
             type: s.type,
             weight_kg: s.weight,
             reps: s.reps,
             rpe: s.rpe,
             completed: s.completed,
-          });
-        })
-      );
-      const { error: we3 } = await supabase.from("workout_sets").insert(sets);
-      if (we3) throw we3;
+          })),
+        })),
+      };
+
+      const { error: errSave } = await supabase.rpc("finish_workout", {
+        p_workout: payload,
+      });
+      if (errSave) throw errSave;
 
       const { data: unlocked } = await supabase.rpc("unlock_achievements");
       discardWorkout();

@@ -270,8 +270,7 @@ de uso anómalo de la API.
 - [ ] Suite de tests de RLS (tabla por tabla) que corra en CI contra staging.
 - [ ] `enable row level security` por defecto + `revoke` de `anon` en tablas no
       públicas.
-- [ ] Transacciones (RPC `SECURITY DEFINER`) para `save_routine` y
-      `finish_workout` (evita huérfanos/duplicados y race conditions).
+- [x] Transacciones (RPC `SECURITY DEFINER`) para `finish_workout` (💥 wiring en `/entrenar`) + `save_routine` (RPC lista; wiring en `/rutinas` pendiente).
 - [ ] Backups automáticos + prueba de restauración documentada (DR).
 - [ ] Audit log de acciones privilegiadas.
 

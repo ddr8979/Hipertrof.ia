@@ -464,7 +464,7 @@ export default function OnboardingPage() {
                       style={{ background: c }}
                     >
                       {form.accent === c && (
-                        <Check className="mx-auto size-5 text-black" />
+                        <Check className="mx-auto size-5 text-[var(--accent-ink)]" />
                       )}
                     </button>
                   ))}

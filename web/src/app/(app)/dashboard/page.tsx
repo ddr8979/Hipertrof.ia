@@ -21,13 +21,13 @@ import {
   Calculator,
   User,
 } from "lucide-react";
-import { SpotifyIcon } from "@/components/brand-icons";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/components/providers";
 import { Button } from "@/components/ui/button";
+import { ComingSoon } from "@/components/coming-soon";
 import { Skeleton, Avatar } from "@/components/ui/primitives";
 import { EmptyState, StatCard } from "@/components/ui/data";
-import { cn, formatDate, formatDuration, splitEmojiRuns } from "@/lib/utils";
+import { cn, estimate1RM, formatDate, formatDuration, splitEmojiRuns } from "@/lib/utils";
 
 /** Dashboard principal del atleta: resumen de actividad y accesos rápidos. */
 export default function DashboardPage() {
@@ -67,7 +67,25 @@ export default function DashboardPage() {
         .order("created_at", { ascending: false })
         .limit(4);
 
+      // Sesiones recientes para estimar el 1RM máximo (sin calentamientos)
+      const { data: rmData } = await supabase
+        .from("workouts")
+        .select("workout_exercises(workout_sets(type, weight_kg, reps, completed))")
+        .order("started_at", { ascending: false })
+        .limit(60);
+
+      let max1rm = 0;
+      for (const w of rmData ?? []) {
+        for (const we of w.workout_exercises ?? []) {
+          for (const st of we.workout_sets ?? []) {
+            if (!st.completed || st.type === "W" || st.reps <= 0 || st.weight_kg <= 0) continue;
+            max1rm = Math.max(max1rm, estimate1RM(st.weight_kg, st.reps));
+          }
+        }
+      }
+
       return {
+        max1rm: Math.round(max1rm),
         workouts: workouts ?? [],
         routines: routines ?? [],
         dates: streakData ?? [],
@@ -199,7 +217,7 @@ export default function DashboardPage() {
         />
         <StatCard
           label="1RM"
-          value="—"
+          value={data?.max1rm ? `${data.max1rm} kg` : "—"}
           sub="máximo estimado"
           icon={<Trophy className="size-4" />}
         />
@@ -296,190 +314,14 @@ export default function DashboardPage() {
 }
 
 /** Widget que muestra lo que suena en Spotify y permite vincular/ocultar la cuenta. */
+
+/** Widget de Spotify — hoy muestra el cartel de "próximamente". */
 function SpotifyWidget() {
-  // Consulta el estado de Spotify del usuario autenticado. Si no está vinculado
-  // devuelve null; si está conectado se refresca cada 30 s para reflejar lo que sonaba.
-  const { data: spotify, refetch } = useQuery({
-    queryKey: ["spotify"],
-    queryFn: async () => {
-      const r = await fetch("/api/spotify/data");
-      if (r.status === 401) return null;
-      if (!r.ok) throw new Error("spotify");
-      return (await r.json()) as {
-        connected: boolean;
-        hidden?: boolean;
-        premiumRequired?: boolean;
-        playing?: { name: string; artists: string; cover: string | null; is_playing: boolean; is_recent?: boolean } | null;
-      };
-    },
-    // Solo hace polling si la cuenta está conectada a Spotify.
-    refetchInterval: (query) => {
-      const d = query.state.data as { connected?: boolean } | null | undefined;
-      return d?.connected ? 30000 : false;
-    },
-  });
-
-  // Caso: conectado pero la cuenta de Spotify no tiene Premium (no se puede ver reproducción).
-  if (spotify?.connected && spotify?.premiumRequired && !spotify?.hidden) {
-    return (
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
-            <SpotifyIcon className="size-5 text-[#1DB954]" />
-            Escuchando ahora
-          </h3>
-          <button
-            onClick={() => refetch()}
-            className="text-xs font-semibold text-[var(--muted)] hover:text-[var(--text)]"
-          >
-            Actualizar
-          </button>
-        </div>
-        <div className="flex items-center gap-3.5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[#1DB954]">
-            <SpotifyIcon className="size-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold">Spotify requiere Premium</p>
-            <p className="text-xs leading-relaxed text-[var(--muted)]">
-              La cuenta dueña de la app de Spotify necesita Premium para ver lo que se reproduce.
-              Puede tardar unas horas tras activarlo.
-            </p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // Caso: conectado y visible -> muestra la canción actual o la última reproducida.
-  if (spotify?.connected && !spotify?.hidden) {
-    // Se comparte salvo que haya una pausa explícita.
-    const share = !spotify.playing || spotify.playing.is_playing;
-    return (
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
-            <SpotifyIcon className="size-5 text-[#1DB954]" />
-            Escuchando ahora
-          </h3>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                // Alterna el estado de visibilidad/compartido de Spotify vía API.
-                void (async () => {
-                  const r = await fetch("/api/spotify/share", { method: "POST" });
-                  if (r.ok) refetch();
-                })();
-              }}
-              className="flex items-center gap-1.5 text-xs font-semibold text-[var(--muted)] hover:text-[var(--text)]"
-            >
-              <span className={cn("size-2 rounded-full", share ? "bg-[#1DB954]" : "bg-[var(--muted)]")} />
-              {share ? "Aprobado" : "Oculto"}
-            </button>
-            <button
-              onClick={() => refetch()}
-              className="text-xs font-semibold text-[var(--muted)] hover:text-[var(--text)]"
-            >
-              Actualizar
-            </button>
-          </div>
-        </div>
-        <div className="flex items-center gap-3.5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-          {spotify.playing?.cover ? (
-            <img
-              src={spotify.playing.cover}
-              referrerPolicy="no-referrer"
-              alt=""
-              className="size-12 shrink-0 rounded-xl object-cover"
-            />
-          ) : (
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[#1DB954]">
-              <SpotifyIcon className="size-5" />
-            </span>
-          )}
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold">
-              {spotify.playing?.name ?? "Nada sonando ahora"}
-            </p>
-            {spotify.playing ? (
-              <p className="truncate text-xs text-[var(--muted)]">
-                {spotify.playing.artists}
-                {spotify.playing.is_recent ? " · último" : spotify.playing.is_playing ? "" : " · pausado"}
-              </p>
-            ) : (
-              <p className="text-xs text-[var(--muted)]">Sin reproducción reciente</p>
-            )}
-          </div>
-          {spotify.playing?.is_playing ? (
-            <span className="flex items-center gap-1 text-xs font-semibold text-[#1DB954]">
-              <SpotifyIcon className="size-3.5" />
-              Sonando
-            </span>
-          ) : spotify.playing?.is_recent ? (
-            <span className="flex items-center gap-1 text-xs font-semibold text-[var(--muted)]">
-              <SpotifyIcon className="size-3.5" />
-              Último
-            </span>
-          ) : null}
-        </div>
-      </section>
-    );
-  }
-
-  // Caso: no vinculado (null) -> invita a conectar la cuenta de Spotify.
-  if (spotify === null) {
-    return (
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
-            <SpotifyIcon className="size-5 text-[#1DB954]" />
-            Spotify
-          </h3>
-          <a
-            href="/api/spotify/auth"
-            className="flex items-center gap-0.5 text-sm font-semibold text-[#1DB954] hover:underline"
-          >
-            Vincular <ChevronRight className="size-4" />
-          </a>
-        </div>
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-          <div className="flex items-center gap-3">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-[#1DB954]/15 text-[#1DB954]">
-              <SpotifyIcon className="size-5" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold">Conectá tu Spotify</p>
-              <p className="text-xs text-[var(--muted)]">
-                Mostrá lo que escuchás mientras entrenás
-              </p>
-            </div>
-          </div>
-          <a href="/api/spotify/auth">
-            <Button variant="outline" size="sm">
-              Conectar
-            </Button>
-          </a>
-        </div>
-      </section>
-    );
-  }
-
-  // Fallback: conectado pero oculto o sin datos de reproducción.
   return (
-    <section>
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="flex items-center gap-2 font-display text-lg font-bold tracking-tight">
-          <SpotifyIcon className="size-5 text-[#1DB954]" />
-          Spotify
-        </h3>
-        <span className="text-xs font-semibold text-[var(--muted)]">Conectado</span>
-      </div>
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-        <p className="text-sm font-semibold">Nada reproduciéndose ahora</p>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          Refrescar
-        </Button>
-      </div>
-    </section>
+    <ComingSoon
+      compact
+      title="Spotify en el entreno"
+      description="Próximamente: lo que estás escuchando, directo en tu dashboard."
+    />
   );
 }

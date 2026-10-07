@@ -129,6 +129,39 @@
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
   }
+
+  /* --- Cartel "Próximamente" --- */
+  @keyframes cs-curl {
+    0%, 100% { transform: rotate(-15deg); }
+    50% { transform: rotate(15deg); }
+  }
+  @keyframes cs-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  @keyframes cs-spark {
+    0%, 100% { opacity: 0.25; transform: scale(0.7); }
+    50% { opacity: 1; transform: scale(1.15); }
+  }
+  @keyframes cs-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(0.65); }
+  }
+
+  /* --- Mascota de login/registro --- */
+  @keyframes hi-idle {
+    0%, 100% { transform: translateY(0) scale(1, 1); }
+    30% { transform: translateY(3px) scale(1.06, 0.94); }
+    55% { transform: translateY(-5px) scale(0.96, 1.05); }
+    75% { transform: translateY(-1px) scale(1.02, 0.99); }
+  }
+  @keyframes hi-blink {
+    0%, 86% { transform: scaleY(0); }
+    89%, 92% { transform: scaleY(1); }
+    94%, 95% { transform: scaleY(0); }
+    97%, 99% { transform: scaleY(1); }
+    100% { transform: scaleY(0); }
+  }
 }
 
 html {

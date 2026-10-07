@@ -35,6 +35,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/data";
 import { Dialog } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
@@ -201,6 +202,13 @@ export default function NutricionPage() {
       return (data ?? []) as Recipe[];
     },
   });
+
+  // Confirmación genérica de borrado (receta o día completo).
+  const [confirmDel, setConfirmDel] = useState<{
+    kind: "recipe" | "day";
+    id: string;
+    label: string;
+  } | null>(null);
 
   // Elimina una receta propia.
   const deleteRecipe = useMutation({
@@ -683,14 +691,18 @@ export default function NutricionPage() {
                       type="button"
                       onClick={(ev) => {
                         ev.stopPropagation();
-                        deleteDay.mutate(e.entry_date);
+                        setConfirmDel({
+                          kind: "day",
+                          id: e.entry_date,
+                          label: e.name ?? weekdayLabel(e.entry_date),
+                        });
                       }}
                       disabled={deleteDay.isPending}
                       aria-label={`Borrar ${e.name ?? weekdayLabel(e.entry_date)}`}
                       className={cn(
                         "rounded-lg p-1.5 transition-colors",
                         isSel
-                          ? "text-[var(--accent-ink)]/60 hover:bg-black/10 hover:text-[var(--accent-ink)]"
+                          ? "text-[var(--accent-ink)]/60 hover:bg-[var(--text)]/10 hover:text-[var(--accent-ink)]"
                           : "text-[var(--muted)] hover:bg-[var(--danger)]/10 hover:text-[var(--danger)]"
                       )}
                     >
@@ -995,7 +1007,7 @@ export default function NutricionPage() {
                   <Share2 className="size-4" />
                 </Link>
                 <button
-                  onClick={() => deleteRecipe.mutate(r.id)}
+                  onClick={() => setConfirmDel({ kind: "recipe", id: r.id, label: r.name })}
                   aria-label="Eliminar receta"
                   className="rounded-lg p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--danger)]"
                 >
@@ -1380,6 +1392,35 @@ export default function NutricionPage() {
           onSave={(m) => addMeal.mutate(m, { onSuccess: () => setManualOpen(false) })}
         />
       </Dialog>
+
+      <ConfirmDialog
+        open={confirmDel !== null}
+        onClose={() => setConfirmDel(null)}
+        busy={deleteRecipe.isPending || deleteDay.isPending}
+        title={confirmDel?.kind === "day" ? "Eliminar día" : "Eliminar receta"}
+        message={
+          confirmDel?.kind === "day" ? (
+            <>
+              ¿Eliminar todos los registros de <strong>&laquo;{confirmDel.label}&raquo;</strong>?
+              Esta acción no se puede deshacer.
+            </>
+          ) : confirmDel ? (
+            <>
+              ¿Eliminar <strong>&laquo;{confirmDel.label}&raquo;</strong>?
+              Esta acción no se puede deshacer.
+            </>
+          ) : (
+            ""
+          )
+        }
+        onConfirm={() => {
+          if (!confirmDel) return;
+          const { kind, id } = confirmDel;
+          setConfirmDel(null);
+          if (kind === "day") deleteDay.mutate(id);
+          else deleteRecipe.mutate(id);
+        }}
+      />
 
       {/* Form de receta propia */}
       <MyRecipeForm
