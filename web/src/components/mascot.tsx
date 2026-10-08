@@ -1,6 +1,6 @@
-// Mascota original de Hipertrof.ia para login/registro.
-// Estilo cartoon "rubber hose": parpadeo, squash & stretch y globos de diálogo
-// con frases que rotan. SVG 100% original (sin assets externos ni licencias).
+// Mascota de Hipertrof.ia: mancuerna elegante y animada.
+// Diseño premium, minimalista, con personalidad — no un personaje cartoon.
+// SVG 100% original, animado con CSS global, sin assets externos.
 "use client";
 
 import { useEffect, useState } from "react";
@@ -33,108 +33,114 @@ export function Mascot({ mode }: { mode: "login" | "registro" }) {
   }, [phrases.length]);
 
   return (
-    <div className="mb-4 flex items-end justify-center gap-1.5" aria-hidden="true">
-      <MascotArt />
+    <div className="mb-4 flex flex-col items-center gap-2" aria-hidden="true">
+      <DumbbellMascot />
       <div
         key={i}
-        className="relative mb-7 max-w-[13.5rem] animate-[fade-up_0.45s_cubic-bezier(0.16,1,0.3,1)_both] rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-3.5 py-2.5 text-left text-sm font-semibold leading-snug text-[var(--text-2)] shadow-[var(--shadow-md)]"
+        className="relative max-w-[14rem] animate-fade-up rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-center text-sm font-semibold leading-snug text-[var(--text-2)] shadow-[var(--shadow-md)]"
       >
-        <span className="absolute -left-1 bottom-4 size-3 rotate-45 rounded-[2px] border-b border-l border-[var(--border)] bg-[var(--surface)]" />
+        <span className="absolute left-1/2 bottom-[-6px] size-3 -translate-x-1/2 rotate-45 border-b border-r border-[var(--border)] bg-[var(--surface)]" />
         {phrases[i]}
       </div>
     </div>
   );
 }
 
-/** Ilustración animada de la mascota (squash & stretch + parpadeo). */
-function MascotArt() {
-  const eye = (cx: number) => (
-    <g key={cx}>
-      {/* Blanco del ojo */}
-      <ellipse cx={cx} cy={58} rx={8} ry={11} fill="#ffffff" />
-      {/* Pupila con brillo */}
-      <ellipse cx={cx + 1.5} cy={61} rx={3.6} ry={4.8} fill="#161a12" />
-      <circle cx={cx - 1} cy={58.5} r={1.6} fill="#ffffff" />
-      {/* Párpado (parpadeo): cubre el interior, el contorno va encima */}
-      <ellipse
-        cx={cx}
-        cy={58}
-        rx={8}
-        ry={11}
-        fill="var(--accent)"
-        style={{
-          transformBox: "fill-box",
-          transformOrigin: "center top",
-          animation: "hi-blink 4.6s ease-in-out infinite",
-        }}
-      />
-      {/* Contorno del ojo */}
-      <ellipse cx={cx} cy={58} rx={8} ry={11} fill="none" stroke="#161a12" strokeWidth={2} />
-    </g>
-  );
-
+/** Mancuerna animada: flotación sutil, pulso de brillo, rotación ocasional. */
+function DumbbellMascot() {
   return (
-    <div className="size-24 shrink-0 animate-[hi-idle_2.8s_ease-in-out_infinite] sm:size-28">
-      <svg viewBox="0 0 124 130" className="size-full" role="img">
-        <title>Hipi, la mascota de Hipertrof.ia</title>
+    <div className="relative size-28 sm:size-32 animate-db-float">
+      <svg viewBox="0 0 160 100" className="size-full" role="img" aria-label="Mancuerna de Hipertrof.ia">
+        <title>Mancuerna de Hipertrof.ia</title>
 
-        {/* Sombra */}
-        <ellipse cx="60" cy="120" rx="24" ry="5" fill="var(--surface-3)" />
+        {/* Sombra proyectada en el suelo */}
+        <ellipse cx="80" cy="94" rx="38" ry="6" fill="var(--surface-3)" opacity="0.6" />
 
-        {/* Brazo izquierdo (manguera de goma con guante) */}
-        <path
-          d="M30 74 C20 78 14 86 13 93"
-          fill="none"
-          stroke="#161a12"
-          strokeWidth={5}
-          strokeLinecap="round"
-        />
-        <circle cx="11" cy="98" r="7.5" fill="#fff" stroke="#161a12" strokeWidth={2} />
-        <path d="M7 96 q4 3 8 1" fill="none" stroke="#161a12" strokeWidth={1.4} strokeLinecap="round" />
-
-        {/* Brazo derecho: flex + saludo periódico (gira desde el hombro) */}
-        <g
-          className="animate-[hi-wave_4.6s_ease-in-out_infinite]"
-          style={{ transformOrigin: "90px 70px" }}
-        >
-          <path
-            d="M90 70 C100 66 106 58 106 50"
-            fill="none"
-            stroke="#161a12"
-            strokeWidth={5}
-            strokeLinecap="round"
-          />
-          <circle cx="107" cy="45" r="7.5" fill="#fff" stroke="#161a12" strokeWidth={2} />
-          <path d="M103 43 q4 3 8 1" fill="none" stroke="#161a12" strokeWidth={1.4} strokeLinecap="round" />
-        </g>
-        {/* Chispas del flex */}
-        <g className="animate-[cs-spark_1.8s_ease-in-out_infinite]" style={{ transformOrigin: "116px 30px" }}>
-          <path d="M116 24l1.5 4.5L122 30l-4.5 1.5L116 36l-1.5-4.5L110 30l4.5-1.5z" fill="var(--accent)" />
-        </g>
-        <g className="animate-[cs-spark_1.8s_ease-in-out_infinite]" style={{ transformOrigin: "96px 32px", animationDelay: "0.7s" }}>
-          <path d="M96 28l1.1 3.2L100.3 32.3l-3.2 1.1L96 36.6l-1.1-3.2L91.7 32.3l3.2-1.1z" fill="var(--text-2)" />
+        {/* Disco izquierdo */}
+        <g className="animate-db-plate-glow">
+          {/* Disco exterior */}
+          <ellipse cx="32" cy="50" rx="22" ry="28" fill="var(--accent)" />
+          {/* Bisel interior */}
+          <ellipse cx="32" cy="48" rx="18" ry="24" fill="color-mix(in srgb, var(--accent) 75%, white)" />
+          {/* Agujero central */}
+          <ellipse cx="32" cy="50" rx="8" ry="10" fill="var(--surface)" />
+          {/* Borde del agujero */}
+          <ellipse cx="32" cy="50" rx="8" ry="10" fill="none" stroke="var(--border)" strokeWidth="1.5" />
+          {/* Reflejo superior */}
+          <ellipse cx="32" cy="36" rx="12" ry="6" fill="white" opacity="0.15" />
         </g>
 
-        {/* Cuerpo (huevo) */}
-        <path
-          d="M60 26 C80 26 96 44 96 68 C96 92 80 106 60 106 C40 106 24 92 24 68 C24 44 40 26 60 26 Z"
-          fill="var(--accent)"
-        />
-        {/* Cara */}
-        <ellipse cx="60" cy="66" rx="27" ry="28" fill="#f6f8f2" />
-        {/* Rubor */}
-        <ellipse cx="37" cy="76" rx="5.5" ry="3.5" fill="#ff9aa8" opacity="0.5" />
-        <ellipse cx="83" cy="76" rx="5.5" ry="3.5" fill="#ff9aa8" opacity="0.5" />
+        {/* Barra central (manija) */}
+        <g>
+          {/* Cuerpo de la barra */}
+          <rect x="54" y="38" width="52" height="24" rx="12" fill="var(--text)" opacity="0.9" />
+          {/* Brillo superior de la barra */}
+          <rect x="54" y="38" width="52" height="10" rx="12" fill="white" opacity="0.08" />
+          {/* Knurling (rayado de agarre) sugerido */}
+          <g stroke="white" strokeWidth="0.8" opacity="0.12">
+            <line x1="58" y1="42" x2="102" y2="42" />
+            <line x1="58" y1="48" x2="102" y2="48" />
+            <line x1="58" y1="54" x2="102" y2="54" />
+          </g>
+          {/* Anillo decorativo central */}
+          <circle cx="80" cy="50" r="8" fill="none" stroke="var(--accent)" strokeWidth="2" opacity="0.6" />
+        </g>
 
-        {/* Ojos */}
-        {eye(51)}
-        {eye(71)}
+        {/* Disco derecho */}
+        <g className="animate-db-plate-glow" style={{ animationDelay: "0.3s" }}>
+          {/* Disco exterior */}
+          <ellipse cx="128" cy="50" rx="22" ry="28" fill="var(--accent)" />
+          {/* Bisel interior */}
+          <ellipse cx="128" cy="48" rx="18" ry="24" fill="color-mix(in srgb, var(--accent) 75%, white)" />
+          {/* Agujero central */}
+          <ellipse cx="128" cy="50" rx="8" ry="10" fill="var(--surface)" />
+          {/* Borde del agujero */}
+          <ellipse cx="128" cy="50" rx="8" ry="10" fill="none" stroke="var(--border)" strokeWidth="1.5" />
+          {/* Reflejo superior */}
+          <ellipse cx="128" cy="36" rx="12" ry="6" fill="white" opacity="0.15" />
+        </g>
 
-        {/* Sonrisa abierta estilo cartoon */}
-        <path d="M45 78 Q60 97 75 78 Z" fill="#241512" />
-        <ellipse cx="60" cy="90" rx="7" ry="4" fill="#ff8d9c" />
-        <path d="M45 78 L75 78 L75 81 Q60 84.5 45 81 Z" fill="#ffffff" />
+        {/* Partículas de energía alrededor */}
+        <g className="db-sparkle-container" style={{ transformOrigin: "80px 50px" }}>
+          <circle className="animate-db-sparkle" cx="15" cy="20" r="2.5" fill="var(--accent)" />
+          <circle className="animate-db-sparkle" cx="145" cy="18" r="2" fill="var(--accent)" style={{ animationDelay: "0.4s" }} />
+          <circle className="animate-db-sparkle" cx="80" cy="10" r="3" fill="var(--accent)" style={{ animationDelay: "0.8s" }} />
+          <circle className="animate-db-sparkle" cx="25" cy="75" r="2" fill="var(--warn)" style={{ animationDelay: "1.2s" }} />
+          <circle className="animate-db-sparkle" cx="135" cy="78" r="2.5" fill="var(--warn)" style={{ animationDelay: "1.6s" }} />
+        </g>
       </svg>
     </div>
+  );
+}
+
+// Variante simplificada para usar en otros lugares (header, empty states, etc.)
+export function DumbbellIcon({ size = 40, className = "", animated = false }: { size?: number; className?: string; animated?: boolean }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 160 100"
+      className={className + (animated ? " animate-db-float" : "")}
+      role="img"
+      aria-hidden="true"
+    >
+      <title>Mancuerna</title>
+      {/* Sombra */}
+      <ellipse cx="80" cy="94" rx="38" ry="6" fill="var(--surface-3)" opacity="0.5" />
+      {/* Disco izquierdo */}
+      <ellipse cx="32" cy="50" rx="22" ry="28" fill="var(--accent)" />
+      <ellipse cx="32" cy="48" rx="18" ry="24" fill="color-mix(in srgb, var(--accent) 75%, white)" />
+      <ellipse cx="32" cy="50" rx="8" ry="10" fill="var(--surface)" />
+      <ellipse cx="32" cy="50" rx="8" ry="10" fill="none" stroke="var(--border)" strokeWidth="1.5" />
+      {/* Barra */}
+      <rect x="54" y="38" width="52" height="24" rx="12" fill="var(--text)" opacity="0.9" />
+      <rect x="54" y="38" width="52" height="10" rx="12" fill="white" opacity="0.08" />
+      <circle cx="80" cy="50" r="8" fill="none" stroke="var(--accent)" strokeWidth="2" opacity="0.5" />
+      {/* Disco derecho */}
+      <ellipse cx="128" cy="50" rx="22" ry="28" fill="var(--accent)" />
+      <ellipse cx="128" cy="48" rx="18" ry="24" fill="color-mix(in srgb, var(--accent) 75%, white)" />
+      <ellipse cx="128" cy="50" rx="8" ry="10" fill="var(--surface)" />
+      <ellipse cx="128" cy="50" rx="8" ry="10" fill="none" stroke="var(--border)" strokeWidth="1.5" />
+    </svg>
   );
 }

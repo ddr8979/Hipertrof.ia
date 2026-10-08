@@ -11,23 +11,32 @@ export function StatCard({
   sub,
   icon,
   className,
+  trend,
 }: {
   label: string;
   value: string | number;
   sub?: string;
   icon?: React.ReactNode;
   className?: string;
+  trend?: { value: number; label: string; positive?: boolean };
 }) {
   return (
-    <div className={cn("card flex min-w-0 flex-col items-center overflow-hidden p-3 text-center", className)}>
+    <div className={cn("card flex min-w-0 flex-col items-center overflow-hidden p-4 text-center", className)}>
       {icon && <span className="shrink-0 text-[var(--accent)]">{icon}</span>}
-      <p className="mt-1.5 min-w-0 text-[10px] font-semibold leading-tight text-[var(--muted)]">
+      <p className="mt-2 min-w-0 text-[11px] font-semibold leading-tight uppercase tracking-wide text-[var(--muted)]">
         {label}
       </p>
-      <p className="mt-1 min-w-0 font-display text-2xl font-bold tracking-tight">
+      <p className="mt-1 min-w-0 font-display text-3xl font-bold tracking-tight">
         {value}
       </p>
       {sub && <p className="mt-0.5 min-w-0 text-xs text-[var(--text-2)]">{sub}</p>}
+      {trend && (
+        <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold" style={{ color: trend.positive ? "var(--success)" : "var(--danger)" }}>
+          <span>{trend.positive ? "↑" : "↓"}</span>
+          <span>{trend.value}%</span>
+          <span className="text-[var(--muted)]">{trend.label}</span>
+        </p>
+      )}
     </div>
   );
 }
@@ -72,18 +81,24 @@ export function ProgressRing({
           stroke="var(--surface-3)"
           strokeWidth={stroke}
         />
-        {/* Arco de progreso */}
+        {/* Arco de progreso con gradiente */}
+        <defs>
+          <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="var(--accent)" />
+            <stop offset="100%" stopColor="var(--info)" />
+          </linearGradient>
+        </defs>
         <circle
           cx={size / 2}
           cy={size / 2}
           r={r}
           fill="none"
-          stroke="var(--accent)"
+          stroke="url(#progress-gradient)"
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={c}
           strokeDashoffset={c * (1 - pct)}
-          style={{ transition: "stroke-dashoffset 0.6s cubic-bezier(0.16,1,0.3,1)" }}
+          style={{ transition: "stroke-dashoffset 0.8s cubic-bezier(0.16,1,0.3,1)" }}
         />
       </svg>
       <span className="absolute font-display font-bold" style={{ fontSize: size * 0.22 }}>
@@ -113,22 +128,22 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-[var(--border)] px-6 py-14 text-center",
+        "flex flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-[var(--border)] px-6 py-16 text-center",
         className
       )}
     >
-      <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
+      <div className="flex size-16 items-center justify-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
         {icon}
       </div>
       <div>
-        <h3 className="font-display text-lg font-bold tracking-tight">{title}</h3>
+        <h3 className="font-display text-xl font-bold tracking-tight">{title}</h3>
         {description && (
-          <p className="mx-auto mt-1 max-w-sm text-sm text-[var(--text-2)]">
+          <p className="mx-auto mt-2 max-w-sm text-sm text-[var(--text-2)] leading-relaxed">
             {description}
           </p>
         )}
       </div>
-      {action && <div className="mt-1">{action}</div>}
+      {action && <div className="mt-2">{action}</div>}
     </div>
   );
 }

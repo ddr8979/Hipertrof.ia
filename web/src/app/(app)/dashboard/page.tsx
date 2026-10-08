@@ -15,13 +15,15 @@ import {
   Dumbbell,
   CalendarDays,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { Skeleton, Avatar } from "@/components/ui/primitives";
 import { EmptyState, StatCard } from "@/components/ui/data";
-import { cn, estimate1RM, formatDate, formatDuration, splitEmojiRuns } from "@/lib/utils";
+import { DumbbellIcon } from "@/components/mascot";
+import { estimate1RM, formatDate, formatDuration, splitEmojiRuns } from "@/lib/utils";
 
 /** Dashboard principal del atleta: resumen de actividad y accesos rápidos. */
 export default function DashboardPage() {
@@ -85,62 +87,56 @@ export default function DashboardPage() {
   const weeklyVolume = data?.workouts?.slice(0, 7);
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Widget de perfil */}
-      <Link
-        href="/perfil"
-        className="flex items-center gap-3.5 rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-4 transition-colors hover:border-[var(--accent)]"
-      >
-        <Avatar
-          src={profile?.avatar_url}
-          size={52}
-          alt={profile?.display_name ?? profile?.username ?? "Perfil"}
-        />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-[var(--muted)]">
-            {new Date().toLocaleDateString("es-UY", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-            })}
-          </p>
-          <h1 className="truncate font-display text-xl font-bold tracking-tight">
-            Hola,{" "}
-            {splitEmojiRuns(profile?.display_name ?? "atleta").map((s, i) =>
-              s.emoji ? (
-                <span key={i} className="text-[var(--text)]">
-                  {s.text}
-                </span>
-              ) : (
-                <span key={i} className="text-[var(--accent)]">
-                  {s.text}
-                </span>
-              )
-            )}
-          </h1>
-          {profile?.username && (
-            <p className="truncate text-xs text-[var(--muted)]">@{profile.username}</p>
-          )}
+    <div className="flex flex-col gap-5 animate-fade-up">
+      {/* Saludo con mascota */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <DumbbellIcon size={44} animated className="text-[var(--accent)]" />
+          <div>
+            <p className="text-sm font-medium text-[var(--muted)]">
+              {new Date().toLocaleDateString("es-UY", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              })}
+            </p>
+            <h1 className="truncate font-display text-xl font-bold tracking-tight">
+              Hola,{" "}
+              {splitEmojiRuns(profile?.display_name ?? "atleta").map((s, i) =>
+                s.emoji ? (
+                  <span key={i} className="text-[var(--text)]">{s.text}</span>
+                ) : (
+                  <span key={i} className="text-[var(--accent)]">{s.text}</span>
+                )
+              )}
+            </h1>
+          </div>
         </div>
-        <span className="flex shrink-0 items-center gap-1 rounded-full bg-[var(--accent)] px-2.5 py-1 text-xs font-bold text-[var(--accent-ink)] shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--accent)_60%,transparent)]">
-          <Flame className="size-3.5 fill-current" />
-          {days}
-        </span>
-        <ChevronRight className="size-5 shrink-0 text-[var(--muted)]" />
-      </Link>
+        <Link href="/perfil" className="flex shrink-0 items-center gap-2">
+          <span className="flex items-center gap-1 rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-bold text-[var(--accent-ink)] shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--accent)_60%,transparent)]">
+            <Flame className="size-3.5 fill-current" />
+            {days}
+          </span>
+          <Avatar
+            src={profile?.avatar_url}
+            size={36}
+            alt={profile?.display_name ?? profile?.username ?? "Perfil"}
+          />
+        </Link>
+      </div>
 
       {/* CTA principal */}
       <Link
         href="/entrenar"
-        className="group relative overflow-hidden rounded-3xl border border-[var(--border)] p-6 transition-colors hover:border-[var(--accent)] sm:p-8"
+        className="group relative overflow-hidden rounded-3xl border border-[var(--border)] p-6 transition-all hover:border-[var(--accent)] hover:shadow-[var(--shadow-md)] sm:p-8"
         style={{
           background:
-            "linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), var(--surface))",
+            "linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, var(--surface)), var(--surface))",
         }}
       >
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold text-[var(--accent)]">
+            <p className="text-xs font-semibold text-[var(--accent)] uppercase tracking-wide">
               {weeklyVolume?.length ? "Tu último entrenamiento" : "Listo para entrenar"}
             </p>
             <h2 className="mt-1.5 font-display text-2xl font-bold tracking-tight sm:text-3xl">
@@ -155,7 +151,7 @@ export default function DashboardPage() {
               </p>
             )}
           </div>
-          <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--accent)] text-[var(--accent-ink)] transition-colors">
+          <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--accent)] text-[var(--accent-ink)] transition-all group-hover:scale-105 group-hover:shadow-[0_8px_20px_-4px_color-mix(in_srgb,var(--accent)_50%,transparent)]">
             <Play className="ml-0.5 size-6 fill-current" />
           </span>
         </div>
@@ -166,7 +162,7 @@ export default function DashboardPage() {
         <StatCard
           label="Sesiones"
           value={data?.workouts?.length ?? 0}
-          sub="últimas"
+          sub="últimas 5"
           icon={<Dumbbell className="size-4" />}
         />
         <StatCard
@@ -176,17 +172,18 @@ export default function DashboardPage() {
           icon={<CalendarDays className="size-4" />}
         />
         <StatCard
-          label="1RM"
+          label="1RM estimado"
           value={data?.max1rm ? `${data.max1rm} kg` : "—"}
-          sub="máximo estimado"
+          sub="máximo reciente"
           icon={<Trophy className="size-4" />}
         />
       </div>
 
       {/* Rutinas */}
-      <section>
+      <section className="animate-fade-up" style={{ animationDelay: "100ms" }}>
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="font-display text-lg font-bold tracking-tight">
+          <h3 className="font-display text-lg font-bold tracking-tight flex items-center gap-2">
+            <Sparkles className="size-5 text-[var(--accent)]" />
             Tus rutinas
           </h3>
           <Link
@@ -198,8 +195,8 @@ export default function DashboardPage() {
         </div>
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3">
-            <Skeleton className="h-24" />
-            <Skeleton className="h-24" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
           </div>
         ) : data?.routines.length ? (
           <div className="grid grid-cols-2 gap-3">
@@ -207,12 +204,13 @@ export default function DashboardPage() {
               <Link
                 key={r.id}
                 href="/rutinas"
-                className="card card-hover flex flex-col justify-between p-4"
+                className="card card-hover flex flex-col justify-between p-4 group"
               >
-                <p className="line-clamp-2 text-sm font-semibold leading-snug">
+                <p className="line-clamp-2 text-sm font-semibold leading-snug group-hover:text-[var(--accent)] transition-colors">
                   {r.name}
                 </p>
-                <p className="mt-2 text-xs text-[var(--muted)]">
+                <p className="mt-2 text-xs text-[var(--muted)] flex items-center gap-1">
+                  <Dumbbell className="size-3" />
                   {r.routine_exercises[0]?.count ?? 0} ejercicios
                 </p>
               </Link>
@@ -220,7 +218,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <EmptyState
-            icon={<Dumbbell className="size-6" />}
+            icon={<DumbbellIcon size={28} />}
             title="Todavía no tenés rutinas"
             description="Armá tu primera rutina o usá una plantilla de la biblioteca."
             action={

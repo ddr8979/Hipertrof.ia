@@ -108,7 +108,7 @@ const NavLink = memo(function NavLink({
 /** Marca centrada: el logo es el elemento centrado de ambas barras. */
 function BrandMark() {
   return (
-    <Link href="/dashboard" className="flex items-center gap-2">
+    <Link href="/dashboard" className="flex items-center gap-2" aria-label="Hipertrof.ia - Inicio">
       <span className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-ink)]">
         <Dumbbell className="size-4" />
       </span>

@@ -72,7 +72,7 @@ export function Avatar({
   return (
     <span
       className={cn(
-        "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-3)] font-display font-bold text-[var(--text-2)]",
+        "relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-3)] font-display font-bold text-[var(--text-2)] ring-1 ring-[var(--border)]",
         className
       )}
       style={{ width: size, height: size, fontSize: size * 0.38 }}
@@ -101,7 +101,7 @@ export function Skeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-lg bg-[var(--surface-2)]",
+        "animate-pulse rounded-xl bg-gradient-to-r from-[var(--surface-2)] via-[var(--surface-3)] to-[var(--surface-2)] bg-[length:200%_100%] animate-shimmer",
         className
       )}
     />

@@ -67,12 +67,12 @@ const HudItem = memo(function HudItem({
       aria-label={label}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "relative flex flex-col items-center justify-center gap-0.5 rounded-full px-2 py-1 transition-transform duration-150 active:scale-90",
+        "relative flex flex-col items-center justify-center gap-0.5 rounded-full px-2 py-1.5 transition-all duration-200 active:scale-[0.95]",
         active
-          ? "bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--accent)_65%,transparent)]"
+          ? "bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_4px_16px_-4px_color-mix(in_srgb,var(--accent)_50%,transparent)]"
           : emphasis
-            ? "text-[var(--accent)]"
-            : "text-[var(--muted)] hover:text-[var(--text-2)]"
+            ? "text-[var(--accent)] hover:bg-[var(--accent-soft)]"
+            : "text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]"
       )}
     >
       <Icon
@@ -84,7 +84,7 @@ const HudItem = memo(function HudItem({
         {label}
       </span>
       {badge ? (
-        <span className="absolute -right-0.5 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[9px] font-bold text-white">
+        <span className="absolute -right-0.5 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[9px] font-bold text-white animate-pop">
           {badge > 9 ? "9+" : badge}
         </span>
       ) : null}
@@ -132,7 +132,7 @@ export function HudNav({ unread = 0 }: { unread?: number }) {
       />
     <nav
       aria-label="Navegación principal"
-      className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-40 -translate-x-1/2 lg:hidden"
+      className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-40 -translate-x-1/2 lg:hidden animate-slide-up"
     >
       <div
         className="glass relative flex items-center gap-0.5 overflow-hidden rounded-full p-1 shadow-[var(--shadow-lg)]"
@@ -140,7 +140,7 @@ export function HudNav({ unread = 0 }: { unread?: number }) {
           holdRef.current = true;
           paint(e);
           // Táctil: vibración sutil como feedback del dedo.
-          if (e.pointerType === "touch") navigator.vibrate?.(8);
+          if (e.pointerType === "touch") navigator.vibrate?.(6);
         }}
         onPointerMove={(e) => {
           if (holdRef.current) paint(e);
@@ -153,7 +153,7 @@ export function HudNav({ unread = 0 }: { unread?: number }) {
         <div
           ref={glowRef}
           aria-hidden
-          className="pointer-events-none absolute left-0 top-0 size-28 rounded-full opacity-0 transition-opacity duration-300"
+          className="pointer-events-none absolute left-0 top-0 size-28 rounded-full opacity-0 transition-opacity duration-200"
           style={{
             background:
               "radial-gradient(circle, color-mix(in srgb, var(--accent) 35%, transparent) 0%, transparent 70%)",

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 // Estilos comunes a todos los campos.
 const base =
-  "w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 text-[15px] text-[var(--text)] placeholder:text-[var(--muted)] transition-colors focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-soft)] disabled:opacity-50";
+  "w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3.5 text-[15px] text-[var(--text)] placeholder:text-[var(--muted)] transition-all duration-150 focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-soft)] disabled:opacity-50 disabled:cursor-not-allowed hover:border-[var(--muted)]/50";
 
 /** Input de texto de una línea. */
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
@@ -28,7 +28,7 @@ Textarea.displayName = "Textarea";
 /** Select nativo con flecha personalizada. */
 export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(
   ({ className, children, ...props }, ref) => (
-    <select ref={ref} className={cn(base, "h-11 appearance-none pr-9", className)} {...props}>
+    <select ref={ref} className={cn(base, "h-11 appearance-none pr-9 bg-[var(--surface)]", className)} {...props}>
       {children}
     </select>
   )
@@ -57,7 +57,21 @@ export function Field({
       )}
       {children}
       {hint && !error && <span className="text-xs text-[var(--muted)]">{hint}</span>}
-      {error && <span className="text-xs font-medium text-[var(--danger)]">{error}</span>}
+      {error && <span className="text-xs font-medium text-[var(--danger)] flex items-center gap-1">{error}</span>}
     </label>
+  );
+}
+
+/** Input con icono a la izquierda */
+export function InputWithIcon({
+  icon: Icon,
+  className,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & { icon: React.ComponentType<{ className?: string }> }) {
+  return (
+    <div className="relative">
+      <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-5 text-[var(--muted)] pointer-events-none" />
+      <Input className={cn("pl-10", className)} {...props} />
+    </div>
   );
 }
