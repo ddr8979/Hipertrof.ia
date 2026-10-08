@@ -186,17 +186,37 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
 
-        {/* Contenido */}
-        <main
-          className={cn(
-            "mx-auto w-full min-w-0 flex-1 max-w-3xl px-4 pt-8 sm:px-6 sm:pt-12 lg:max-w-none lg:pb-14 lg:pt-10",
-            isChatThread
-              ? "pb-4"
-              : "pb-[calc(4.75rem_+_env(safe-area-inset-bottom))]"
+        {/* Contenido + barra superior de app (mobile) */}
+        <div className="relative flex min-w-0 flex-1 flex-col">
+          {!isChatThread && (
+            <header
+              className="sticky top-0 z-30 border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--bg)_78%,transparent)] backdrop-blur-xl lg:hidden"
+              style={{ paddingTop: "env(safe-area-inset-top)" }}
+            >
+              <div className="flex h-13 items-center justify-between px-4">
+                <Link href="/dashboard" className="flex items-center gap-2">
+                  <span className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--accent)_60%,transparent)]">
+                    <Dumbbell className="size-4" />
+                  </span>
+                  <span className="font-display text-[15px] font-bold tracking-tight">
+                    hypertrof<span className="text-[var(--accent)]">.ia</span>
+                  </span>
+                </Link>
+                <ThemeToggle variant="compact" />
+              </div>
+            </header>
           )}
-        >
-          {children}
-        </main>
+          <main
+            className={cn(
+              "mx-auto w-full min-w-0 flex-1 max-w-3xl px-4 pt-6 sm:px-6 sm:pt-8 lg:max-w-none lg:pb-14 lg:pt-8",
+              isChatThread
+                ? "pb-4"
+                : "pb-[calc(4.75rem_+_env(safe-area-inset-bottom))]"
+            )}
+          >
+            {children}
+          </main>
+        </div>
       </div>
 
       {/* HUD inferior: píldora flotante glass (móvil); se auto-oculta en

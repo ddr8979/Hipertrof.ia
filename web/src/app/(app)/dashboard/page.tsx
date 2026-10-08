@@ -12,14 +12,9 @@ import {
   Play,
   Flame,
   Trophy,
-  Utensils,
   Dumbbell,
-  ChartLine,
   CalendarDays,
   ChevronRight,
-  BookOpenText,
-  Calculator,
-  User,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/components/providers";
@@ -143,31 +138,12 @@ export default function DashboardPage() {
             <p className="truncate text-xs text-[var(--muted)]">@{profile.username}</p>
           )}
         </div>
+        <span className="flex shrink-0 items-center gap-1 rounded-full bg-[var(--accent)] px-2.5 py-1 text-xs font-bold text-[var(--accent-ink)] shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--accent)_60%,transparent)]">
+          <Flame className="size-3.5 fill-current" />
+          {days}
+        </span>
         <ChevronRight className="size-5 shrink-0 text-[var(--muted)]" />
       </Link>
-
-      {/* Streak */}
-      <div className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-gradient-to-r from-[var(--accent-soft)] to-transparent p-4">
-        <div className="flex items-center gap-3">
-          <span className="flex size-11 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--accent-ink)]">
-            <Flame className="size-5.5 fill-current" />
-          </span>
-          <div>
-            <p className="font-display text-xl font-bold leading-none">
-              {days} {days === 1 ? "día" : "días"} de racha
-            </p>
-            <p className="mt-1 text-xs text-[var(--text-2)]">
-              Racha máxima: {profile?.max_streak ?? 0} días
-            </p>
-          </div>
-        </div>
-        <Link
-          href="/progreso"
-          className="text-sm font-semibold text-[var(--accent)] hover:underline"
-        >
-          Ver progreso
-        </Link>
-      </div>
 
       {/* CTA principal */}
       <Link
@@ -228,7 +204,7 @@ export default function DashboardPage() {
       {/* Rutinas */}
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="font-display text-lg font-bold tracking-tight">
+          <h3 className="text-[11px] font-bold uppercase tracking-widest text-[var(--muted)]">
             Tus rutinas
           </h3>
           <Link
@@ -276,39 +252,6 @@ export default function DashboardPage() {
         )}
       </section>
 
-      {/* Hub de opciones */}
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="font-display text-lg font-bold tracking-tight">Explorar</h3>
-          <span className="text-xs text-[var(--muted)]">todas las herramientas</span>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          <Link href="/ejercicios" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <Dumbbell className="size-5 text-[var(--accent)]" />
-            <span className="w-full break-words text-center text-xs font-semibold leading-tight">Ejercicios</span>
-          </Link>
-          <Link href="/glosario" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <BookOpenText className="size-5 text-[var(--accent)]" />
-            <span className="w-full break-words text-center text-xs font-semibold leading-tight">Diccionario</span>
-          </Link>
-          <Link href="/calculadora" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <Calculator className="size-5 text-[var(--accent)]" />
-            <span className="w-full break-words text-center text-xs font-semibold leading-tight">Calculadora</span>
-          </Link>
-          <Link href="/nutricion" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <Utensils className="size-5 text-[var(--accent)]" />
-            <span className="w-full break-words text-center text-xs font-semibold leading-tight">Nutrición</span>
-          </Link>
-          <Link href="/progreso" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <ChartLine className="size-5 text-[var(--accent)]" />
-            <span className="w-full break-words text-center text-xs font-semibold leading-tight">Progreso</span>
-          </Link>
-          <Link href="/perfil" className="card card-hover flex min-w-0 flex-col items-center gap-2 p-4 text-center">
-            <User className="size-5 text-[var(--accent)]" />
-            <span className="w-full break-words text-center text-xs font-semibold leading-tight">Perfil</span>
-          </Link>
-        </div>
-      </section>
     </div>
   );
 }
