@@ -9,28 +9,28 @@
 :root {
   color-scheme: light;
 
-  --bg: #eaece3;
+  --bg: #f2efe8;
   --surface: #ffffff;
-  --surface-2: #f1f2eb;
-  --surface-3: #e4e7dc;
-  --border: #d8dccf;
-  --text: #151a14;
-  --text-2: #4d564b;
-  --muted: #7b8577;
+  --surface-2: #f8f6f0;
+  --surface-3: #edeae1;
+  --border: #e4e0d4;
+  --text: #26261f;
+  --text-2: #57564a;
+  --muted: #8b897a;
 
-  --accent: #9dc93f;
-  --accent-hover: #8fb93a;
-  --accent-soft: rgba(157, 201, 63, 0.14);
-  --accent-ink: #101503;
+  --accent: #7ea679;
+  --accent-hover: #709a6b;
+  --accent-soft: rgba(126, 166, 121, 0.16);
+  --accent-ink: #17211a;
 
-  --danger: #e5484d;
-  --danger-soft: rgba(229, 72, 77, 0.1);
-  --warn: #e8930c;
-  --warn-soft: rgba(232, 147, 12, 0.12);
-  --info: #3b9cd9;
-  --info-soft: rgba(59, 156, 217, 0.12);
-  --success: #30a46c;
-  --success-soft: rgba(48, 164, 108, 0.12);
+  --danger: #d76a70;
+  --danger-soft: rgba(215, 106, 112, 0.12);
+  --warn: #d19a55;
+  --warn-soft: rgba(209, 154, 85, 0.14);
+  --info: #7aa7cc;
+  --info-soft: rgba(122, 167, 204, 0.14);
+  --success: #6a9e7f;
+  --success-soft: rgba(106, 158, 127, 0.14);
 
   --glow: 0 0 12px 0 var(--accent-soft);
   /* Sombras en capas (premium: contacto + difusa) y hairline de luz superior */
@@ -43,28 +43,28 @@
 .dark {
   color-scheme: dark;
 
-  --bg: #10140f;
-  --surface: #191e19;
-  --surface-2: #202620;
-  --surface-3: #29312a;
-  --border: #353e35;
-  --text: #f1f5ef;
-  --text-2: #adb6a9;
-  --muted: #727c70;
+  --bg: #171a17;
+  --surface: #1e221e;
+  --surface-2: #252a25;
+  --surface-3: #2d332d;
+  --border: #3a413a;
+  --text: #eff1ec;
+  --text-2: #b4b8ae;
+  --muted: #7e857c;
 
-  --accent: #b8f34a;
-  --accent-hover: #c6f76e;
-  --accent-soft: rgba(184, 243, 74, 0.14);
-  --accent-ink: #101503;
+  --accent: #a8c9a2;
+  --accent-hover: #b6d4b1;
+  --accent-soft: rgba(168, 201, 162, 0.16);
+  --accent-ink: #16211a;
 
-  --danger: #ff5d6c;
-  --danger-soft: rgba(255, 93, 108, 0.12);
-  --warn: #ffb020;
-  --warn-soft: rgba(255, 176, 32, 0.14);
-  --info: #5cc8ff;
-  --info-soft: rgba(92, 200, 255, 0.12);
-  --success: #4ade80;
-  --success-soft: rgba(74, 222, 128, 0.12);
+  --danger: #e98a8f;
+  --danger-soft: rgba(233, 138, 143, 0.14);
+  --warn: #dfae72;
+  --warn-soft: rgba(223, 174, 114, 0.14);
+  --info: #93bbe0;
+  --info-soft: rgba(147, 187, 224, 0.14);
+  --success: #8fc7a2;
+  --success-soft: rgba(143, 199, 162, 0.14);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 6px 16px -4px rgba(0, 0, 0, 0.55), 0 2px 6px -2px rgba(0, 0, 0, 0.4);
@@ -261,9 +261,9 @@ body {
 
 /* Acento personalizable del perfil (se aplica desde el cliente) */
 [data-accent] {
-  --accent: var(--user-accent, #b8f34a);
-  --accent-hover: color-mix(in srgb, var(--user-accent, #b8f34a) 80%, white);
-  --accent-soft: color-mix(in srgb, var(--user-accent, #b8f34a) 12%, transparent);
+  --accent: var(--user-accent, #a0c499);
+  --accent-hover: color-mix(in srgb, var(--user-accent, #a0c499) 80%, white);
+  --accent-soft: color-mix(in srgb, var(--user-accent, #a0c499) 12%, transparent);
 }
 
 ::selection {

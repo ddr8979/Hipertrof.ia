@@ -30,15 +30,15 @@ const STEPS = ["Tu identidad", "Tu cuerpo", "Tu objetivo", "Tu estilo", "Tu comi
 
 // Paleta de acentos disponibles para el perfil.
 const ACCENTS = [
-  "#b8f34a",
-  "#ff5d8f",
-  "#ffb020",
-  "#5cc8ff",
-  "#c792ff",
-  "#ff6b35",
-  "#4ade80",
-  "#f72585",
-  "#3d9fff",
+  "#a0c499",
+  "#f2b8c6",
+  "#f5cfa0",
+  "#a9cbee",
+  "#c9b6ea",
+  "#9fd6c8",
+  "#eeb79b",
+  "#dfb0d8",
+  "#a8d0d4",
 ];
 
 const SEX = [
@@ -109,7 +109,7 @@ export default function OnboardingPage() {
     activity: "moderate",
     goal: "volumen",
     diet: "omnivoro",
-    accent: "#b8f34a",
+    accent: "#a0c499",
     foodPrefs: [] as string[],
     foodRestrictions: [] as string[],
   });

@@ -24,7 +24,7 @@ export const PLANS: {
       "Social y mensajes",
       "Perfil personalizable",
     ],
-    accent: "#a3e635",
+    accent: "#a0c499",
   },
   {
     id: "plus",
@@ -38,7 +38,7 @@ export const PLANS: {
       "Vender cursos en el marketplace",
       "Seguimiento de progreso de clientes",
     ],
-    accent: "#3897f0",
+    accent: "#8fb6e0",
     popular: true,
   },
   {
@@ -53,7 +53,7 @@ export const PLANS: {
       "Soporte prioritario",
       "Nuevas funciones premium primero",
     ],
-    accent: "#f0b429",
+    accent: "#e8c489",
   },
 ];
 

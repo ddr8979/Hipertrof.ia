@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { playlistThumb, splitEmojiRuns } from "@/lib/utils";
+import { playlistThumb, splitEmojiRuns, pastelAccent} from "@/lib/utils";
 import { SpotifyNowCard, SpotifyConnectCard } from "@/components/spotify-now";
 import { ProfileTrackPlayer, SocialCircles, VerifiedBadge } from "@/components/profile-bits";
 import { SpotifyIcon } from "@/components/brand-icons";
@@ -74,7 +74,7 @@ export default function PerfilPage() {
   const [name, setName] = useState(profile?.display_name ?? "");
   const [bio, setBio] = useState((profile?.bio as string) ?? "");
   const [weight, setWeight] = useState(profile?.weight_kg?.toString() ?? "");
-  const [accent, setAccent] = useState(profile?.accent_color ?? "#a3e635");
+  const [accent, setAccent] = useState(pastelAccent(profile?.accent_color ?? "#a0c499"));
   const [showWeight, setShowWeight] = useState(profile?.show_weight !== false);
   const [showHeight, setShowHeight] = useState(profile?.show_height !== false);
   const [showFollowers, setShowFollowers] = useState(profile?.show_followers !== false);

@@ -14,6 +14,7 @@ import { create } from "zustand";
 import { Toaster } from "@/components/ui/toast";
 import { SWRegister } from "@/components/sw-register";
 import { createClient } from "@/lib/supabase/client";
+import { pastelAccent } from "@/lib/utils";
 
 // Forma de la fila de `profiles` (con campos extra permitidos).
 export type ProfileRow = {
@@ -77,7 +78,7 @@ function ThemeColorSync() {
     const root = document.documentElement;
     const bg =
       getComputedStyle(root).getPropertyValue("--bg").trim() ||
-      (resolvedTheme === "dark" ? "#0b0d0b" : "#f5f6f3");
+      (resolvedTheme === "dark" ? "#171a17" : "#f2efe8");
 
     let meta = document.querySelector<HTMLMetaElement>(
       'meta[name="theme-color"]:not([media])'
@@ -105,7 +106,7 @@ function AccentApplier() {
     }
     document.documentElement.style.setProperty(
       "--user-accent",
-      profile.accent_color
+      pastelAccent(profile.accent_color)
     );
     document.documentElement.setAttribute("data-accent", "true");
   }, [profile?.accent_color]);

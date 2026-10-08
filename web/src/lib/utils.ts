@@ -5,6 +5,26 @@ import exerciseManifest from "./exercise-manifest.json";
  */
 
 /** Une clases condicionales descartando valores falsy (mini utilidad estilo clsx). */
+/** Acentos "fluor" de versiones anteriores → su equivalente pastel. */
+const LEGACY_ACCENTS: Record<string, string> = {
+  "#b8f34a": "#a0c499",
+  "#a3e635": "#a0c499",
+  "#4ade80": "#9fd6c8",
+  "#22c55e": "#9fd6c8",
+  "#ff5d8f": "#f2b8c6",
+  "#f72585": "#f2b8c6",
+  "#ff6b35": "#eeb79b",
+  "#ffb020": "#f5cfa0",
+  "#5cc8ff": "#a9cbee",
+  "#3d9fff": "#a9cbee",
+  "#c792ff": "#c9b6ea",
+};
+
+/** Normaliza el color de acento guardado: fluor heredado → pastel. */
+export function pastelAccent(hex: string): string {
+  return LEGACY_ACCENTS[hex.toLowerCase()] ?? hex;
+}
+
 export function cn(...inputs: (string | false | null | undefined)[]) {
   return inputs.filter(Boolean).join(" ");
 }
