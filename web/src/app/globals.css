@@ -9,11 +9,11 @@
 :root {
   color-scheme: light;
 
-  --bg: #f2f3ee;
-  --surface: #fdfdfc;
-  --surface-2: #eceee7;
-  --surface-3: #e3e6dd;
-  --border: #e0e4d9;
+  --bg: #eaece3;
+  --surface: #ffffff;
+  --surface-2: #f1f2eb;
+  --surface-3: #e4e7dc;
+  --border: #d8dccf;
   --text: #151a14;
   --text-2: #4d564b;
   --muted: #7b8577;
@@ -43,13 +43,13 @@
 .dark {
   color-scheme: dark;
 
-  --bg: #0e110f;
-  --surface: #151916;
-  --surface-2: #1b211c;
-  --surface-3: #232a24;
-  --border: #2c332c;
-  --text: #edf1ec;
-  --text-2: #a8b1a5;
+  --bg: #10140f;
+  --surface: #191e19;
+  --surface-2: #202620;
+  --surface-3: #29312a;
+  --border: #353e35;
+  --text: #f1f5ef;
+  --text-2: #adb6a9;
   --muted: #727c70;
 
   --accent: #b8f34a;
@@ -94,7 +94,7 @@
   --font-display: var(--font-space), ui-sans-serif, system-ui, sans-serif;
 
   --radius-xl: 1rem;
-  --radius-2xl: 1.25rem;
+  --radius-2xl: 1.5rem;
   --radius-3xl: 1.75rem;
 
   --animate-fade-up: fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -233,7 +233,7 @@ button,
 
 body {
   background:
-    radial-gradient(1100px 460px at 50% -8%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 72%),
+    radial-gradient(1200px 540px at 50% -6%, color-mix(in srgb, var(--accent) 15%, transparent), transparent 70%),
     var(--bg);
   color: var(--text);
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;

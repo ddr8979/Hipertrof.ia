@@ -66,7 +66,7 @@ const HudItem = memo(function HudItem({
       className={cn(
         "relative flex flex-col items-center justify-center gap-0.5 rounded-full px-2 py-1 transition-transform duration-150 active:scale-90",
         active
-          ? "bg-[var(--accent-soft)] text-[var(--accent)]"
+          ? "bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--accent)_65%,transparent)]"
           : "text-[var(--muted)] hover:text-[var(--text-2)]"
       )}
     >
@@ -183,7 +183,7 @@ export function HudNav({
             className={cn(
               "relative flex flex-col items-center justify-center gap-0.5 rounded-full px-2 py-1 transition-transform duration-150 active:scale-90",
               isActive(pathname, "/perfil")
-                ? "bg-[var(--accent-soft)] text-[var(--accent)]"
+                ? "bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--accent)_65%,transparent)]"
                 : "text-[var(--muted)] hover:text-[var(--text-2)]"
             )}
           >
@@ -211,7 +211,7 @@ export function HudNav({
             className={cn(
               "flex flex-col items-center justify-center gap-0.5 rounded-full px-2.5 py-1.5 transition-transform duration-150 active:scale-90",
               moreActive
-                ? "bg-[var(--accent-soft)] text-[var(--accent)]"
+                ? "bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--accent)_65%,transparent)]"
                 : "text-[var(--muted)] hover:text-[var(--text-2)]"
             )}
           >

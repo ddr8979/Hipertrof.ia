@@ -549,7 +549,7 @@ export default function RutinasPage() {
       </div>
 
       {/* Pestañas segmentadas: mis rutinas / biblioteca / entrenador */}
-      <div className="grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-3 gap-1 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-1">
         {[
           { id: "mine" as const, label: "Mis rutinas", icon: <LayoutList className="size-4" /> },
           { id: "library" as const, label: "Biblioteca", icon: <BookOpen className="size-4" /> },
@@ -559,10 +559,10 @@ export default function RutinasPage() {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "flex items-center justify-center gap-1.5 rounded-xl border px-1.5 py-2.5 text-[13px] font-semibold transition-all",
+              "flex items-center justify-center gap-1.5 rounded-xl border border-transparent px-1.5 py-2 text-[13px] font-semibold transition-all",
               tab === t.id
-                ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] shadow-[0_2px_8px_-4px_color-mix(in_srgb,var(--accent)_60%,transparent)]"
-                : "border-[var(--border)] text-[var(--text-2)] hover:text-[var(--text)]"
+                ? "bg-[var(--surface)] text-[var(--text)] shadow-[var(--shadow-sm)]"
+                : "text-[var(--muted)] hover:text-[var(--text-2)]"
             )}
           >
             {t.icon}

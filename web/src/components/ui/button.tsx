@@ -21,7 +21,7 @@ const variantClasses: Record<Variant, string> = {
   primary:
     "bg-[var(--text)] text-[var(--bg)] hover:opacity-90 disabled:hover:opacity-100 shadow-[var(--shadow-md)]",
   accent:
-    "bg-[var(--accent)] text-[var(--accent-ink)] hover:brightness-110 disabled:hover:brightness-100 shadow-[0_6px_18px_-5px_color-mix(in_srgb,var(--accent)_55%,transparent),var(--shadow-sm)]",
+    "bg-[linear-gradient(135deg,var(--accent),color-mix(in_srgb,var(--accent)_62%,white))] text-[var(--accent-ink)] hover:brightness-105 disabled:hover:brightness-100 shadow-[0_6px_18px_-5px_color-mix(in_srgb,var(--accent)_60%,transparent),var(--shadow-sm)]",
   secondary: "bg-[var(--surface-2)] text-[var(--text)] hover:bg-[var(--surface-3)]",
   ghost: "bg-transparent text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]",
   outline:
