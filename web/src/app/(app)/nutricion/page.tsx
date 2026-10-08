@@ -1000,7 +1000,7 @@ export default function NutricionPage() {
                   <Pencil className="size-4" />
                 </button>
                 <Link
-                  href="/social"
+                  href="/explorar?share=1"
                   aria-label="Compartir receta"
                   className="rounded-lg p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--accent)]"
                 >

@@ -2,10 +2,10 @@
 
 /**
  * app-shell.tsx
- * Estructura de navegación principal de la app autenticada.
- * Renderiza el sidebar de escritorio (lg+), la tab bar inferior móvil y el
- * sheet "Más" con las secciones secundarias, además de elementos globales
- * como notificaciones de DM y el timer de descanso.
+ * Estructura de navegación de la app autenticada.
+ * Desktop: sidebar agrupado en 3 secciones (Principal / Herramientas / Cuenta).
+ * Móvil: header con logo centrado (☰ · logo · avatar) + píldora inferior de
+ * 5 tabs. Todo lo secundario vive en el sheet "Más", sin duplicar destinos.
  */
 
 import Link from "next/link";
@@ -15,13 +15,14 @@ import {
   Utensils,
   User,
   Users,
-  Store,
   LogOut,
   Settings,
   History,
-  Compass,
   ChartLine,
   BookOpenText,
+  Calculator,
+  BicepsFlexed,
+  Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/components/providers";
@@ -35,33 +36,40 @@ import { HudNav, HUD_ITEMS, isActive } from "@/components/hud-nav";
 import { ThemeToggle } from "@/components/brand-icons";
 import { Sheet } from "@/components/ui/sheet";
 
-/**
- * Tarjeta compacta con la canción que suena en Spotify del usuario.
- * No renderiza nada si no está conectado, está oculto o no hay reproducción.
- */
-function NowPlayingMini() {
-  return null;
-}
+type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
 
-// Destinos del HUD (píldora inferior móvil): viven en hud-nav.tsx.
-const PRIMARY = HUD_ITEMS;
+/** Sección "Principal": los 5 tabs de la píldora (una sola fuente de verdad). */
+const PRINCIPAL: NavItem[] = HUD_ITEMS.map((i) => ({
+  href: i.href,
+  label: i.label,
+  icon: i.icon,
+}));
 
-// Destinos secundarios: sidebar desktop y sheet "Más" (incluye Perfil,
-// que ya no entra en la píldora por espacio).
-const SECONDARY = [
-  { href: "/perfil", label: "Perfil", icon: User },
-  { href: "/nutricion", label: "Alimentación", icon: Utensils },
-  { href: "/explorar", label: "Social", icon: Compass },
-  { href: "/glosario", label: "Diccionario", icon: BookOpenText },
-  { href: "/marketplace", label: "Marketplace", icon: Store },
-  { href: "/entrenadores", label: "Entrenadores", icon: Users },
-  { href: "/historial", label: "Historial", icon: History },
+/** Herramientas: lo que se consulta, no se usa a diario. */
+const HERRAMIENTAS: NavItem[] = [
+  { href: "/ejercicios", label: "Ejercicios", icon: BicepsFlexed },
+  { href: "/nutricion", label: "Nutrición", icon: Utensils },
+  { href: "/calculadora", label: "Calculadora", icon: Calculator },
   { href: "/progreso", label: "Progreso", icon: ChartLine },
-  { href: "/ajustes", label: "Configuración", icon: Settings },
+  { href: "/glosario", label: "Diccionario", icon: BookOpenText },
+  { href: "/historial", label: "Historial", icon: History },
 ];
 
-// Lista completa usada por el sidebar.
-const NAV = [...PRIMARY, ...SECONDARY];
+/** Cuenta: identidad y configuración. */
+const CUENTA: NavItem[] = [
+  { href: "/perfil", label: "Perfil", icon: User },
+  { href: "/entrenadores", label: "Entrenadores", icon: Users },
+  { href: "/ajustes", label: "Ajustes", icon: Settings },
+];
+
+const SECTIONS: { title: string; items: NavItem[] }[] = [
+  { title: "Principal", items: PRINCIPAL },
+  { title: "Herramientas", items: HERRAMIENTAS },
+  { title: "Cuenta", items: CUENTA },
+];
+
+/** Rutas fuera de "Principal" (resaltan el ☰ del header). */
+const SECONDARY = [...HERRAMIENTAS, ...CUENTA];
 
 /** Enlace de navegación usado en el sidebar y el sheet "Más". */
 const NavLink = memo(function NavLink({
@@ -97,6 +105,20 @@ const NavLink = memo(function NavLink({
   );
 });
 
+/** Marca centrada: el logo es el elemento centrado de ambas barras. */
+function BrandMark() {
+  return (
+    <Link href="/dashboard" className="flex items-center gap-2">
+      <span className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-ink)]">
+        <Dumbbell className="size-4" />
+      </span>
+      <span className="font-display text-[15px] font-bold tracking-tight">
+        hypertrof<span className="text-[var(--accent)]">.ia</span>
+      </span>
+    </Link>
+  );
+}
+
 /**
  * Shell de la aplicación autenticada.
  * Provee la navegación (sidebar/tab bar/sheet) y el contenedor del contenido.
@@ -127,10 +149,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     router.refresh();
   }
 
-  // Cierra el sheet "Más" al navegar
-  const secondaryActive = SECONDARY.some((n) => n.href !== "/perfil" && isActive(pathname, n.href));
+  const secondaryActive = SECONDARY.some((n) => isActive(pathname, n.href));
 
-  // En una conversación (pantalla completa) no mostramos la barra inferior.
+  // En una conversación (pantalla completa) no mostramos header ni barra inferior.
   const isChatThread = /^\/mensajes\/[^/]+$/.test(pathname);
 
   return (
@@ -138,28 +159,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-dvh items-start lg:pl-60">
         {/* Sidebar desktop */}
         <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur-xl lg:flex">
-          <div className="flex h-16 items-center justify-between gap-2.5 border-b border-[var(--border)] px-5">
-            <Link href="/dashboard" className="flex items-center gap-2.5">
-              <span className="flex size-8 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--accent-ink)]">
-                <Dumbbell className="size-4.5" />
-              </span>
-              <span className="font-display text-lg font-bold tracking-tight">
-                hypertrof<span className="text-[var(--accent)]">.ia</span>
-              </span>
-            </Link>
-            <ThemeToggle variant="compact" />
+          {/* Logo centrado */}
+          <div className="flex h-16 items-center justify-center border-b border-[var(--border)] px-5">
+            <BrandMark />
           </div>
 
-          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
-            {NAV.map((n) => (
-              <NavLink key={n.href} {...n} />
+          <nav className="flex flex-1 flex-col gap-5 overflow-y-auto p-3">
+            {SECTIONS.map((section) => (
+              <div key={section.title} className="flex flex-col gap-0.5">
+                <p className="px-3 pb-1 text-xs font-semibold text-[var(--muted)]">
+                  {section.title}
+                </p>
+                {section.items.map((n) => (
+                  <NavLink key={n.href} {...n} />
+                ))}
+              </div>
             ))}
           </nav>
 
-          {/* Footer del sidebar: ahora suena + perfil + logout */}
+          {/* Footer del sidebar: perfil + tema + logout */}
           <div className="border-t border-[var(--border)] p-3">
-            <NowPlayingMini />
-            <div className="mt-2 flex items-center gap-2.5 rounded-xl px-2 py-2">
+            <div className="flex items-center gap-2.5 rounded-xl px-2 py-2">
               <Link href="/perfil" className="flex min-w-0 flex-1 items-center gap-2.5">
                 <Avatar
                   src={profile?.avatar_url}
@@ -175,6 +195,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   </p>
                 </div>
               </Link>
+              <ThemeToggle variant="compact" />
               <button
                 onClick={handleLogout}
                 aria-label="Cerrar sesión"
@@ -186,23 +207,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
 
-        {/* Contenido + barra superior de app (mobile) */}
+        {/* Contenido + header móvil: ☰ · logo centrado · avatar */}
         <div className="relative flex min-w-0 flex-1 flex-col">
           {!isChatThread && (
             <header
               className="sticky top-0 z-30 border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--bg)_78%,transparent)] backdrop-blur-xl lg:hidden"
               style={{ paddingTop: "env(safe-area-inset-top)" }}
             >
-              <div className="flex h-13 items-center justify-between px-4">
-                <Link href="/dashboard" className="flex items-center gap-2">
-                  <span className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--accent)_60%,transparent)]">
-                    <Dumbbell className="size-4" />
-                  </span>
-                  <span className="font-display text-[15px] font-bold tracking-tight">
-                    hypertrof<span className="text-[var(--accent)]">.ia</span>
-                  </span>
+              <div className="relative flex h-13 items-center justify-between px-4">
+                <button
+                  type="button"
+                  onClick={() => setMoreOpen(true)}
+                  aria-label="Más opciones"
+                  aria-expanded={moreOpen}
+                  className={cn(
+                    "-ml-1 flex size-8 items-center justify-center rounded-lg transition-colors",
+                    secondaryActive
+                      ? "text-[var(--accent)]"
+                      : "text-[var(--text-2)] hover:bg-[var(--surface-2)]"
+                  )}
+                >
+                  <Menu className="size-5" />
+                </button>
+                {/* Logo centrado en el eje del header */}
+                <div className="pointer-events-none absolute inset-x-0 flex justify-center">
+                  <BrandMark />
+                </div>
+                <Link
+                  href="/perfil"
+                  aria-label="Perfil"
+                  className="rounded-full transition-transform active:scale-90"
+                >
+                  <Avatar
+                    src={profile?.avatar_url}
+                    size={30}
+                    alt={profile?.display_name ?? profile?.username ?? "Perfil"}
+                  />
                 </Link>
-                <ThemeToggle variant="compact" />
               </div>
             </header>
           )}
@@ -219,38 +260,40 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {/* HUD inferior: píldora flotante glass (móvil); se auto-oculta en
-          hilos de chat y durante el descanso en /entrenar. */}
-      <HudNav
-        avatarUrl={profile?.avatar_url}
-        avatarName={profile?.display_name ?? profile?.username}
-        moreActive={secondaryActive}
-        onMore={() => setMoreOpen(true)}
-        unread={unread ?? 0}
-      />
+      {/* HUD inferior: 5 tabs (móvil); se auto-oculta en hilos de chat y
+          durante el descanso en /entrenar. */}
+      <HudNav unread={unread ?? 0} />
 
-      {/* Sheet "Más" */}
+      {/* Sheet "Más": todo lo secundario, agrupado y sin duplicar el HUD */}
       <Sheet open={moreOpen} onClose={() => setMoreOpen(false)} title="Más">
-        <div className="flex flex-col gap-4">
-          <ThemeToggle variant="list" label="Tema de la aplicación" />
-          <NowPlayingMini />
-          <div className="grid grid-cols-2 gap-1.5">
-            {SECONDARY.map(({ href, label, icon: Icon }) => (
-              <NavLink
-                key={href}
-                href={href}
-                label={label}
-                icon={Icon}
-                onClick={() => setMoreOpen(false)}
-              />
-            ))}
+        <div className="flex flex-col gap-5">
+          {SECTIONS.filter((sec) => sec.title !== "Principal").map((section) => (
+            <div key={section.title} className="flex flex-col gap-0.5">
+              <p className="px-3 pb-1 text-xs font-semibold text-[var(--muted)]">
+                {section.title}
+              </p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {section.items.map(({ href, label, icon: Icon }) => (
+                  <NavLink
+                    key={href}
+                    href={href}
+                    label={label}
+                    icon={Icon}
+                    onClick={() => setMoreOpen(false)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+          <div className="flex flex-col gap-2 border-t border-[var(--border)] pt-4">
+            <ThemeToggle variant="list" label="Tema de la aplicación" />
+            <button
+              onClick={handleLogout}
+              className="flex items-center justify-center gap-2 rounded-xl border border-[var(--border)] py-2.5 text-sm font-semibold text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)]"
+            >
+              <LogOut className="size-4" /> Cerrar sesión
+            </button>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center justify-center gap-2 rounded-xl border border-[var(--border)] py-2.5 text-sm font-semibold text-[var(--danger)] transition-colors hover:bg-[var(--danger-soft)]"
-          >
-            <LogOut className="size-4" /> Cerrar sesión
-          </button>
         </div>
       </Sheet>
 

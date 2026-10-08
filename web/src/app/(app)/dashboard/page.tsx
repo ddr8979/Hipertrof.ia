@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Página de inicio (dashboard) del atleta.
- * Muestra saludo según hora/fecha, racha, CTA al último entrenamiento, stats,
- * widget de Spotify, rutinas recientes y un hub de accesos a las herramientas.
+ * Inicio del atleta: saludo + racha, CTA al último entrenamiento, stats
+ * y las últimas rutinas. Sin atajos redundantes (la navegación vive en
+ * la píldora y en el sheet "Más").
  */
 
 import Link from "next/link";
@@ -19,7 +19,6 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/components/providers";
 import { Button } from "@/components/ui/button";
-import { ComingSoon } from "@/components/coming-soon";
 import { Skeleton, Avatar } from "@/components/ui/primitives";
 import { EmptyState, StatCard } from "@/components/ui/data";
 import { cn, estimate1RM, formatDate, formatDuration, splitEmojiRuns } from "@/lib/utils";
@@ -28,8 +27,8 @@ import { cn, estimate1RM, formatDate, formatDuration, splitEmojiRuns } from "@/l
 export default function DashboardPage() {
   const profile = useProfile((s) => s.profile);
 
-  // Consulta agregada del dashboard: últimas sesiones, rutinas, fechas para la
-  // racha y playlists de Spotify. Todo se resuelve en un único queryFn.
+  // Consulta agregada del dashboard: últimas sesiones, rutinas, fechas para
+  // la racha y series para estimar el 1RM. Todo en un único queryFn.
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard"],
     queryFn: async () => {
@@ -55,13 +54,6 @@ export default function DashboardPage() {
         .order("started_at", { ascending: false })
         .limit(90);
 
-      // Últimas 4 playlists/música vinculada
-      const { data: playlists } = await supabase
-        .from("playlists")
-        .select("id, provider, name, artist, url, thumbnail_url")
-        .order("created_at", { ascending: false })
-        .limit(4);
-
       // Sesiones recientes para estimar el 1RM máximo (sin calentamientos)
       const { data: rmData } = await supabase
         .from("workouts")
@@ -84,14 +76,6 @@ export default function DashboardPage() {
         workouts: workouts ?? [],
         routines: routines ?? [],
         dates: streakData ?? [],
-        playlists: (playlists ?? []) as {
-          id: string;
-          provider: string;
-          name: string;
-          artist: string | null;
-          url: string | null;
-          thumbnail_url: string | null;
-        }[],
       };
     },
   });
@@ -156,7 +140,7 @@ export default function DashboardPage() {
       >
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-[var(--accent)]">
+            <p className="text-xs font-semibold text-[var(--accent)]">
               {weeklyVolume?.length ? "Tu último entrenamiento" : "Listo para entrenar"}
             </p>
             <h2 className="mt-1.5 font-display text-2xl font-bold tracking-tight sm:text-3xl">
@@ -199,12 +183,10 @@ export default function DashboardPage() {
         />
       </div>
 
-      <SpotifyWidget />
-
       {/* Rutinas */}
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-[11px] font-bold uppercase tracking-widest text-[var(--muted)]">
+          <h3 className="font-display text-lg font-bold tracking-tight">
             Tus rutinas
           </h3>
           <Link
@@ -251,20 +233,6 @@ export default function DashboardPage() {
           />
         )}
       </section>
-
     </div>
-  );
-}
-
-/** Widget que muestra lo que suena en Spotify y permite vincular/ocultar la cuenta. */
-
-/** Widget de Spotify — hoy muestra el cartel de "próximamente". */
-function SpotifyWidget() {
-  return (
-    <ComingSoon
-      compact
-      title="Spotify en el entreno"
-      description="Próximamente: lo que estás escuchando, directo en tu dashboard."
-    />
   );
 }

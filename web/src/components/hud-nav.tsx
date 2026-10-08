@@ -15,9 +15,8 @@ import {
   Home,
   Dumbbell,
   MessageCircle,
-  Calculator,
-  BicepsFlexed,
-  Menu,
+  Play,
+  Compass,
 } from "lucide-react";
 import {
   memo,
@@ -28,12 +27,16 @@ import {
 import { cn } from "@/lib/utils";
 import { useWorkoutStore } from "@/lib/workout-store";
 
-/** Destinos que viven dentro de la píldora del HUD (móvil). */
+/**
+ * Destinos de la píldora inferior (móvil): 5 tabs máximo.
+ * /entrenar vive en el centro como acción primaria; el resto de rutas
+ * (perfil, herramientas, ajustes) cuelgan del header y del sheet "Más".
+ */
 export const HUD_ITEMS = [
   { href: "/dashboard", label: "Inicio", icon: Home },
   { href: "/rutinas", label: "Rutinas", icon: Dumbbell },
-  { href: "/ejercicios", label: "Ejercicios", icon: BicepsFlexed },
-  { href: "/calculadora", label: "Calc", ariaLabel: "Calculadora", icon: Calculator },
+  { href: "/entrenar", label: "Entrenar", icon: Play, emphasis: true },
+  { href: "/explorar", label: "Social", icon: Compass },
   { href: "/mensajes", label: "Mensajes", icon: MessageCircle },
 ] as const;
 
@@ -46,31 +49,37 @@ export function isActive(pathname: string, href: string) {
 const HudItem = memo(function HudItem({
   href,
   label,
-  ariaLabel,
   icon: Icon,
   badge,
+  emphasis,
 }: {
   href: string;
   label: string;
-  ariaLabel?: string;
-  icon: ComponentType<{ className?: string; strokeWidth?: number }>;
+  icon: ComponentType<{ className?: string; strokeWidth?: number; fill?: string }>;
   badge?: number;
+  emphasis?: boolean;
 }) {
   const pathname = usePathname();
   const active = isActive(pathname, href);
   return (
     <Link
       href={href}
-      aria-label={ariaLabel ?? label}
+      aria-label={label}
       aria-current={active ? "page" : undefined}
       className={cn(
         "relative flex flex-col items-center justify-center gap-0.5 rounded-full px-2 py-1 transition-transform duration-150 active:scale-90",
         active
           ? "bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--accent)_65%,transparent)]"
-          : "text-[var(--muted)] hover:text-[var(--text-2)]"
+          : emphasis
+            ? "text-[var(--accent)]"
+            : "text-[var(--muted)] hover:text-[var(--text-2)]"
       )}
     >
-      <Icon className="size-5" strokeWidth={active ? 2.4 : 2} />
+      <Icon
+        className="size-5"
+        strokeWidth={active || emphasis ? 2.4 : 2}
+        fill={emphasis && !active ? "currentColor" : undefined}
+      />
       <span className="hidden text-[9px] font-bold leading-none min-[360px]:block">
         {label}
       </span>
@@ -83,20 +92,7 @@ const HudItem = memo(function HudItem({
   );
 });
 
-export function HudNav({
-  moreActive,
-  onMore,
-  unread = 0,
-  avatarUrl,
-  avatarName,
-}: {
-  /** Resalta el botón "Más" si la ruta activa está en el sheet secundario. */
-  moreActive: boolean;
-  onMore: () => void;
-  unread?: number;
-  avatarUrl?: string | null;
-  avatarName?: string | null;
-}) {
+export function HudNav({ unread = 0 }: { unread?: number }) {
   const pathname = usePathname();
   const restActive = useWorkoutStore((s) => s.restEndsAt !== null);
 
@@ -171,55 +167,11 @@ export function HudNav({
               key={t.href}
               href={t.href}
               label={t.label}
-              ariaLabel={"ariaLabel" in t ? t.ariaLabel : undefined}
               icon={t.icon}
+              emphasis={"emphasis" in t ? t.emphasis : undefined}
               badge={t.href === "/mensajes" ? unread : undefined}
             />
           ))}
-          <Link
-            href="/perfil"
-            aria-label="Perfil"
-            aria-current={isActive(pathname, "/perfil") ? "page" : undefined}
-            className={cn(
-              "relative flex flex-col items-center justify-center gap-0.5 rounded-full px-2 py-1 transition-transform duration-150 active:scale-90",
-              isActive(pathname, "/perfil")
-                ? "bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--accent)_65%,transparent)]"
-                : "text-[var(--muted)] hover:text-[var(--text-2)]"
-            )}
-          >
-            {avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={avatarUrl}
-                alt=""
-                className="size-5 rounded-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <span className="flex size-5 items-center justify-center rounded-full bg-[var(--accent-soft)] font-display text-[11px] font-bold text-[var(--accent)]">
-                {(avatarName ?? "U").trim().charAt(0).toUpperCase()}
-              </span>
-            )}
-            <span className="hidden text-[9px] font-bold leading-none min-[360px]:block">
-              Perfil
-            </span>
-          </Link>
-          <button
-            type="button"
-            onClick={onMore}
-            aria-label="Más opciones"
-            className={cn(
-              "flex flex-col items-center justify-center gap-0.5 rounded-full px-2.5 py-1.5 transition-transform duration-150 active:scale-90",
-              moreActive
-                ? "bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--accent)_65%,transparent)]"
-                : "text-[var(--muted)] hover:text-[var(--text-2)]"
-            )}
-          >
-            <Menu className="size-5" strokeWidth={2} />
-            <span className="hidden text-[9px] font-bold leading-none min-[360px]:block">
-              Más
-            </span>
-          </button>
         </div>
       </div>
     </nav>

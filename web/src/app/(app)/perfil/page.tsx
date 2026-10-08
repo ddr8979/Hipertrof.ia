@@ -259,8 +259,6 @@ export default function PerfilPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <SpotifyNowCard />
-      <SpotifyConnectCard />
       {/* Header */}
       <div className="card overflow-hidden">
         <div className="relative h-36 bg-[var(--surface-2)] sm:h-44">
@@ -518,6 +516,10 @@ export default function PerfilPage() {
           </div>
         )}
       </section>
+
+      {/* Próximamente: widgets de Spotify al fondo, no en el primer pantallazo */}
+      <SpotifyNowCard />
+      <SpotifyConnectCard />
 
       {/* Editar perfil */}
       <Dialog

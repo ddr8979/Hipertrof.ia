@@ -20,7 +20,6 @@ const PUBLIC_PATHS = [
   "/auth/callback",
   "/terminos",
   "/privacidad",
-  "/marketplace",
   "/manifest.webmanifest",
   "/sw.js",
 ];

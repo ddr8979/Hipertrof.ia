@@ -21,7 +21,7 @@ export function StatCard({
   return (
     <div className={cn("card flex min-w-0 flex-col items-center overflow-hidden p-3 text-center", className)}>
       {icon && <span className="shrink-0 text-[var(--accent)]">{icon}</span>}
-      <p className="mt-1.5 min-w-0 text-[10px] font-semibold uppercase leading-tight tracking-wide text-[var(--muted)]">
+      <p className="mt-1.5 min-w-0 text-[10px] font-semibold leading-tight text-[var(--muted)]">
         {label}
       </p>
       <p className="mt-1 min-w-0 font-display text-2xl font-bold tracking-tight">
