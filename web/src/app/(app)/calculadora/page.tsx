@@ -151,7 +151,6 @@ export default function CalculadoraPage() {
   const handleFoodDetected = useCallback((food: DetectedFood) => {
     addFood(food);
     toast("success", "Alimento agregado", `${food.class}: ~${food.calories} kcal`);
-    setShowCamera(false);
   }, [addFood]);
 
   return (
