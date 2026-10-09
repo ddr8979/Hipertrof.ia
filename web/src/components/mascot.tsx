@@ -1,8 +1,9 @@
-// Mascota de Hipertrof.ia: mancuerna moderna estilo Hevy/Fitia.
-// Geometría limpia, bold, sin ruido visual. SVG 100% original.
+// Mascarota de Hipertrof.ia: marca "H" bold dentro de un cuadro redondeado.
+// Estilo Hevy/Fitia: geometría limpia, sin sombras, sin glow, sin ruido.
 "use client";
 
 import { useEffect, useState } from "react";
+import { Dumbbell } from "lucide-react";
 
 const PHRASES: Record<"login" | "registro", string[]> = {
   login: [
@@ -27,8 +28,8 @@ export function Mascot({ mode }: { mode: "login" | "registro" }) {
   }, [phrases.length]);
 
   return (
-    <div className="mb-4 flex flex-col items-center gap-2" aria-hidden="true">
-      <DumbbellMascot />
+    <div className="mb-4 flex flex-col items-center gap-3" aria-hidden="true">
+      <BrandMark />
       <div
         key={i}
         className="relative max-w-[14rem] animate-fade-up rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-center text-sm font-semibold leading-snug text-[var(--text-2)] shadow-[var(--shadow-md)]"
@@ -40,64 +41,39 @@ export function Mascot({ mode }: { mode: "login" | "registro" }) {
   );
 }
 
-/**
- * Mancuerna moderna estilo Hevy/Fitia:
- * - Formas geométricas limpies y bold
- * - Placas = rectángulos redondeados (no círculos)
- * - Barra = rectángulo con separadores (knurling mínimo)
- * - Sin partículas, sin brillos excesivos
- * - Un solo acento de color (accent) para dar vida
- */
-function DumbbellMascot() {
+/** Marca "H" bold estilo Hevy: cuadro redondeado con acento brand. */
+function BrandMark() {
   return (
-    <div className="relative size-28 sm:size-32 animate-db-float">
-      <svg viewBox="0 0 160 80" className="size-full" role="img" aria-label="Mancuerna de Hipertrof.ia">
-        <title>Mancuerna de Hipertrof.ia</title>
-
-        {/* Placa izquierda */}
-        <rect x="6" y="14" width="28" height="52" rx="6" fill="var(--text)" />
-        <rect x="12" y="18" width="16" height="44" rx="4" fill="var(--surface-2)" />
-        <rect x="16" y="36" width="8" height="8" rx="2" fill="var(--accent)" />
-
-        {/* Barra */}
-        <rect x="42" y="33" width="76" height="14" rx="0" fill="var(--text)" />
-        <line x1="50" y1="40" x2="110" y2="40" stroke="var(--surface-2)" strokeWidth="2" strokeLinecap="round" />
-
-        {/* Placa derecha */}
-        <rect x="126" y="14" width="28" height="52" rx="6" fill="var(--text)" />
-        <rect x="132" y="18" width="16" height="44" rx="4" fill="var(--surface-2)" />
-        <rect x="136" y="36" width="8" height="8" rx="2" fill="var(--accent)" />
+    <div className="size-24 sm:size-28 animate-db-float">
+      <svg viewBox="0 0 96 96" className="size-full" role="img" aria-label="Hipertrof.ia">
+        <title>Hipertrof.ia</title>
+        {/* Fondo: cuadro redondeado con acento */}
+        <rect x="4" y="4" width="88" height="88" rx="22" fill="var(--accent)" />
+        {/* Sombra interna sutil (no negra, sino más oscura del acento) */}
+        <rect x="4" y="4" width="88" height="88" rx="22" fill="white" opacity="0.08" />
+        {/* Letra H bold */}
+        <g fill="var(--accent-ink)" transform="translate(48,48)">
+          {/* Barra izquierda */}
+          <rect x="-22" y="-24" width="10" height="48" rx="3" />
+          {/* Barra derecha */}
+          <rect x="12" y="-24" width="10" height="48" rx="3" />
+          {/* Barra central */}
+          <rect x="-12" y="-5" width="24" height="10" rx="3" />
+        </g>
+        {/* Pequeño punto de acento */}
+        <circle cx="76" cy="20" r="5" fill="white" opacity="0.3" />
       </svg>
     </div>
   );
 }
 
-/** Icono limpio para header, empty states, etc. */
+/** Icono de mancuerna: usa el icono nativo de Lucide (limpio, consistente). */
 export function DumbbellIcon({ size = 40, className = "", animated = false }: { size?: number; className?: string; animated?: boolean }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 160 80"
+    <Dumbbell
+      size={size}
+      strokeWidth={1.8}
       className={className + (animated ? " animate-db-float" : "")}
-      role="img"
-      aria-hidden="true"
-    >
-      <title>Mancuerna</title>
-
-      {/* Placa izquierda */}
-      <rect x="6" y="14" width="28" height="52" rx="6" fill="currentColor" />
-      <rect x="12" y="18" width="16" height="44" rx="4" fill="var(--surface-2)" />
-      <rect x="16" y="36" width="8" height="8" rx="2" fill="var(--accent)" />
-
-      {/* Barra */}
-      <rect x="42" y="33" width="76" height="14" fill="currentColor" />
-      <line x1="50" y1="40" x2="110" y2="40" stroke="var(--surface-2)" strokeWidth="2" strokeLinecap="round" />
-
-      {/* Placa derecha */}
-      <rect x="126" y="14" width="28" height="52" rx="6" fill="currentColor" />
-      <rect x="132" y="18" width="16" height="44" rx="4" fill="var(--surface-2)" />
-      <rect x="136" y="36" width="8" height="8" rx="2" fill="var(--accent)" />
-    </svg>
+    />
   );
 }
