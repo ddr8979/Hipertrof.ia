@@ -22,7 +22,7 @@ import { useProfile } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { Skeleton, Avatar } from "@/components/ui/primitives";
 import { EmptyState, StatCard } from "@/components/ui/data";
-import { DumbbellIcon } from "@/components/mascot";
+import { DumbbellIcon, MrMancuernasCard } from "@/components/mascot";
 import { estimate1RM, formatDate, formatDuration, splitEmojiRuns } from "@/lib/utils";
 
 /** Dashboard principal del atleta: resumen de actividad y accesos rápidos. */
@@ -88,29 +88,26 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-5 animate-fade-up">
-      {/* Saludo con mascota */}
+      {/* Saludo */}
       <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <DumbbellIcon size={44} animated className="text-[var(--accent)]" />
-          <div>
-            <p className="text-sm font-medium text-[var(--muted)]">
-              {new Date().toLocaleDateString("es-UY", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-              })}
-            </p>
-            <h1 className="truncate font-display text-xl font-bold tracking-tight">
-              Hola,{" "}
-              {splitEmojiRuns(profile?.display_name ?? "atleta").map((s, i) =>
-                s.emoji ? (
-                  <span key={i} className="text-[var(--text)]">{s.text}</span>
-                ) : (
-                  <span key={i} className="text-[var(--accent)]">{s.text}</span>
-                )
-              )}
-            </h1>
-          </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-[var(--muted)]">
+            {new Date().toLocaleDateString("es-UY", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
+          </p>
+          <h1 className="truncate font-display text-xl font-bold tracking-tight">
+            Hola,{" "}
+            {splitEmojiRuns(profile?.display_name ?? "atleta").map((s, i) =>
+              s.emoji ? (
+                <span key={i} className="text-[var(--text)]">{s.text}</span>
+              ) : (
+                <span key={i} className="text-[var(--accent)]">{s.text}</span>
+              )
+            )}
+          </h1>
         </div>
         <Link href="/perfil" className="flex shrink-0 items-center gap-2">
           <span className="flex items-center gap-1 rounded-full bg-[var(--accent)] px-3 py-1 text-xs font-bold text-[var(--accent-ink)] shadow-[0_4px_12px_-4px_color-mix(in_srgb,var(--accent)_60%,transparent)]">
@@ -124,6 +121,9 @@ export default function DashboardPage() {
           />
         </Link>
       </div>
+
+      {/* Mr Mancuernas: mascota que saluda y da un tip distinto cada visita */}
+      <MrMancuernasCard />
 
       {/* CTA principal */}
       <Link

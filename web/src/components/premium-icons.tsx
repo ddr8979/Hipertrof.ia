@@ -60,37 +60,29 @@ export function VerifiedBadge({ size = 20, className }: { size?: number; classNa
 }
 
 /**
- * Aplica un efecto de brillo deslizante sobre los hijos SVG.
+ * Aplica un latido sutil a los iconos hijos sin alterar su color.
+ * IMPORTANTE: antes se usaba un gradiente con `stop-color="currentColor"`,
+ * que muchos navegadores NO resuelven dentro de `<stop>` y renderizan NEGRO.
+ * Ahora se conserva el color real del icono y solo se anima su opacidad.
  * @param duration  Duración del ciclo en segundos.
- * @param intensity Intensidad del contraste del degradado.
  */
-export function ShimmerIcon({ 
-  children, 
+export function ShimmerIcon({
+  children,
   className,
   duration = 3,
-  intensity = 0.15
-}: { 
-  children: React.ReactNode; 
+}: {
+  children: React.ReactNode;
   className?: string;
   duration?: number;
   intensity?: number;
 }) {
-  const [id] = useState(() => `sh-${Math.random().toString(36).slice(2, 8)}`);
   return (
-    <svg className={cn("inline-block", className)}>
-      <defs>
-        <linearGradient id={`${id}-shimmer`} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="currentColor" stopOpacity={1 - intensity} />
-          <stop offset="50%" stopColor="currentColor" stopOpacity={1} />
-          <stop offset="100%" stopColor="currentColor" stopOpacity={1 - intensity} />
-          <animate attributeName="x1" values="0%;100%;0%" dur={`${duration}s`} repeatCount="indefinite" />
-          <animate attributeName="x2" values="100%;200%;100%" dur={`${duration}s`} repeatCount="indefinite" />
-        </linearGradient>
-      </defs>
-      <g fill={`url(#${id}-shimmer)`}>
-        {children}
-      </g>
-    </svg>
+    <span
+      className={cn("inline-block [&>svg]:block [&>svg]:size-full", className)}
+      style={{ animation: `icon-shine ${duration}s ease-in-out infinite` }}
+    >
+      {children}
+    </span>
   );
 }
 

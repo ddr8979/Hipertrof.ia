@@ -307,6 +307,43 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 
+/* ----------------------------------------------------------------------------
+   Mr Mancuernas: animaciones del personaje (una al azar por visita)
+   ------------------------------------------------------------------------- */
+@keyframes mr-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+@keyframes mr-tilt {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+@keyframes mr-wave {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-9deg); }
+  60% { transform: rotate(6deg); }
+}
+@keyframes mr-hop {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  30% { transform: translateY(-10px) scaleY(1.04); }
+  60% { transform: translateY(0) scaleY(0.96); }
+}
+@keyframes mr-sway {
+  0%, 100% { transform: translateX(-3px) rotate(-2deg); }
+  50% { transform: translateX(3px) rotate(2deg); }
+}
+.mr-bounce { animation: mr-bounce 2.4s ease-in-out infinite; }
+.mr-tilt { animation: mr-tilt 3s ease-in-out infinite; }
+.mr-wave { animation: mr-wave 2.6s ease-in-out infinite; transform-origin: 50% 90%; }
+.mr-hop { animation: mr-hop 2.2s ease-in-out infinite; transform-origin: 50% 100%; }
+.mr-sway { animation: mr-sway 3.4s ease-in-out infinite; transform-origin: 50% 90%; }
+
+/* Latido sutil de iconos (mantiene el color real del icono) */
+@keyframes icon-shine {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.72; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

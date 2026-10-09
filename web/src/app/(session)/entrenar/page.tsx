@@ -625,7 +625,8 @@ const { data: lastW } = await supabase
           exercise_id: e.exerciseId,
           name: e.name,
           notes: e.notes,
-          sets: e.sets.map((s) => ({
+          sets: e.sets.map((s, i) => ({
+            set_index: i,
             type: s.type,
             weight_kg: s.weight,
             reps: s.reps,
