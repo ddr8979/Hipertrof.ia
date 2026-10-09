@@ -14,7 +14,7 @@ import { usePathname } from "next/navigation";
 import {
   Home,
   Dumbbell,
-  MessageCircle,
+  User,
   Play,
   Compass,
 } from "lucide-react";
@@ -37,7 +37,7 @@ export const HUD_ITEMS = [
   { href: "/rutinas", label: "Rutinas", icon: Dumbbell },
   { href: "/entrenar", label: "Entrenar", icon: Play, emphasis: true },
   { href: "/explorar", label: "Social", icon: Compass },
-  { href: "/mensajes", label: "Mensajes", icon: MessageCircle },
+  { href: "/perfil", label: "Perfil", icon: User },
 ] as const;
 
 /** Determina si un href corresponde a la ruta actual (o a una subruta). */
@@ -92,7 +92,7 @@ const HudItem = memo(function HudItem({
   );
 });
 
-export function HudNav({ unread = 0 }: { unread?: number }) {
+export function HudNav() {
   const pathname = usePathname();
   const restActive = useWorkoutStore((s) => s.restEndsAt !== null);
 
@@ -169,7 +169,6 @@ export function HudNav({ unread = 0 }: { unread?: number }) {
               label={t.label}
               icon={t.icon}
               emphasis={"emphasis" in t ? t.emphasis : undefined}
-              badge={t.href === "/mensajes" ? unread : undefined}
             />
           ))}
         </div>
