@@ -1,17 +1,15 @@
-const SHELL_CACHE = "hypertrofia-shell-v6";
-const DATA_CACHE = "hypertrofia-data-v6";
-const RUNTIME_CACHE = "hypertrofia-runtime-v6";
+// Service Worker de hypertrof.ia.
+// Estrategia NETWORK-FIRST en todo: mientras haya red siempre servís la
+// versión más reciente (evita quedar pegado a un deploy viejo). La caché
+// queda solo como respaldo offline. Las notificaciones push siguen igual.
+const SHELL_CACHE = "hypertrofia-shell-v7";
+const DATA_CACHE = "hypertrofia-data-v7";
+const RUNTIME_CACHE = "hypertrofia-runtime-v7";
 
-const SHELL_URLS = ["/", "/dashboard", "/manifest.webmanifest"];
+const CURRENT_CACHES = [SHELL_CACHE, DATA_CACHE, RUNTIME_CACHE];
 
-self.addEventListener("install", (event) => {
+self.addEventListener("install", () => {
   self.skipWaiting();
-  event.waitUntil(
-    (async () => {
-      const cache = await caches.open(SHELL_CACHE);
-      await Promise.allSettled(SHELL_URLS.map((u) => cache.add(u)));
-    })()
-  );
 });
 
 self.addEventListener("activate", (event) => {
@@ -19,9 +17,7 @@ self.addEventListener("activate", (event) => {
     (async () => {
       const keys = await caches.keys();
       await Promise.all(
-        keys
-          .filter((k) => ![SHELL_CACHE, DATA_CACHE, RUNTIME_CACHE].includes(k))
-          .map((k) => caches.delete(k))
+        keys.filter((k) => !CURRENT_CACHES.includes(k)).map((k) => caches.delete(k))
       );
       await self.clients.claim();
     })()
@@ -65,44 +61,43 @@ self.addEventListener("notificationclick", (event) => {
   );
 });
 
+// Network-first: intenta la red y cachea la respuesta; si falla, cae a caché.
+async function networkFirst(req, cacheName) {
+  const cache = await caches.open(cacheName);
+  try {
+    const res = await fetch(req);
+    if (res && res.ok && res.type === "basic") cache.put(req, res.clone());
+    return res;
+  } catch {
+    const cached = await cache.match(req);
+    if (cached) return cached;
+    throw new Error("offline");
+  }
+}
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
 
   const url = new URL(req.url);
 
+  // Solo nos ocupamos de nuestro origen y de Supabase.
   if (url.origin !== self.location.origin && !url.hostname.endsWith("supabase.co")) {
     return;
   }
 
   if (url.hostname.endsWith("supabase.co")) {
-    // Network-first: datos frescos cuando hay red, cache como respaldo offline.
-    event.respondWith(
-      (async () => {
-        const cache = await caches.open(DATA_CACHE);
-        try {
-          const res = await fetch(req);
-          if (res.ok) cache.put(req, res.clone());
-          return res;
-        } catch {
-          const cached = await cache.match(req);
-          if (cached) return cached;
-          return new Response("", { status: 504 });
-        }
-      })()
-    );
+    event.respondWith(networkFirst(req, DATA_CACHE));
     return;
   }
 
   if (req.mode === "navigate") {
     event.respondWith(
       (async () => {
-        const cache = await caches.open(SHELL_CACHE);
         try {
-          const res = await fetch(req);
-          if (res.ok && res.redirected === false) cache.put(req, res.clone());
-          return res;
+          return await networkFirst(req, SHELL_CACHE);
         } catch {
+          const cache = await caches.open(SHELL_CACHE);
           const cached = (await cache.match(req)) || (await cache.match("/dashboard"));
           if (cached) return cached;
           throw new Error("offline");
@@ -112,32 +107,5 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  const isStatic =
-    url.pathname.startsWith("/_next/static") ||
-    url.pathname.startsWith("/icons") ||
-    /\.(?:woff2?|ttf|otf|png|jpg|jpeg|webp|svg|gif|webm|mp4|ico)$/.test(url.pathname);
-
-  if (isStatic) {
-    event.respondWith(
-      (async () => {
-        const cache = await caches.open(RUNTIME_CACHE);
-        const cached = await cache.match(req);
-        if (cached) {
-          fetch(req)
-            .then((res) => {
-              if (res.ok) cache.put(req, res.clone());
-            })
-            .catch(() => {});
-          return cached;
-        }
-        try {
-          const res = await fetch(req);
-          if (res.ok) cache.put(req, res.clone());
-          return res;
-        } catch (err) {
-          throw err;
-        }
-      })()
-    );
-  }
+  event.respondWith(networkFirst(req, RUNTIME_CACHE));
 });
