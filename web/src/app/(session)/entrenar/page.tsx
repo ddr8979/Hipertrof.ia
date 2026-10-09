@@ -354,7 +354,7 @@ export default function EntrenarPage() {
       const { data } = await supabase
         .from("routines")
         .select(
-          "id, name, routine_exercises(id, exercise_id, target_sets, target_reps, rest_sec, order_index, exercise:exercises(id, name, gif_url))"
+          "id, name, routine_exercises(id, exercise_id, target_sets, target_reps, rest_sec, target_weight_kg, order_index, exercise:exercises(id, name, gif_url))"
         )
         .eq("id", routineId)
         .order("order_index", { referencedTable: "routine_exercises", ascending: true })
@@ -368,6 +368,7 @@ export default function EntrenarPage() {
           target_sets: number;
           target_reps: number;
           rest_sec: number;
+          target_weight_kg: number | null;
           order_index: number;
           exercise: { id: string; name: string; gif_url: string | null } | null;
         }[];
@@ -435,6 +436,20 @@ export default function EntrenarPage() {
     });
     if (unmatched.length > 0) {
       toast("warning", "Ejercicios sin video/músculo", `${unmatched.map((u) => u.exercise?.name ?? "Desconocido").join(", ")} no están en la base de datos`);
+    }
+
+    // Peso objetivo de la rutina: precarga la carga sugerida en cada serie.
+    // Luego el historial (abajo) la reemplaza si hay un peso previo real.
+    const store = useWorkoutStore.getState();
+    const targets = new Map<string, number>();
+    for (const re of r.routine_exercises ?? []) {
+      const w = Number(re.target_weight_kg);
+      if (re.exercise_id && w > 0) targets.set(re.exercise_id, w);
+    }
+    for (const ex of store.draft?.exercises ?? []) {
+      const t = targets.get(ex.exerciseId ?? "");
+      if (!t) continue;
+      for (const set of ex.sets) store.updateSet(ex.key, set.key, { weight: t });
     }
 
     // Cargas predeterminadas: pesos del último entrenamiento del usuario

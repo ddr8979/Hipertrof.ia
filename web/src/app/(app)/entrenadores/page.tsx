@@ -26,6 +26,7 @@ import {
   ChevronRight,
   Pencil,
   QrCode,
+  ChartLine,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -39,6 +40,7 @@ import { toast } from "@/components/ui/toast";
 import { useProfile } from "@/components/providers";
 import { TrainerInviteDialog } from "@/components/trainer-invite-dialog";
 import { TrainerInviteAccept } from "@/components/trainer-invite-accept";
+import { TrainerClientInsights } from "@/components/trainer-client-insights";
 import { cn } from "@/lib/utils";
 
 type ClientRow = {
@@ -109,7 +111,7 @@ export function EntrenadoresView({ embedded = false }: { embedded?: boolean }) {
   const [inviteOpen, setInviteOpen] = useState(false);
 
   const [manageFor, setManageFor] = useState<string | null>(null);
-  const [manageTab, setManageTab] = useState<"routine" | "recipe">("routine");
+  const [manageTab, setManageTab] = useState<"routine" | "recipe" | "progress">("routine");
   const [editRoutine, setEditRoutine] = useState<{ id: string; name: string } | null>(null);
 
   // Determina si el usuario actual es trainer para mostrar el panel correspondiente.
@@ -981,10 +983,11 @@ export function EntrenadoresView({ embedded = false }: { embedded?: boolean }) {
         size="lg"
       >
         <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-1 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-1">
+          <div className="grid grid-cols-3 gap-1 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-1">
             {[
               { id: "routine" as const, label: "Rutinas", icon: <ClipboardList className="size-4" /> },
               { id: "recipe" as const, label: "Recetas", icon: <Utensils className="size-4" /> },
+              { id: "progress" as const, label: "Progreso", icon: <ChartLine className="size-4" /> },
             ].map((t) => (
               <button
                 key={t.id}
@@ -1095,7 +1098,7 @@ export function EntrenadoresView({ embedded = false }: { embedded?: boolean }) {
                 )}
               </div>
             </div>
-          ) : (
+          ) : manageTab === "recipe" ? (
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
                 <p className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">
@@ -1172,6 +1175,8 @@ export function EntrenadoresView({ embedded = false }: { embedded?: boolean }) {
                 </div>
               </div>
             </div>
+          ) : (
+            <TrainerClientInsights athleteId={manageFor!} />
           )}
         </div>
       </Dialog>

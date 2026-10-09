@@ -47,6 +47,7 @@ type RoutineEx = {
   target_sets: number;
   target_reps: string;
   rest_sec: number;
+  target_weight_kg: number | null;
   group_name: string | null;
   is_superset: boolean;
   color: string | null;
@@ -71,6 +72,7 @@ type DraftEx = {
   sets: number;
   reps: string;
   rest: number;
+  weight: number;
   groupName: string | null;
   isSuperset: boolean;
   color: string | null;
@@ -102,7 +104,8 @@ function DraftRow({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{ex.name}</p>
           <p className="text-xs text-[var(--muted)]">
-            {ex.sets} × {ex.reps} · {ex.rest}s descanso
+            {ex.sets} × {ex.reps}
+            {ex.weight > 0 ? ` · ${ex.weight} kg` : ""} · {ex.rest}s descanso
           </p>
         </div>
         <div className="flex items-center gap-1">
@@ -128,7 +131,7 @@ function DraftRow({
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-2 pl-6.5">
+      <div className="grid grid-cols-2 gap-2 pl-6.5 sm:grid-cols-4">
         <Field label="Series">
           <Input
             type="number"
@@ -143,6 +146,16 @@ function DraftRow({
             value={ex.reps}
             onChange={(e) => onChange({ reps: e.target.value })}
             placeholder="8-12"
+          />
+        </Field>
+        <Field label="Peso (kg)">
+          <Input
+            type="number"
+            min={0}
+            step="0.5"
+            value={ex.weight}
+            onChange={(e) => onChange({ weight: Number(e.target.value) })}
+            placeholder="0"
           />
         </Field>
         <Field label="Descanso (s)">
@@ -188,6 +201,7 @@ function RoutineEditor({
       sets: e.target_sets,
       reps: e.target_reps,
       rest: e.rest_sec,
+      weight: e.target_weight_kg ?? 0,
       groupName: e.group_name,
       isSuperset: e.is_superset,
       color: e.color,
@@ -212,6 +226,7 @@ function RoutineEditor({
         sets: 3,
         reps: "8-12",
         rest: 90,
+        weight: 0,
         groupName: null,
         isSuperset: false,
         color: null,
@@ -233,91 +248,27 @@ function RoutineEditor({
     setSaving(true);
     try {
       const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Sin sesión");
 
-      let routineId = routine?.id ?? null;
-
-      // Edición: actualiza la rutina y hace upsert/borrado de ejercicios por order_index.
-      if (routineId) {
-        const { error: er } = await supabase
-          .from("routines")
-          .update({ name: name.trim(), description: description.trim() || null })
-          .eq("id", routineId);
-        if (er) throw er;
-
-        // Upsert de ejercicios preservando order_index, group_name, is_superset, color
-        // Primero obtener existentes para mapear por exercise_id+order_index
-        const { data: existingEx } = await supabase
-          .from("routine_exercises")
-          .select("id, exercise_id, order_index")
-          .eq("routine_id", routineId);
-
-        const existingMap = new Map<string, string>();
-        for (const ex of existingEx ?? []) {
-          existingMap.set(`${ex.exercise_id}:${ex.order_index}`, ex.id);
-        }
-
-const upserts = drafts.map((d, i) => {
-          const existingKey = `${d.exerciseId}:${i}`;
-          const existingId = existingMap.get(existingKey);
-          return {
-            id: existingId,
-            routine_id: routineId!,
-            exercise_id: d.exerciseId,
-            order_index: i,
-            target_sets: d.sets,
-            target_reps: d.reps,
-            rest_sec: d.rest,
-            group_name: d.groupName,
-            is_superset: d.isSuperset,
-            color: d.color,
-          };
-        });
-
-        // Para los existentes que ya no están en drafts, borrar
-        const newKeys = new Set(drafts.map((d, i) => `${d.exerciseId}:${i}`));
-        const toDelete = (existingEx ?? [])
-          .filter((ex) => !newKeys.has(`${ex.exercise_id}:${ex.order_index}`))
-          .map((ex) => ex.id);
-        if (toDelete.length > 0) {
-          const { error: ed } = await supabase
-            .from("routine_exercises")
-            .delete()
-            .in("id", toDelete);
-          if (ed) throw ed;
-        }
-
-        const { error: ei } = await supabase
-          .from("routine_exercises")
-          .upsert(upserts, { onConflict: "id" });
-        if (ei) throw ei;
-      } else {
-        // Alta: crea la rutina y luego inserta sus ejercicios.
-        const { data: r, error: er } = await supabase
-          .from("routines")
-          .insert({ name: name.trim(), description: description.trim() || null, user_id: user.id })
-          .select("id")
-          .single();
-        if (er) throw er;
-        routineId = r.id;
-
-        const rows = drafts.map((d, i) => ({
-          routine_id: routineId!,
+      // Persistencia atómica vía RPC: crea/actualiza la rutina y reemplaza sus
+      // ejercicios (incluido el peso objetivo) en una sola transacción.
+      const payload = {
+        id: routine?.id ?? null,
+        name: name.trim(),
+        description: description.trim() || null,
+        exercises: drafts.map((d, i) => ({
           exercise_id: d.exerciseId,
           order_index: i,
           target_sets: d.sets,
           target_reps: d.reps,
           rest_sec: d.rest,
+          target_weight_kg: d.weight > 0 ? d.weight : null,
           group_name: d.groupName,
-          is_superset: d.isSuperset,
           color: d.color,
-        }));
-        const { error: ei } = await supabase.from("routine_exercises").insert(rows);
-        if (ei) throw ei;
-      }
+          is_superset: d.isSuperset,
+        })),
+      };
+      const { error } = await supabase.rpc("save_routine", { p_routine: payload });
+      if (error) throw error;
 
       qc.invalidateQueries({ queryKey: ["routines"] });
       toast("success", routine ? "Rutina actualizada" : "Rutina creada");
@@ -447,7 +398,7 @@ export default function RutinasPage() {
       const { data } = await supabase
         .from("routines")
         .select(
-          "id, name, description, is_template, updated_at, routine_exercises(id, exercise_id, order_index, target_sets, target_reps, rest_sec, group_name, is_superset, color, exercise:exercises(id, name, muscle_group, gif_url))"
+          "id, name, description, is_template, updated_at, routine_exercises(id, exercise_id, order_index, target_sets, target_reps, rest_sec, target_weight_kg, group_name, is_superset, color, exercise:exercises(id, name, muscle_group, gif_url))"
         )
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
