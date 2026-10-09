@@ -23,7 +23,6 @@ import {
   Calculator,
   BicepsFlexed,
   Menu,
-  MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/components/providers";
@@ -208,7 +207,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
 
-        {/* Contenido + header móvil: ☰ · logo centrado · mensajes */}
+        {/* Contenido + header móvil: ☰ · logo centrado · perfil */}
         <div className="relative flex min-w-0 flex-1 flex-col">
           {!isChatThread && (
             <header
@@ -234,18 +233,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="pointer-events-none absolute inset-x-0 flex justify-center">
                   <BrandMark />
                 </div>
-                {/* Mensajes con badge */}
+                {/* Perfil: avatar que navega a /perfil */}
                 <Link
-                  href="/mensajes"
-                  aria-label="Mensajes"
-                  className="relative flex size-8 items-center justify-center rounded-lg transition-colors text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
+                  href="/perfil"
+                  aria-label="Perfil"
+                  className="relative flex size-8 items-center justify-center rounded-lg transition-colors hover:bg-[var(--surface-2)]"
                 >
-                  <MessageCircle className="size-5" />
-                  {unread > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-4.5 min-w-[4.5px] items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[9px] font-bold text-white animate-pop">
-                      {unread > 9 ? "9+" : unread}
-                    </span>
-                  )}
+                  <Avatar
+                    src={profile?.avatar_url}
+                    size={30}
+                    alt={profile?.display_name ?? profile?.username ?? "Perfil"}
+                  />
                 </Link>
               </div>
             </header>

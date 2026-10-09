@@ -431,9 +431,9 @@ export default function MensajesPage() {
               {/* Composer */}
               <form onSubmit={handleSend} className="border-t border-[var(--border)] bg-[var(--surface)] p-3">
                 <div className="flex items-end gap-2">
-                  <button type="button" className="flex size-9 items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]" aria-label="Adjuntar">
+                  <Button type="button" variant="ghost" size="icon" aria-label="Adjuntar">
                     <Paperclip className="size-5" />
-                  </button>
+                  </Button>
                   <div className="flex-1 relative">
                     <Input
                       value={newMessage}
@@ -442,24 +442,23 @@ export default function MensajesPage() {
                       className="pr-12 rounded-full border-[var(--border)] bg-[var(--surface-2)] focus:border-[var(--accent)]"
                     />
                     <div className="absolute right-2 bottom-2 flex items-center gap-1">
-                      <button type="button" className="flex size-8 items-center justify-center rounded-full text-[var(--muted)] hover:bg-[var(--surface-3)] hover:text-[var(--text)]" aria-label="Cámara">
+                      <Button type="button" variant="ghost" size="icon" aria-label="Cámara">
                         <Camera className="size-4" />
-                      </button>
+                      </Button>
                       <Button
                         type="submit"
-                        variant="subtle"
+                        variant="accent"
                         size="icon"
                         disabled={!newMessage.trim() || sending}
-                        className="text-[var(--accent)]"
                         aria-label="Enviar"
                       >
                         <Send className="size-4" />
                       </Button>
                     </div>
                   </div>
-                  <button type="button" className="flex size-9 items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]" aria-label="Audio">
+                  <Button type="button" variant="ghost" size="icon" aria-label="Audio">
                     <Mic className="size-5" />
-                  </button>
+                  </Button>
                 </div>
               </form>
             </>
