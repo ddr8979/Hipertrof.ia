@@ -66,10 +66,11 @@
   --success: #8fc7a2;
   --success-soft: rgba(143, 199, 162, 0.14);
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 4px 12px -4px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 16px 32px -8px rgba(0, 0, 0, 0.5), 0 6px 16px -6px rgba(0, 0, 0, 0.3);
-  --card-hi: rgba(255, 255, 255, 0.05);
+  /* Dark mode shadows: subtle, using surface tones not pure black */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px -4px rgba(0, 0, 0, 0.25), 0 2px 4px -2px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 16px 32px -8px rgba(0, 0, 0, 0.3), 0 6px 16px -6px rgba(0, 0, 0, 0.18);
+  --card-hi: rgba(255, 255, 255, 0.03);
 }
 
 @theme inline {

@@ -19,16 +19,16 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 // Mapeo de cada variante a sus clases Tailwind - sombras refinadas, elegantes.
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-[var(--text)] text-[var(--bg)] hover:opacity-90 disabled:hover:opacity-100 shadow-[0_2px_4px_rgba(0,0,0,0.08),0_1px_1px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_4px_rgba(0,0,0,0.3),0_1px_1px_rgba(0,0,0,0.2)]",
+    "bg-[var(--text)] text-[var(--bg)] hover:opacity-90 disabled:hover:opacity-100 shadow-[0_2px_4px_rgba(0,0,0,0.08),0_1px_1px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_4px_rgba(0,0,0,0.25),0_1px_1px_rgba(0,0,0,0.15)]",
   accent:
-    "bg-[var(--accent)] text-[var(--accent-ink)] hover:bg-[var(--accent-hover)] disabled:hover:bg-[var(--accent)] shadow-[0_2px_8px_-2px_color-mix(in_srgb,var(--accent)_40%,transparent),0_1px_2px_color-mix(in_srgb,var(--accent)_20%,transparent)] dark:shadow-[0_2px_8px_-2px_rgba(168,201,162,0.3),0_1px_2px_rgba(168,201,162,0.15)]",
+    "bg-[var(--accent)] text-[var(--accent-ink)] hover:bg-[var(--accent-hover)] disabled:hover:bg-[var(--accent)] shadow-[0_2px_8px_-2px_color-mix(in_srgb,var(--accent)_40%,transparent),0_1px_2px_color-mix(in_srgb,var(--accent)_20%,transparent)] dark:shadow-[0_2px_8px_-2px_color-mix(in_srgb,var(--accent)_30%,transparent),0_1px_2px_color-mix(in_srgb,var(--accent)_15%,transparent)]",
   subtle:
     "bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--accent-ink)] shadow-none",
-  secondary: "bg-[var(--surface-2)] text-[var(--text)] hover:bg-[var(--surface-3)] shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)]",
+  secondary: "bg-[var(--surface-2)] text-[var(--text)] hover:bg-[var(--surface-3)] shadow-[0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.15)]",
   ghost: "bg-transparent text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)] shadow-none",
   outline:
     "border border-[var(--border)] bg-transparent text-[var(--text)] hover:border-[var(--muted)] hover:bg-[var(--surface-2)] shadow-none",
-  danger: "bg-[var(--danger)] text-white hover:brightness-110 shadow-[0_2px_4px_rgba(215,106,112,0.25)] dark:shadow-[0_2px_4px_rgba(233,138,143,0.3)]",
+  danger: "bg-[var(--danger)] text-white hover:brightness-110 shadow-[0_2px_4px_rgba(215,106,112,0.25)] dark:shadow-[0_2px_4px_rgba(233,138,143,0.25)]",
 };
 
 // Mapeo de cada tamaño a sus clases Tailwind.
