@@ -54,30 +54,19 @@ function DumbbellMascot() {
       <svg viewBox="0 0 160 80" className="size-full" role="img" aria-label="Mancuerna de Hipertrof.ia">
         <title>Mancuerna de Hipertrof.ia</title>
 
-        {/* Placa izquierda - rectángulo redondeado bold */}
-        <g transform="translate(20, 40)">
-          <rect x="-14" y="-26" width="28" height="52" rx="6" fill="var(--text)" />
-          {/* Bisel interior sutil */}
-          <rect x="-10" y="-22" width="20" height="44" rx="4" fill="var(--text)" opacity="0.7" />
-          {/* Marca de peso */}
-          <rect x="-6" y="-4" width="12" height="8" rx="2" fill="var(--accent)" />
-        </g>
+        {/* Placa izquierda */}
+        <rect x="6" y="14" width="28" height="52" rx="6" fill="var(--text)" />
+        <rect x="12" y="18" width="16" height="44" rx="4" fill="var(--surface-2)" />
+        <rect x="16" y="36" width="8" height="8" rx="2" fill="var(--accent)" />
 
-        {/* Barra central - limpia con knurling mínimo */}
-        <g transform="translate(42, 40)">
-          <rect x="0" y="-7" width="76" height="14" rx="0" fill="var(--text)" />
-          {/* Knurling: 3 líneas finas */}
-          <line x1="8" y1="0" x2="68" y2="0" stroke="var(--surface)" strokeWidth="1.5" opacity="0.3" />
-          <line x1="12" y1="-3" x2="64" y2="-3" stroke="var(--surface)" strokeWidth="1" opacity="0.15" />
-          <line x1="12" y1="3" x2="64" y2="3" stroke="var(--surface)" strokeWidth="1" opacity="0.15" />
-        </g>
+        {/* Barra */}
+        <rect x="42" y="33" width="76" height="14" rx="0" fill="var(--text)" />
+        <line x1="50" y1="40" x2="110" y2="40" stroke="var(--surface-2)" strokeWidth="2" strokeLinecap="round" />
 
-        {/* Placa derecha - rectángulo redondeado bold */}
-        <g transform="translate(140, 40)">
-          <rect x="-14" y="-26" width="28" height="52" rx="6" fill="var(--text)" />
-          <rect x="-10" y="-22" width="20" height="44" rx="4" fill="var(--text)" opacity="0.7" />
-          <rect x="-6" y="-4" width="12" height="8" rx="2" fill="var(--accent)" />
-        </g>
+        {/* Placa derecha */}
+        <rect x="126" y="14" width="28" height="52" rx="6" fill="var(--text)" />
+        <rect x="132" y="18" width="16" height="44" rx="4" fill="var(--surface-2)" />
+        <rect x="136" y="36" width="8" height="8" rx="2" fill="var(--accent)" />
       </svg>
     </div>
   );
@@ -97,26 +86,18 @@ export function DumbbellIcon({ size = 40, className = "", animated = false }: { 
       <title>Mancuerna</title>
 
       {/* Placa izquierda */}
-      <g transform="translate(20, 40)">
-        <rect x="-14" y="-26" width="28" height="52" rx="6" fill="currentColor" />
-        <rect x="-10" y="-22" width="20" height="44" rx="4" fill="currentColor" opacity="0.7" />
-        <rect x="-6" y="-4" width="12" height="8" rx="2" fill="var(--accent)" />
-      </g>
+      <rect x="6" y="14" width="28" height="52" rx="6" fill="currentColor" />
+      <rect x="12" y="18" width="16" height="44" rx="4" fill="var(--surface-2)" />
+      <rect x="16" y="36" width="8" height="8" rx="2" fill="var(--accent)" />
 
       {/* Barra */}
-      <g transform="translate(42, 40)">
-        <rect x="0" y="-7" width="76" height="14" fill="currentColor" />
-        <line x1="8" y1="0" x2="68" y2="0" stroke="var(--surface)" strokeWidth="1.5" opacity="0.3" />
-        <line x1="12" y1="-3" x2="64" y2="-3" stroke="var(--surface)" strokeWidth="1" opacity="0.15" />
-        <line x1="12" y1="3" x2="64" y2="3" stroke="var(--surface)" strokeWidth="1" opacity="0.15" />
-      </g>
+      <rect x="42" y="33" width="76" height="14" fill="currentColor" />
+      <line x1="50" y1="40" x2="110" y2="40" stroke="var(--surface-2)" strokeWidth="2" strokeLinecap="round" />
 
       {/* Placa derecha */}
-      <g transform="translate(140, 40)">
-        <rect x="-14" y="-26" width="28" height="52" rx="6" fill="currentColor" />
-        <rect x="-10" y="-22" width="20" height="44" rx="4" fill="currentColor" opacity="0.7" />
-        <rect x="-6" y="-4" width="12" height="8" rx="2" fill="var(--accent)" />
-      </g>
+      <rect x="126" y="14" width="28" height="52" rx="6" fill="currentColor" />
+      <rect x="132" y="18" width="16" height="44" rx="4" fill="var(--surface-2)" />
+      <rect x="136" y="36" width="8" height="8" rx="2" fill="var(--accent)" />
     </svg>
   );
 }
