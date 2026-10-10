@@ -5,13 +5,14 @@
  * Estructura de navegación de la app autenticada.
  * Desktop: sidebar agrupado en 3 secciones (Principal / Herramientas / Cuenta).
  * Móvil: header con logo centrado (☰ · logo · avatar) + píldora inferior de
- * 5 tabs. Todo lo secundario vive en el sheet "Más", sin duplicar destinos.
+ * 6 tabs. Todo lo secundario vive en el sheet "Más", sin duplicar destinos.
  */
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Barbell as Dumbbell, ForkKnife as Utensils, User, Users, SignOut as LogOut, Gear as Settings, ClockCounterClockwise as History, ChartLineUp as ChartLine, BookOpenText, Calculator, Barbell as BicepsFlexed, List as Menu, ChatCircleDots } from "@phosphor-icons/react";
+import { User, Users, SignOut as LogOut, Gear as Settings, ClockCounterClockwise as History, ChartLineUp as ChartLine, BookOpenText, Calculator, Barbell as BicepsFlexed, List as Menu, ChatCircleDots } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/ui/logo";
 import { useProfile } from "@/components/providers";
 import { Avatar } from "@/components/ui/primitives";
 import { createClient } from "@/lib/supabase/client";
@@ -35,7 +36,6 @@ const PRINCIPAL: NavItem[] = HUD_ITEMS.map((i) => ({
 /** Herramientas: lo que se consulta, no se usa a diario. */
 const HERRAMIENTAS: NavItem[] = [
   { href: "/ejercicios", label: "Ejercicios", icon: BicepsFlexed },
-  { href: "/nutricion", label: "Nutrición", icon: Utensils },
   { href: "/calculadora", label: "Calculadora", icon: Calculator },
   { href: "/progreso", label: "Progreso", icon: ChartLine },
   { href: "/glosario", label: "Diccionario", icon: BookOpenText },
@@ -95,13 +95,8 @@ const NavLink = memo(function NavLink({
 /** Marca centrada: el logo es el elemento centrado de ambas barras. */
 function BrandMark() {
   return (
-    <Link href="/dashboard" className="pointer-events-auto flex items-center gap-2" aria-label="Hipertrof.ia - Inicio">
-      <span className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-ink)]">
-        <Dumbbell className="size-4" weight="bold" />
-      </span>
-      <span className="font-display text-[15px] font-bold tracking-tight">
-        hypertrof<span className="text-[var(--accent)]">.ia</span>
-      </span>
+    <Link href="/dashboard" className="pointer-events-auto flex items-center" aria-label="Hipertrof.ia - Inicio">
+      <Logo className="h-[22px] w-auto text-[var(--text)]" />
     </Link>
   );
 }

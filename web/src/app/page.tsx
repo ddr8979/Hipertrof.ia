@@ -7,6 +7,7 @@
 import Link from "next/link";
 import { Barbell as Dumbbell, ChartLineUp as ChartLine, Timer, Users, MusicNotes as Music4, Trophy, Storefront as Store, ArrowRight, Lightning as Zap } from "@phosphor-icons/react/dist/ssr";
 import { createClient } from "@/lib/supabase/server";
+import { Logo } from "@/components/ui/logo";
 
 /** Landing pública; consulta el usuario actual para personalizar la navegación. */
 export default async function LandingPage() {
@@ -26,13 +27,8 @@ export default async function LandingPage() {
 
       {/* Nav */}
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
-        <div className="flex items-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--accent-ink)]">
-            <Dumbbell className="size-5" weight="bold" />
-          </span>
-          <span className="font-display text-xl font-bold tracking-tight">
-            hypertrof<span className="text-[var(--accent)]">.ia</span>
-          </span>
+        <div className="flex items-center">
+          <Logo className="h-7 w-auto text-[var(--text)]" />
         </div>
         <nav className="hidden items-center gap-6 text-sm font-medium text-[var(--text-2)] md:flex">
           <a href="#features" className="transition-colors hover:text-[var(--text)]">Features</a>
@@ -361,13 +357,8 @@ export default async function LandingPage() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-[var(--border)]">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 sm:flex-row">
-          <div className="flex items-center gap-2">
-            <span className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-ink)]">
-              <Dumbbell className="size-4" weight="bold" />
-            </span>
-            <span className="font-display font-bold">
-              hypertrof<span className="text-[var(--accent)]">.ia</span>
-            </span>
+          <div className="flex items-center">
+            <Logo className="h-5 w-auto text-[var(--text)]" />
           </div>
           <div className="flex items-center gap-5 text-sm text-[var(--muted)]">
             <Link href="/terminos" className="transition-colors hover:text-[var(--text)]">

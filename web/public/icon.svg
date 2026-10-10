@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Hipertrof.ia app">
+  <title>Hipertrof.ia</title>
+  <rect width="120" height="120" rx="27" fill="#141414"/>
+  <g fill="#f5f5f3">
+    <path d="M36,24 H53 V56 H67 V24 H84 V96 H67 V64 H53 V96 H36 Z" transform="translate(0,2)"/>
+  </g>
+  <g fill="#0077d6">
+    <rect x="27.5" y="60" width="10" height="4" rx="2"/>
+    <rect x="82.5" y="60" width="10" height="4" rx="2"/>
+  </g>
+</svg>
