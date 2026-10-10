@@ -12,7 +12,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, Barbell, Play, Compass, User } from "@phosphor-icons/react";
+import { House, Barbell, Play, Compass, User, ForkKnife } from "@phosphor-icons/react";
 import {
   memo,
   useRef,
@@ -23,15 +23,16 @@ import { cn } from "@/lib/utils";
 import { useWorkoutStore } from "@/lib/workout-store";
 
 /**
- * Destinos de la píldora inferior (móvil): 5 tabs máximo.
+ * Destinos de la píldora inferior (móvil).
  * /entrenar vive en el centro como acción primaria; el resto de rutas
- * (perfil, herramientas, ajustes) cuelgan del header y del sheet "Más".
+ * (herramientas, ajustes) cuelgan del header y del sheet "Más".
  */
 export const HUD_ITEMS = [
   { href: "/dashboard", label: "Inicio", icon: House },
   { href: "/rutinas", label: "Rutinas", icon: Barbell },
   { href: "/entrenar", label: "Entrenar", icon: Play, emphasis: true },
   { href: "/explorar", label: "Social", icon: Compass },
+  { href: "/nutricion", label: "Nutrición", icon: ForkKnife },
   { href: "/perfil", label: "Perfil", icon: User },
 ] as const;
 

@@ -558,39 +558,54 @@ export default function ExplorarPage() {
     <div className="flex flex-col gap-5">
       <div className="flex w-full min-w-0 flex-col items-center gap-4">
         <h1 className="font-display text-3xl font-bold tracking-tight">Social</h1>
-        <div className="flex w-full min-w-0 max-w-full overflow-x-auto rounded-xl bg-[var(--surface-2)] p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {(
-            [
-              { id: "global", label: "Global", color: null },
-              { id: "amigos", label: "Amigos", color: "text-[#7c8cff]" },
-              {
-                id: "mejores",
-                label: "Mejores amigos",
-                color: "text-[#22c55e]",
-                icon: Star,
-              },
-              { id: "buscar", label: "Buscar", color: null, icon: Search },
-            ] as const
-          ).map((t) => {
-            const Icon = "icon" in t ? t.icon : null;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={cn(
-                  "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors sm:px-4",
-                  tab === t.id
-                    ? t.id === "mejores"
-                      ? "bg-[#22c55e] text-white shadow-sm"
-                      : "bg-[var(--accent)] text-[var(--accent-ink)] shadow-sm"
-                    : cn(t.color ?? "text-[var(--muted)]", "hover:text-[var(--text)]")
-                )}
-              >
-                {Icon && <Icon className="size-3.5" />}
-                {t.label}
-              </button>
-            );
-          })}
+        <div className="flex w-full min-w-0 items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto rounded-xl bg-[var(--surface-2)] p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {(
+              [
+                { id: "global", label: "Global", color: null },
+                { id: "amigos", label: "Amigos", color: "text-[#7c8cff]" },
+                {
+                  id: "mejores",
+                  label: "Mejores amigos",
+                  color: "text-[#22c55e]",
+                  icon: Star,
+                },
+              ] as const
+            ).map((t) => {
+              const Icon = "icon" in t ? t.icon : null;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={cn(
+                    "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors sm:px-4",
+                    tab === t.id
+                      ? t.id === "mejores"
+                        ? "bg-[#22c55e] text-white shadow-sm"
+                        : "bg-[var(--accent)] text-[var(--accent-ink)] shadow-sm"
+                      : cn(t.color ?? "text-[var(--muted)]", "hover:text-[var(--text)]")
+                  )}
+                >
+                  {Icon && <Icon className="size-3.5" />}
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+          {/* Lupa flotante */}
+          <button
+            onClick={() => setTab(tab === "buscar" ? "global" : "buscar")}
+            aria-label="Buscar"
+            aria-pressed={tab === "buscar"}
+            className={cn(
+              "flex shrink-0 items-center justify-center rounded-full p-2.5 transition-colors",
+              tab === "buscar"
+                ? "bg-[var(--accent)] text-[var(--accent-ink)] shadow-sm"
+                : "bg-[var(--surface-2)] text-[var(--text-2)] hover:text-[var(--text)]"
+            )}
+          >
+            <Search className="size-5" />
+          </button>
         </div>
       </div>
 
