@@ -23,7 +23,7 @@ export function Logo({
   return (
     <svg
       viewBox="-3 -79 751 92"
-      className={cn("h-auto", className)}
+      className={cn("block", className)}
       role="img"
       aria-label="Hipertrof.ia"
     >
@@ -52,7 +52,7 @@ export function LogoMark({
   bg?: string;
 }) {
   return (
-    <svg viewBox="0 0 120 120" className={cn("h-auto", className)} role="img" aria-label="Hipertrof.ia">
+    <svg viewBox="0 0 120 120" className={cn("block", className)} role="img" aria-label="Hipertrof.ia">
       <title>Hipertrof.ia</title>
       {bg ? <rect width="120" height="120" rx="27" fill={bg} /> : null}
       <path
