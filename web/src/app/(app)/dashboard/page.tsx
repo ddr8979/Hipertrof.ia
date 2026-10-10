@@ -119,7 +119,7 @@ export default function DashboardPage() {
 
       {/* CTA principal */}
       <Link
-        href="/entrenar"
+        href="/entrenar/sesion"
         className="group relative overflow-hidden rounded-3xl border border-[var(--border)] p-6 transition-all hover:border-[var(--accent)] hover:shadow-[var(--shadow-md)] sm:p-8"
         style={{
           background:

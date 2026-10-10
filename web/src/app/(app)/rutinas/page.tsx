@@ -437,7 +437,7 @@ export default function RutinasPage() {
       } else {
         toast("success", "Plantilla agregada", `${template.name} está en tus rutinas`);
       }
-      router.push(`/entrenar?routine=${routine.id}`);
+      router.push(`/entrenar/sesion?routine=${routine.id}`);
     } catch (err) {
       toast("error", "No se pudo agregar la plantilla", (err as Error).message);
     }
@@ -569,7 +569,7 @@ export default function RutinasPage() {
                   </p>
 
                   <div className="mt-4 flex min-w-0 gap-2">
-                    <Link href={`/entrenar?routine=${r.id}`} className="min-w-0 flex-1">
+                    <Link href={`/entrenar/sesion?routine=${r.id}`} className="min-w-0 flex-1">
                       <Button variant="accent" className="w-full" size="sm">
                         <Play className="size-4" />
                         Entrenar
@@ -580,7 +580,7 @@ export default function RutinasPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        const url = `${window.location.origin}/entrenar?routine=${r.id}`;
+                        const url = `${window.location.origin}/entrenar/sesion?routine=${r.id}`;
                         const text = `Rutina: ${r.name}\n${url}`;
                         if (navigator.share) {
                           navigator.share({ title: r.name, text })
@@ -597,7 +597,7 @@ export default function RutinasPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => navigator.clipboard.writeText(`${window.location.origin}/entrenar?routine=${r.id}`)}
+                      onClick={() => navigator.clipboard.writeText(`${window.location.origin}/entrenar/sesion?routine=${r.id}`)}
                       aria-label="Copiar link de la rutina"
                     >
                       <Copy className="size-4" />

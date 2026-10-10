@@ -193,7 +193,7 @@ export default function HistorialPage() {
           title="Todavía no tenés sesiones"
           description="Completá tu primer entrenamiento y aparece acá, con todas las métricas."
           action={
-            <Link href="/entrenar">
+            <Link href="/entrenar/sesion">
               <Button variant="accent">Empezar a entrenar</Button>
             </Link>
           }

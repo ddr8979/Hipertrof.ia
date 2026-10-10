@@ -6,13 +6,13 @@
  * (estilo WhatsApp/Reddit) que reacciona al dedo en pantallas touch con un
  * glow que sigue el puntero, escala al presionar y una vibración sutil.
  * Iconos Phosphor en peso bold; el activo pasa a fill. Se auto-oculta en
- * hilos de chat y durante el descanso en /entrenar (el RestTimer tiene
+ * hilos de chat y durante el descanso en /entrenar/sesion (el RestTimer tiene
  * prioridad sobre el HUD).
  */
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, Barbell, Play, Compass, User, ForkKnife } from "@phosphor-icons/react";
+import { House, Play, Compass, User, ForkKnife } from "@phosphor-icons/react";
 import {
   memo,
   useRef,
@@ -29,7 +29,6 @@ import { useWorkoutStore } from "@/lib/workout-store";
  */
 export const HUD_ITEMS = [
   { href: "/dashboard", label: "Inicio", icon: House },
-  { href: "/rutinas", label: "Rutinas", icon: Barbell },
   { href: "/entrenar", label: "Entrenar", icon: Play, emphasis: true },
   { href: "/explorar", label: "Social", icon: Compass },
   { href: "/nutricion", label: "Nutrición", icon: ForkKnife },
@@ -114,7 +113,7 @@ export function HudNav() {
   // En un hilo de chat el contenido es pantalla completa; durante el descanso
   // la barra del RestTimer ocupa el fondo y tiene prioridad.
   const isChatThread = /^\/mensajes\/[^/]+$/.test(pathname);
-  const hidden = isChatThread || (restActive && pathname.startsWith("/entrenar"));
+  const hidden = isChatThread || (restActive && pathname === "/entrenar/sesion");
   if (hidden) return null;
 
   return (

@@ -1,6 +1,6 @@
 // Temporizador de descanso entre series.
 // Gestiona cuenta regresiva, alarma sonora con vibración y wake lock,
-// y muestra una barra inferior solo en la ruta de entrenamiento.
+// y muestra una barra inferior solo en la ruta de sesión de entrenamiento.
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -69,7 +69,7 @@ function stopAlarmLoop() {
 
 /**
  * Barra de descanso ligada al store del entrenamiento.
- * No renderiza UI si no hay descanso activo o no estamos en /entrenar,
+ * No renderiza UI si no hay descanso activo o no estamos en /entrenar/sesion,
  * pero la alarma sigue funcionando en segundo plano.
  */
 export function RestTimer() {
@@ -166,9 +166,9 @@ export function RestTimer() {
   const total = Math.max(1, restTotal ?? 90);
   const pct = Math.min(100, Math.max(0, ((total - remaining) / total) * 100));
   const exerciseName = draft?.exercises.find((e) => e.key === restExerciseKey)?.name;
-  const inSession = pathname?.startsWith("/entrenar") ?? false;
+  const inSession = pathname === "/entrenar/sesion";
 
-  // Solo renderizar la barra completa en /entrenar; en otras rutas no mostrar UI (alarma sigue sonando)
+  // Solo renderizar la barra completa en /entrenar/sesion; en otras rutas no mostrar UI (alarma sigue sonando)
   if (!inSession) return null;
 
   return (
@@ -243,7 +243,7 @@ export function RestTimer() {
           <div className="flex items-center gap-2">
             {/* Acciones: continuar/comenzar serie y silenciar */}
             {done && !inSession && draft && (
-              <Button variant="accent" size="sm" onClick={() => router.push("/entrenar")}>
+              <Button variant="accent" size="sm" onClick={() => router.push("/entrenar/sesion")}>
                 <Play className="size-4" /> Continuar entrenando
               </Button>
             )}

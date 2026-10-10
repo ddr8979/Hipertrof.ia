@@ -885,7 +885,7 @@ export default function ExplorarPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() =>
-                                  router.push(`/entrenar?routine=${p.routine!.id}`)
+                                  router.push(`/entrenar/sesion?routine=${p.routine!.id}`)
                                 }
                               >
                                 <Dumbbell className="size-4" /> Usar

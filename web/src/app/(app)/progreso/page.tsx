@@ -308,7 +308,7 @@ export default function ProgresoPage() {
           title="Todavía no hay datos"
           description="Completá entrenamientos y acá vas a ver tu evolución: volumen, 1RM y rachas."
           action={
-            <Link href="/entrenar">
+            <Link href="/entrenar/sesion">
               <Button variant="accent">Empezar a entrenar</Button>
             </Link>
           }

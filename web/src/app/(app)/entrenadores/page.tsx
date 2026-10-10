@@ -841,7 +841,7 @@ export function EntrenadoresView({ embedded = false }: { embedded?: boolean }) {
                     <Button
                       variant="accent"
                       size="sm"
-                      onClick={() => router.push(`/entrenar?routine=${a.routine?.id}`)}
+                      onClick={() => router.push(`/entrenar/sesion?routine=${a.routine?.id}`)}
                     >
                       <Dumbbell className="size-3.5" /> Entrenar
                     </Button>
