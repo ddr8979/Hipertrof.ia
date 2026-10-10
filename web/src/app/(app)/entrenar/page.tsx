@@ -49,15 +49,17 @@ export default function EntrenarMenuPage() {
   });
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-5 px-6 py-10">
-      {/* Mascota saludando */}
-      <MrMancuernas size={80} />
+    <main className="flex min-h-dvh flex-col items-center px-6 pb-10 pt-[max(1.5rem,env(safe-area-inset-top))]">
+      {/* Encabezado: mascot + título, arriba */}
+      <header className="flex flex-col items-center gap-2">
+        <MrMancuernas size={72} />
+        <h1 className="font-display text-2xl font-bold tracking-tight">
+          Entrenar
+        </h1>
+      </header>
 
-      <h1 className="font-display text-2xl font-bold tracking-tight">
-        Entrenar
-      </h1>
-
-      <div className="flex w-full max-w-sm flex-col gap-3">
+      {/* Botones: centrados en el espacio restante */}
+      <div className="flex w-full max-w-sm flex-1 flex-col justify-center gap-3 py-6">
         {/* Comenzar rutina: despliega el selector */}
         <button
           type="button"
