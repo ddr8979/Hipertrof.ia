@@ -255,10 +255,13 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-/* Utilidades de superficie: planas, sin glass ni brillo interior. */
+/* Utilidades de superficie: glass translúcido (píldora de nav, toasts). */
 .glass {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  box-shadow: var(--shadow-sm);
 }
 
 :where(a, button) {

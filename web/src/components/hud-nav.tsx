@@ -2,33 +2,37 @@
 
 /**
  * hud-nav.tsx
- * Barra inferior de navegación móvil estilo Instagram: pegada al borde, a todo
- * el ancho, sin etiquetas, con icono relleno (weight="fill") en el tab activo
- * y el avatar del usuario en la pestaña de perfil. Se auto-oculta en hilos de
- * chat y durante el descanso en /entrenar (el RestTimer tiene prioridad).
+ * HUD inferior de navegación móvil: píldora flotante con estética glass
+ * (estilo WhatsApp/Reddit) que reacciona al dedo en pantallas touch con un
+ * glow que sigue el puntero, escala al presionar y una vibración sutil.
+ * Iconos Phosphor en peso bold; el activo pasa a fill. Se auto-oculta en
+ * hilos de chat y durante el descanso en /entrenar (el RestTimer tiene
+ * prioridad sobre el HUD).
  */
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, Barbell, Play, Compass } from "@phosphor-icons/react";
-import { memo, type ComponentType } from "react";
+import { House, Barbell, Play, Compass, User } from "@phosphor-icons/react";
+import {
+  memo,
+  useRef,
+  type ComponentType,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { cn } from "@/lib/utils";
 import { useWorkoutStore } from "@/lib/workout-store";
-import { useProfile } from "@/components/providers";
-import { Avatar } from "@/components/ui/primitives";
-
-type HudIcon = ComponentType<{ className?: string; weight?: "light" | "fill" | "bold" }>;
 
 /**
- * Destinos de la barra inferior (móvil): 5 tabs máximo.
- * /entrenar vive en el centro como acción primaria; el perfil usa el avatar.
- * El resto de rutas cuelgan del header y del sheet "Más".
+ * Destinos de la píldora inferior (móvil): 5 tabs máximo.
+ * /entrenar vive en el centro como acción primaria; el resto de rutas
+ * (perfil, herramientas, ajustes) cuelgan del header y del sheet "Más".
  */
 export const HUD_ITEMS = [
   { href: "/dashboard", label: "Inicio", icon: House },
   { href: "/rutinas", label: "Rutinas", icon: Barbell },
-  { href: "/entrenar", label: "Entrenar", icon: Play },
+  { href: "/entrenar", label: "Entrenar", icon: Play, emphasis: true },
   { href: "/explorar", label: "Social", icon: Compass },
+  { href: "/perfil", label: "Perfil", icon: User },
 ] as const;
 
 /** Determina si un href corresponde a la ruta actual (o a una subruta). */
@@ -36,17 +40,19 @@ export function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-/** Ítem de tab: icono solo, relleno cuando está activo (patrón Instagram). */
-const TabItem = memo(function TabItem({
+/** Ítem de la píldora: icono + label (el label se oculta en pantallas <360px). */
+const HudItem = memo(function HudItem({
   href,
   label,
   icon: Icon,
   badge,
+  emphasis,
 }: {
   href: string;
   label: string;
-  icon: HudIcon;
+  icon: ComponentType<{ className?: string; weight?: "bold" | "fill" }>;
   badge?: number;
+  emphasis?: boolean;
 }) {
   const pathname = usePathname();
   const active = isActive(pathname, href);
@@ -55,14 +61,24 @@ const TabItem = memo(function TabItem({
       href={href}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-      className="relative flex h-12 w-12 items-center justify-center transition-transform active:scale-90"
+      className={cn(
+        "relative flex flex-col items-center justify-center gap-0.5 rounded-full px-2 py-1.5 transition-all duration-200 active:scale-[0.95]",
+        active
+          ? "bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_4px_16px_-4px_color-mix(in_srgb,var(--accent)_50%,transparent)]"
+          : emphasis
+            ? "text-[var(--accent)] hover:bg-[var(--accent-soft)]"
+            : "text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]"
+      )}
     >
       <Icon
-        className={cn("size-6 transition-colors", active ? "text-[var(--text)]" : "text-[var(--text-2)]")}
-        weight={active ? "fill" : "light"}
+        className="size-5"
+        weight={active ? "fill" : "bold"}
       />
+      <span className="hidden text-[9px] font-bold leading-none min-[360px]:block">
+        {label}
+      </span>
       {badge ? (
-        <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[9px] font-bold leading-none text-white animate-pop">
+        <span className="absolute -right-0.5 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[9px] font-bold text-white animate-pop">
           {badge > 9 ? "9+" : badge}
         </span>
       ) : null}
@@ -70,37 +86,29 @@ const TabItem = memo(function TabItem({
   );
 });
 
-/** Pestaña de perfil: avatar circular; anillo cuando está activa. */
-function ProfileTab() {
-  const pathname = usePathname();
-  const profile = useProfile((s) => s.profile);
-  const active = isActive(pathname, "/perfil");
-  return (
-    <Link
-      href="/perfil"
-      aria-label="Perfil"
-      aria-current={active ? "page" : undefined}
-      className="relative flex h-12 w-12 items-center justify-center transition-transform active:scale-90"
-    >
-      <span
-        className={cn(
-          "flex items-center justify-center rounded-full transition-all",
-          active ? "ring-2 ring-[var(--text)] ring-offset-2 ring-offset-[var(--surface)]" : ""
-        )}
-      >
-        <Avatar
-          src={profile?.avatar_url}
-          size={26}
-          alt={profile?.display_name ?? profile?.username ?? "Perfil"}
-        />
-      </span>
-    </Link>
-  );
-}
-
 export function HudNav() {
   const pathname = usePathname();
   const restActive = useWorkoutStore((s) => s.restEndsAt !== null);
+
+  // Glow que sigue al dedo: se pinta por mutación directa de estilos
+  // (sin re-renders) mientras el puntero está presionado sobre la píldora.
+  const holdRef = useRef(false);
+  const glowRef = useRef<HTMLDivElement>(null);
+
+  const paint = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const g = glowRef.current;
+    if (!g) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    g.style.opacity = "1";
+    g.style.transform = `translate(${e.clientX - r.left}px, ${
+      e.clientY - r.top
+    }px) translate(-50%, -50%)`;
+  };
+
+  const release = () => {
+    holdRef.current = false;
+    if (glowRef.current) glowRef.current.style.opacity = "0";
+  };
 
   // En un hilo de chat el contenido es pantalla completa; durante el descanso
   // la barra del RestTimer ocupa el fondo y tiene prioridad.
@@ -109,17 +117,57 @@ export function HudNav() {
   if (hidden) return null;
 
   return (
+    <>
+      {/* Velo inferior: el contenido se desvanece bajo la píldora en vez de
+          pasar por debajo de forma cruda. */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-20 bg-gradient-to-t from-[var(--bg)] via-[color-mix(in_srgb,var(--bg)_75%,transparent)] to-transparent lg:hidden"
+      />
     <nav
       aria-label="Navegación principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border)] bg-[var(--surface)] lg:hidden"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-40 -translate-x-1/2 lg:hidden animate-slide-up"
     >
-      <div className="mx-auto flex h-12 max-w-lg items-center justify-around">
-        {HUD_ITEMS.map((t) => (
-          <TabItem key={t.href} href={t.href} label={t.label} icon={t.icon} />
-        ))}
-        <ProfileTab />
+      <div
+        className="glass relative flex items-center gap-0.5 overflow-hidden rounded-full p-1 shadow-[var(--shadow-lg)]"
+        onPointerDown={(e) => {
+          holdRef.current = true;
+          paint(e);
+          // Táctil: vibración sutil como feedback del dedo.
+          if (e.pointerType === "touch") navigator.vibrate?.(6);
+        }}
+        onPointerMove={(e) => {
+          if (holdRef.current) paint(e);
+        }}
+        onPointerUp={release}
+        onPointerCancel={release}
+        onPointerLeave={release}
+      >
+        {/* Halo bajo el dedo (recortado por el overflow de la píldora) */}
+        <div
+          ref={glowRef}
+          aria-hidden
+          className="pointer-events-none absolute left-0 top-0 size-28 rounded-full opacity-0 transition-opacity duration-200"
+          style={{
+            background:
+              "radial-gradient(circle, color-mix(in srgb, var(--accent) 35%, transparent) 0%, transparent 70%)",
+            filter: "blur(14px)",
+          }}
+        />
+
+        <div className="relative flex items-center gap-0.5">
+          {HUD_ITEMS.map((t) => (
+            <HudItem
+              key={t.href}
+              href={t.href}
+              label={t.label}
+              icon={t.icon}
+              emphasis={"emphasis" in t ? t.emphasis : undefined}
+            />
+          ))}
+        </div>
       </div>
     </nav>
+    </>
   );
 }

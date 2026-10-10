@@ -12,7 +12,7 @@ export default function PrivacidadPage() {
     <main className="mx-auto max-w-3xl px-5 py-12">
       <Link href="/" className="mb-10 inline-flex items-center gap-2 font-display font-bold">
         <span className="flex size-8 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-ink)]">
-          <Dumbbell className="size-4" />
+          <Dumbbell className="size-4" weight="bold" />
         </span>
         hypertrof<span className="text-[var(--accent)]">.ia</span>
       </Link>

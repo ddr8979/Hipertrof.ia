@@ -227,9 +227,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         enableColorScheme
         disableTransitionOnChange
       >
-        {/* Peso global de los iconos: "light" (trazo fino premium). El estado
-            activo de la nav lo sobreescribe con weight="fill". */}
-        <IconContext.Provider value={{ weight: "light" }}>
+        {/* Peso global de los iconos: "bold" (trazo sólido y legible). El
+            estado activo de la nav lo sobreescribe con weight="fill". */}
+        <IconContext.Provider value={{ weight: "bold" }}>
           <ThemeColorSync />
           <AccentApplier />
           <ProfileSync />

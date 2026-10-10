@@ -28,7 +28,7 @@ export default async function LandingPage() {
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
         <div className="flex items-center gap-2.5">
           <span className="flex size-9 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--accent-ink)]">
-            <Dumbbell className="size-5" weight="light" />
+            <Dumbbell className="size-5" weight="bold" />
           </span>
           <span className="font-display text-xl font-bold tracking-tight">
             hypertrof<span className="text-[var(--accent)]">.ia</span>
@@ -46,7 +46,7 @@ export default async function LandingPage() {
               className="inline-flex h-10 items-center gap-2 rounded-xl bg-[var(--accent)] px-5 text-sm font-bold text-[var(--accent-ink)] transition-colors"
             >
               Ir a mi entrenamiento
-              <ArrowRight className="size-4" weight="light" />
+              <ArrowRight className="size-4" weight="bold" />
             </Link>
           ) : (
             <>
@@ -61,7 +61,7 @@ export default async function LandingPage() {
                 className="inline-flex h-10 items-center gap-2 rounded-xl bg-[var(--accent)] px-5 text-sm font-bold text-[var(--accent-ink)] transition-colors"
               >
                 Crear cuenta
-                <ArrowRight className="size-4" weight="light" />
+                <ArrowRight className="size-4" weight="bold" />
               </Link>
             </>
           )}
@@ -84,7 +84,7 @@ export default async function LandingPage() {
             className="inline-flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-[var(--accent)] px-8 text-base font-bold text-[var(--accent-ink)]  transition-colors sm:w-auto"
           >
             {user ? "Ir a mi entrenamiento" : "Empezar gratis"}
-            <ArrowRight className="size-5" weight="light" />
+            <ArrowRight className="size-5" weight="bold" />
           </Link>
           <Link
             href="#features"
@@ -178,32 +178,32 @@ export default async function LandingPage() {
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
             {
-              icon: <Dumbbell className="size-6" weight="light" />,
+              icon: <Dumbbell className="size-6" weight="bold" />,
               title: "Diario de cargas en vivo",
               desc: "Series, peso, repeticiones, warmups, fallo y drop sets. Timer de descanso inteligente.",
             },
             {
-              icon: <Timer className="size-6" weight="light" />,
+              icon: <Timer className="size-6" weight="bold" />,
               title: "Rutinas",
               desc: "Biblioteca de 246 ejercicios con video, supersets, y programas progresivos.",
             },
             {
-              icon: <ChartLine className="size-6" weight="light" />,
+              icon: <ChartLine className="size-6" weight="bold" />,
               title: "Progreso medible",
               desc: "1RM estimado, volumen semanal, récords personales, heatmap y rachas.",
             },
             {
-              icon: <Users className="size-6" weight="light" />,
+              icon: <Users className="size-6" weight="bold" />,
               title: "Comunidad",
               desc: "Perfil público, seguidores, feed de actividad y logros.",
             },
             {
-              icon: <Music4 className="size-6" weight="light" />,
+              icon: <Music4 className="size-6" weight="bold" />,
               title: "Tu música, tu perfil",
               desc: "Conectá Spotify, Apple Music o YouTube Music y mostrá tus playlists.",
             },
             {
-              icon: <Store className="size-6" weight="light" />,
+              icon: <Store className="size-6" weight="bold" />,
               title: "Marketplace",
               desc: "Cursos y guías de entrenadores verificados, con pago integrado.",
             },
@@ -229,7 +229,7 @@ export default async function LandingPage() {
           <div className="grid gap-8 p-8 sm:p-12 lg:grid-cols-2 lg:items-center">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-bold text-[var(--accent)]">
-                <Trophy className="size-3.5" weight="light" />
+                <Trophy className="size-3.5" weight="bold" />
                 Comunidad
               </div>
               <h2 className="mt-4 font-display text-3xl font-bold tracking-tight sm:text-4xl">
@@ -317,17 +317,17 @@ export default async function LandingPage() {
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               {[
-                <Zap key="z" className="size-4 text-[var(--accent)]" weight="light" />,
-                <ChartLine key="c" className="size-4 text-[var(--accent)]" weight="light" />,
+                <Zap key="z" className="size-4 text-[var(--accent)]" weight="bold" />,
+                <ChartLine key="c" className="size-4 text-[var(--accent)]" weight="bold" />,
               ]}
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-semibold">
-                <Users className="size-3.5 text-[var(--accent)]" weight="light" /> Gestión de alumnos
+                <Users className="size-3.5 text-[var(--accent)]" weight="bold" /> Gestión de alumnos
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-semibold">
-                <ChartLine className="size-3.5 text-[var(--accent)]" weight="light" /> Progreso en vivo
+                <ChartLine className="size-3.5 text-[var(--accent)]" weight="bold" /> Progreso en vivo
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-semibold">
-                <Store className="size-3.5 text-[var(--accent)]" weight="light" /> Marketplace
+                <Store className="size-3.5 text-[var(--accent)]" weight="bold" /> Marketplace
               </span>
             </div>
           </div>
@@ -353,7 +353,7 @@ export default async function LandingPage() {
             className="relative mt-8 inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-[var(--accent)] px-8 text-base font-bold text-[var(--accent-ink)]  transition-colors"
           >
             {user ? "Ir a mi entrenamiento" : "Crear cuenta gratis"}
-            <ArrowRight className="size-5" weight="light" />
+            <ArrowRight className="size-5" weight="bold" />
           </Link>
         </div>
       </section>
@@ -363,7 +363,7 @@ export default async function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 sm:flex-row">
           <div className="flex items-center gap-2">
             <span className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-ink)]">
-              <Dumbbell className="size-4" weight="light" />
+              <Dumbbell className="size-4" weight="bold" />
             </span>
             <span className="font-display font-bold">
               hypertrof<span className="text-[var(--accent)]">.ia</span>
