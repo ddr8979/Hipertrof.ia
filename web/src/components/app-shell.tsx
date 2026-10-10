@@ -96,7 +96,7 @@ const NavLink = memo(function NavLink({
 function BrandMark() {
   return (
     <Link href="/dashboard" className="pointer-events-auto flex items-center" aria-label="Hipertrof.ia - Inicio">
-      <Logo className="h-[22px] w-auto text-[var(--text)]" />
+      <Logo className="h-7 w-auto" />
     </Link>
   );
 }

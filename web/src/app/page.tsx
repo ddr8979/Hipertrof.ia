@@ -28,7 +28,7 @@ export default async function LandingPage() {
       {/* Nav */}
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
         <div className="flex items-center">
-          <Logo className="h-7 w-auto text-[var(--text)]" />
+          <Logo className="h-8 w-auto" />
         </div>
         <nav className="hidden items-center gap-6 text-sm font-medium text-[var(--text-2)] md:flex">
           <a href="#features" className="transition-colors hover:text-[var(--text)]">Features</a>
@@ -358,7 +358,7 @@ export default async function LandingPage() {
       <footer className="relative z-10 border-t border-[var(--border)]">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 py-8 sm:flex-row">
           <div className="flex items-center">
-            <Logo className="h-5 w-auto text-[var(--text)]" />
+            <Logo className="h-5 w-auto" />
           </div>
           <div className="flex items-center gap-5 text-sm text-[var(--muted)]">
             <Link href="/terminos" className="transition-colors hover:text-[var(--text)]">
