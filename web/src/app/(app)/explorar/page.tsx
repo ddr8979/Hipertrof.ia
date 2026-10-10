@@ -569,7 +569,7 @@ export default function ExplorarPage() {
                 color: "text-[#22c55e]",
                 icon: Star,
               },
-              { id: "buscar", label: "Buscar", color: null },
+              { id: "buscar", label: "Buscar", color: null, icon: Search },
             ] as const
           ).map((t) => {
             const Icon = "icon" in t ? t.icon : null;
@@ -578,7 +578,7 @@ export default function ExplorarPage() {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors sm:px-4",
+                  "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors sm:px-4",
                   tab === t.id
                     ? t.id === "mejores"
                       ? "bg-[#22c55e] text-white shadow-sm"
