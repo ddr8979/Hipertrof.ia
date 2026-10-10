@@ -49,104 +49,106 @@ export default function EntrenarMenuPage() {
   });
 
   return (
-    <main className="flex min-h-dvh flex-col items-center px-6 pb-10 pt-[max(1.5rem,env(safe-area-inset-top))]">
-      {/* Encabezado: mascot + título, arriba */}
-      <header className="flex flex-col items-center gap-2">
+    <main className="flex h-dvh flex-col items-center justify-center overflow-hidden px-6">
+      {/* Bloque único: mascot + título + botones, agrupados y centrados */}
+      <div className="flex w-full max-w-sm flex-col items-center gap-4">
         <MrMancuernas size={72} />
         <h1 className="font-display text-2xl font-bold tracking-tight">
           Entrenar
         </h1>
-      </header>
 
-      {/* Botones: centrados en el espacio restante */}
-      <div className="flex w-full max-w-sm flex-1 flex-col justify-center gap-3 py-6">
-        {/* Comenzar rutina: despliega el selector */}
-        <button
-          type="button"
-          onClick={() => setPicking((v) => !v)}
-          className="card flex w-full items-center gap-3 p-4 text-left transition-colors"
-        >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-2)]">
-            <Play className="size-4.5 fill-current" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-semibold">Comenzar rutina</span>
-            <span className="block text-xs text-[var(--muted)]">
-              Elegí una rutina para iniciar
+        {/* Botones justo debajo del título */}
+        <div className="flex w-full flex-col gap-2.5">
+          {/* Comenzar rutina: despliega el selector */}
+          <button
+            type="button"
+            onClick={() => setPicking((v) => !v)}
+            className="card flex w-full items-center gap-3 p-4 text-left transition-colors"
+          >
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-2)]">
+              <Play className="size-4.5 fill-current" />
             </span>
-          </span>
-          <CaretDown
-            className={cn(
-              "size-4.5 shrink-0 text-[var(--muted)] transition-transform",
-              picking && "rotate-180"
-            )}
-          />
-        </button>
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold">Comenzar rutina</span>
+              <span className="block text-xs text-[var(--muted)]">
+                Elegí una rutina para iniciar
+              </span>
+            </span>
+            <CaretDown
+              className={cn(
+                "size-4.5 shrink-0 text-[var(--muted)] transition-transform",
+                picking && "rotate-180"
+              )}
+            />
+          </button>
 
-        {/* Selector desplegado: ¿Qué rutina? + lista + libre */}
-        {picking && (
-          <div className="card flex flex-col gap-2 p-3">
-            <p className="px-1 text-center text-sm font-semibold text-[var(--text-2)]">
-              ¿Qué rutina querés iniciar?
-            </p>
+          {/* Selector desplegado: ¿Qué rutina? + lista + libre */}
+          {picking && (
+            <div className="card flex flex-col gap-2 p-3">
+              <p className="px-1 text-center text-sm font-semibold text-[var(--text-2)]">
+                ¿Qué rutina querés iniciar?
+              </p>
 
-            {isLoading && (
-              <div className="flex items-center justify-center gap-2 py-4 text-sm text-[var(--muted)]">
-                <Spinner className="size-4 animate-spin" />
-                Cargando…
-              </div>
-            )}
+              {isLoading && (
+                <div className="flex items-center justify-center gap-2 py-4 text-sm text-[var(--muted)]">
+                  <Spinner className="size-4 animate-spin" />
+                  Cargando…
+                </div>
+              )}
 
-            {!isLoading && routines?.length === 0 && (
-              <Link
-                href="/rutinas"
-                className="rounded-xl border border-dashed border-[var(--border)] px-3 py-4 text-center text-sm text-[var(--muted)] transition-colors hover:border-[var(--accent)]"
-              >
-                Creá tu primera rutina
-              </Link>
-            )}
-
-            <div className="flex max-h-[40vh] flex-col gap-1 overflow-y-auto">
-              {routines?.map((r) => (
+              {!isLoading && routines?.length === 0 && (
                 <Link
-                  key={r.id}
-                  href={`/entrenar/sesion?routine=${r.id}`}
-                  className="flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-[var(--surface-2)]"
+                  href="/rutinas"
+                  className="rounded-xl border border-dashed border-[var(--border)] px-3 py-4 text-center text-sm text-[var(--muted)] transition-colors hover:border-[var(--accent)]"
                 >
-                  <span className="min-w-0 truncate font-medium">{r.name}</span>
-                  <span className="shrink-0 text-xs text-[var(--muted)]">
-                    {r.routine_exercises.length} ejercicios
-                  </span>
+                  Creá tu primera rutina
                 </Link>
-              ))}
+              )}
+
+              <div className="flex max-h-[35vh] flex-col gap-1 overflow-y-auto">
+                {routines?.map((r) => (
+                  <Link
+                    key={r.id}
+                    href={`/entrenar/sesion?routine=${r.id}`}
+                    className="flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-[var(--surface-2)]"
+                  >
+                    <span className="min-w-0 truncate font-medium">
+                      {r.name}
+                    </span>
+                    <span className="shrink-0 text-xs text-[var(--muted)]">
+                      {r.routine_exercises.length} ejercicios
+                    </span>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Sesión libre */}
+              <Link
+                href="/entrenar/sesion"
+                className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-[var(--surface-2)]"
+              >
+                <Plus className="size-4 text-[var(--muted)]" />
+                <span className="font-medium">Entrenamiento libre</span>
+              </Link>
             </div>
+          )}
 
-            {/* Sesión libre */}
-            <Link
-              href="/entrenar/sesion"
-              className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-[var(--surface-2)]"
-            >
-              <Plus className="size-4 text-[var(--muted)]" />
-              <span className="font-medium">Entrenamiento libre</span>
-            </Link>
-          </div>
-        )}
-
-        {/* Rutinas: gestión */}
-        <Link
-          href="/rutinas"
-          className="card flex w-full items-center gap-3 p-4 transition-colors"
-        >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-2)]">
-            <ListDashes className="size-4.5" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-semibold">Rutinas</span>
-            <span className="block text-xs text-[var(--muted)]">
-              Creá y editá tus rutinas
+          {/* Rutinas: gestión */}
+          <Link
+            href="/rutinas"
+            className="card flex w-full items-center gap-3 p-4 transition-colors"
+          >
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-2)]">
+              <ListDashes className="size-4.5" />
             </span>
-          </span>
-        </Link>
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold">Rutinas</span>
+              <span className="block text-xs text-[var(--muted)]">
+                Creá y editá tus rutinas
+              </span>
+            </span>
+          </Link>
+        </div>
       </div>
     </main>
   );
