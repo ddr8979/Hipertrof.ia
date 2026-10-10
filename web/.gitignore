@@ -52,3 +52,9 @@ CONTEXTO_SESION_*.md
 *.log
 *.bak
 *.tmp
+
+# Archivos generados para pegar a mano en el SQL Editor de Supabase.
+# La fuente de verdad son supabase/migrations/; esto se regenera con
+# tools/build_todo_completo.py y no se versiona.
+supabase/PEGAR-*.sql
+supabase/TODO-COMPLETO.sql

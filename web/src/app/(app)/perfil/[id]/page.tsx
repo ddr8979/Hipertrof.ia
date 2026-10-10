@@ -90,7 +90,7 @@ export default function PublicProfilePage() {
       const { data } = await supabase
         .from("public_profiles")
         .select(
-          "id, display_name, username, bio, avatar_url, banner_url, accent_color, streak_count, is_public_profile, show_weight, show_height, show_followers, show_personal, is_verified, plan, instagram_handle, tiktok_handle, twitter_handle, spotify_handle, profile_track_id, profile_track_name, profile_track_artist, profile_track_preview"
+          "id, display_name, username, bio, avatar_url, banner_url, accent_color, streak_count, is_public_profile, show_weight, show_height, show_followers, show_personal, is_verified, plan, instagram_handle, tiktok_handle, twitter_handle, spotify_handle, profile_track_id, profile_track_name, profile_track_artist, profile_track_preview, profile_track_cover"
         )
         .eq("id", id)
         .maybeSingle();

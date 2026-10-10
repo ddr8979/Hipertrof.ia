@@ -25,6 +25,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useProfile } from "@/components/providers";
 import { Skeleton, Avatar } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/data";
 import { Dialog } from "@/components/ui/dialog";
@@ -47,11 +48,12 @@ type Conversation = {
 type Message = {
   id: string;
   sender_id: string;
+  recipient_id: string;
   content: string;
   created_at: string;
-  read: boolean;
-  type: "text" | "image" | "workout" | "routine";
-  metadata?: Record<string, unknown>;
+  read_at: string | null;
+  image_url: string | null;
+  view_once: boolean;
 };
 
 function timeAgo(iso: string | null): string {
@@ -78,6 +80,7 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
 export default function MensajesPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const me = useProfile((s) => s.profile);
   const [activeTab, setActiveTab] = useState<"chats" | "requests">("chats");
   const [newOpen, setNewOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -144,13 +147,14 @@ export default function MensajesPage() {
   const sendMutation = useMutation({
     mutationFn: async (content: string) => {
       if (!selectedConvo) throw new Error("No conversation selected");
+      if (!me?.id) throw new Error("Sin sesión");
       const supabase = createClient();
       const { data, error } = await supabase
         .from("direct_messages")
         .insert({
+          sender_id: me.id,
           recipient_id: selectedConvo.other_id,
           content,
-          type: "text",
         })
         .select()
         .single();
@@ -161,6 +165,7 @@ export default function MensajesPage() {
       setMessages((prev) => [...prev, msg]);
       setNewMessage("");
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["unread_dm"] });
     },
   });
 
@@ -169,11 +174,14 @@ export default function MensajesPage() {
       const supabase = createClient();
       await supabase
         .from("direct_messages")
-        .update({ read: true })
+        .update({ read_at: new Date().toISOString() })
         .eq("sender_id", convoId)
-        .eq("read", false);
+        .is("read_at", null);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["conversations"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["unread_dm"] });
+    },
   });
 
   useEffect(() => {
@@ -184,11 +192,14 @@ export default function MensajesPage() {
   }, [selectedConvo]);
 
   const loadMessages = async (otherId: string) => {
+    if (!me?.id) return;
     const supabase = createClient();
     const { data, error } = await supabase
       .from("direct_messages")
-      .select("*")
-      .or(`sender_id.eq.${otherId},recipient_id.eq.${otherId}`)
+      .select("id, sender_id, recipient_id, content, created_at, read_at, image_url, view_once")
+      .or(
+        `or(and(sender_id.eq.${me.id},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${me.id}))`
+      )
       .order("created_at", { ascending: true })
       .limit(100);
     if (!error) setMessages((data ?? []) as Message[]);
@@ -398,7 +409,7 @@ export default function MensajesPage() {
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ background: "var(--bg)" }}>
                 {messages.map((msg) => {
-                  const isOwn = msg.sender_id !== selectedConvo?.other_id;
+                  const isOwn = me?.id != null && msg.sender_id === me.id;
                   return (
                     <div key={msg.id} className={cn("flex gap-2", isOwn && "flex-row-reverse")}>
                       {!isOwn && (
@@ -411,8 +422,8 @@ export default function MensajesPage() {
                             ? "bg-[var(--accent)] text-[var(--accent-ink)] rounded-br-md"
                             : "bg-[var(--surface)] text-[var(--text)] rounded-bl-md shadow-[var(--shadow-sm)]"
                         )}>
-                          {msg.type === "image" && msg.metadata?.url ? (
-                            <img src={msg.metadata.url as string} alt="Imagen" className="rounded-xl max-w-xs" />
+                          {msg.image_url ? (
+                            <img src={msg.image_url} alt="Imagen" className="rounded-xl max-w-xs" />
                           ) : (
                             msg.content
                           )}

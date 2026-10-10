@@ -167,7 +167,7 @@ begin
 
   insert into public.trainer_clients as tc (trainer_id, athlete_id, status)
     values (v_inv.trainer_id, v_uid, 'active')
-    on conflict (tc.trainer_id, tc.athlete_id)
+    on conflict (trainer_id, athlete_id)
     do update set status = 'active';
 
   update public.trainer_invites i2
