@@ -556,9 +556,9 @@ export default function ExplorarPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex w-full min-w-0 flex-col items-center gap-4">
         <h1 className="font-display text-3xl font-bold tracking-tight">Social</h1>
-        <div className="flex w-full max-w-full overflow-x-auto rounded-xl bg-[var(--surface-2)] p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-full min-w-0 max-w-full overflow-x-auto rounded-xl bg-[var(--surface-2)] p-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {(
             [
               { id: "global", label: "Global", color: null },
@@ -578,7 +578,7 @@ export default function ExplorarPage() {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  "flex shrink-0 items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-semibold transition-colors sm:px-4",
+                  "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors sm:px-4",
                   tab === t.id
                     ? t.id === "mejores"
                       ? "bg-[#22c55e] text-white shadow-sm"
