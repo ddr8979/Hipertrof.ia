@@ -10,9 +10,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { User, Users, SignOut as LogOut, Gear as Settings, ClockCounterClockwise as History, ChartLineUp as ChartLine, BookOpenText, Calculator, Barbell as BicepsFlexed, List as Menu, ChatCircleDots } from "@phosphor-icons/react";
+import { User, Users, SignOut as LogOut, Gear as Settings, ClockCounterClockwise as History, ChartLineUp as ChartLine, BookOpenText, Calculator, Barbell as Dumbbell, Barbell as BicepsFlexed, List as Menu, ChatCircleDots } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { Logo } from "@/components/ui/logo";
 import { useProfile } from "@/components/providers";
 import { Avatar } from "@/components/ui/primitives";
 import { createClient } from "@/lib/supabase/client";
@@ -95,8 +94,13 @@ const NavLink = memo(function NavLink({
 /** Marca centrada: el logo es el elemento centrado de ambas barras. */
 function BrandMark() {
   return (
-    <Link href="/dashboard" className="pointer-events-auto flex items-center" aria-label="Hipertrof.ia - Inicio">
-      <Logo className="h-7 w-auto" />
+    <Link href="/dashboard" className="pointer-events-auto flex items-center gap-2" aria-label="Hipertrof.ia - Inicio">
+      <span className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-ink)]">
+        <Dumbbell className="size-4" weight="bold" />
+      </span>
+      <span className="font-display text-[15px] font-bold tracking-tight">
+        hypertrof<span className="text-[var(--accent)]">.ia</span>
+      </span>
     </Link>
   );
 }
