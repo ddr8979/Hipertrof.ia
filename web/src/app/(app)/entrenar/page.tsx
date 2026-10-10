@@ -2,151 +2,111 @@
 
 /**
  * Menú de Entrenar.
- * Punto de entrada que agrupa las dos formas de entrenar: lanzar una sesión
- * (pantalla completa en /entrenar/sesion) y gestionar las rutinas (que antes
- * ocupaban un tab propio en la píldora inferior). Muestra un atajo para
- * reanudar un borrador en curso si existe.
+ * Selector de rutinas: pregunta "¿Qué rutina querés iniciar?" y lista las
+ * rutinas del usuario para lanzar una sesión directa (o entrenar libre).
+ * Diseño centrado, sin scroll de página; la lista crece con su propio scroll.
  */
 
 import Link from "next/link";
-import {
-  Play,
-  Barbell as Dumbbell,
-  CaretRight as ChevronRight,
-  Plus,
-} from "@phosphor-icons/react";
-import { useWorkoutStore } from "@/lib/workout-store";
+import { useQuery } from "@tanstack/react-query";
+import { Play, Plus, Spinner } from "@phosphor-icons/react";
+import { createClient } from "@/lib/supabase/client";
 import { MrMancuernas } from "@/components/mascot";
-import { cn } from "@/lib/utils";
 
-/** Fila de navegación del menú: icono + textos + chevron. */
-function MenuRow({
-  href,
-  icon: Icon,
-  eyebrow,
-  title,
-  sub,
-  accent = false,
-}: {
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  eyebrow: string;
-  title: string;
-  sub?: string;
-  accent?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "group flex items-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)] transition-all hover:-translate-y-0.5 hover:border-[var(--accent)] hover:shadow-[var(--shadow-md)]",
-        accent &&
-          "border-[var(--accent)]/40 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--accent)_12%,var(--surface)),var(--surface))]"
-      )}
-    >
-      <span
-        className={cn(
-          "flex size-12 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105",
-          accent
-            ? "bg-[var(--accent)] text-[var(--accent-ink)]"
-            : "bg-[var(--surface-2)] text-[var(--accent)]"
-        )}
-      >
-        <Icon className={cn("size-5.5", accent && "fill-current")} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span
-          className={cn(
-            "block text-[11px] font-semibold uppercase tracking-wider",
-            accent ? "text-[var(--accent)]" : "text-[var(--muted)]"
-          )}
-        >
-          {eyebrow}
-        </span>
-        <span className="mt-0.5 block truncate font-display text-lg font-bold tracking-tight">
-          {title}
-        </span>
-        {sub && (
-          <span className="mt-0.5 block truncate text-xs text-[var(--muted)]">
-            {sub}
-          </span>
-        )}
-      </span>
-      <ChevronRight className="size-5 shrink-0 text-[var(--muted)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--accent)]" />
-    </Link>
-  );
-}
+type RoutineLite = {
+  id: string;
+  name: string;
+  routine_exercises: { id: string }[];
+};
 
 export default function EntrenarMenuPage() {
-  const draft = useWorkoutStore((s) => s.draft);
-  const inProgress = !!draft && draft.exercises.length > 0;
+  const { data: routines, isLoading } = useQuery({
+    queryKey: ["routines", "picker"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return [] as RoutineLite[];
+      const { data } = await supabase
+        .from("routines")
+        .select("id, name, routine_exercises(id)")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false });
+      return (data ?? []) as unknown as RoutineLite[];
+    },
+  });
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-5 px-4 pb-24 pt-[max(1.5rem,env(safe-area-inset-top))]">
-      {/* Encabezado con la mascota saludando */}
-      <header className="flex items-center gap-3">
-        <MrMancuernas size={56} />
-        <div className="min-w-0">
-          <h1 className="font-display text-3xl font-bold tracking-tight">
-            Entrenar
-          </h1>
-          <p className="text-sm text-[var(--text-2)]">
-            {inProgress
-              ? "Tenés una sesión en curso"
-              : "Elegí por dónde arrancar"}
-          </p>
-        </div>
-      </header>
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-6 py-10">
+      {/* Mascota saludando */}
+      <MrMancuernas size={80} />
 
-      {/* Atajo a la sesión en curso (solo si hay borrador con ejercicios) */}
-      {inProgress && (
-        <Link
-          href="/entrenar/sesion"
-          className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-[var(--accent)] bg-[var(--accent)] p-5 text-[var(--accent-ink)] shadow-[0_8px_24px_-8px_color-mix(in_srgb,var(--accent)_60%,transparent)] transition-all hover:-translate-y-0.5"
-        >
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-ink)]/15">
-            <Play className="size-5.5 fill-current" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[11px] font-semibold uppercase tracking-wider opacity-80">
-              Reanudar
-            </span>
-            <span className="mt-0.5 block truncate font-display text-lg font-bold tracking-tight">
-              {draft.name}
-            </span>
-            <span className="mt-0.5 block truncate text-xs opacity-80">
-              {draft.exercises.length} ejercicios · continuá donde lo dejaste
-            </span>
-          </span>
-          <ChevronRight className="size-5 shrink-0 transition-transform group-hover:translate-x-0.5" />
-        </Link>
-      )}
-
-      {/* Opciones principales del menú */}
-      <div className="flex flex-col gap-3">
-        {!inProgress && (
-          <MenuRow
-            href="/entrenar/sesion"
-            icon={Plus}
-            eyebrow="Sesión"
-            title="Empezar a entrenar"
-            sub="Registro libre o repitiendo tu último entreno"
-            accent
-          />
-        )}
-        <MenuRow
-          href="/rutinas"
-          icon={Dumbbell}
-          eyebrow="Planificación"
-          title="Rutinas"
-          sub="Creá, editá y lanzá tus rutinas"
-        />
+      {/* Encabezado: la pregunta */}
+      <div className="flex flex-col items-center gap-1 text-center">
+        <h1 className="font-display text-2xl font-bold tracking-tight">
+          ¿Qué rutina querés iniciar?
+        </h1>
+        <p className="text-sm text-[var(--text-2)]">
+          Elegí una rutina o arrancá una sesión libre
+        </p>
       </div>
 
-      {/* Pie con consejo motivacional */}
-      <p className="mt-auto text-center text-xs text-[var(--muted)]">
-        La constancia gana. Volvé mañana.
-      </p>
+      {/* Lista de rutinas + opción libre */}
+      <div className="flex w-full max-w-sm flex-col gap-3">
+        {isLoading && (
+          <div className="flex items-center justify-center gap-2 py-8 text-sm text-[var(--muted)]">
+            <Spinner className="size-4 animate-spin" />
+            Cargando rutinas…
+          </div>
+        )}
+
+        {!isLoading && routines?.length === 0 && (
+          <Link
+            href="/rutinas"
+            className="card flex flex-col items-center gap-1 border border-dashed border-[var(--border)] p-6 text-center transition-colors hover:border-[var(--accent)]"
+          >
+            <span className="font-semibold">Todavía no tenés rutinas</span>
+            <span className="text-xs text-[var(--muted)]">
+              Creá tu primera rutina para lanzarla desde acá
+            </span>
+          </Link>
+        )}
+
+        {routines?.map((r) => (
+          <Link
+            key={r.id}
+            href={`/entrenar/sesion?routine=${r.id}`}
+            className="card group flex items-center gap-3 p-4 transition-transform hover:-translate-y-0.5"
+          >
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-2)] transition-colors group-hover:text-[var(--accent)]">
+              <Play className="size-4.5 fill-current" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-semibold">{r.name}</span>
+              <span className="block text-xs text-[var(--muted)]">
+                {r.routine_exercises.length} ejercicios
+              </span>
+            </span>
+          </Link>
+        ))}
+
+        {/* Sesión libre: desde cero */}
+        <Link
+          href="/entrenar/sesion"
+          className="card group flex items-center gap-3 p-4 transition-transform hover:-translate-y-0.5"
+        >
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-2)] transition-colors group-hover:text-[var(--accent)]">
+            <Plus className="size-4.5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">Entrenamiento libre</span>
+            <span className="block text-xs text-[var(--muted)]">
+              Armá la sesión a tu manera
+            </span>
+          </span>
+        </Link>
+      </div>
     </main>
   );
 }

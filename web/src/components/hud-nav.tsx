@@ -29,9 +29,9 @@ import { useWorkoutStore } from "@/lib/workout-store";
  */
 export const HUD_ITEMS = [
   { href: "/dashboard", label: "Inicio", icon: House },
-  { href: "/entrenar", label: "Entrenar", icon: Play, emphasis: true },
-  { href: "/explorar", label: "Social", icon: Compass },
   { href: "/nutricion", label: "Nutrición", icon: ForkKnife },
+  { href: "/entrenar", label: "Entrenar", icon: Play },
+  { href: "/explorar", label: "Social", icon: Compass },
   { href: "/perfil", label: "Perfil", icon: User },
 ] as const;
 
@@ -46,13 +46,11 @@ const HudItem = memo(function HudItem({
   label,
   icon: Icon,
   badge,
-  emphasis,
 }: {
   href: string;
   label: string;
   icon: ComponentType<{ className?: string; weight?: "bold" | "fill" }>;
   badge?: number;
-  emphasis?: boolean;
 }) {
   const pathname = usePathname();
   const active = isActive(pathname, href);
@@ -65,9 +63,7 @@ const HudItem = memo(function HudItem({
         "relative flex flex-col items-center justify-center gap-0.5 rounded-full px-2 py-1.5 transition-all duration-200 active:scale-[0.95]",
         active
           ? "bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_4px_16px_-4px_color-mix(in_srgb,var(--accent)_50%,transparent)]"
-          : emphasis
-            ? "text-[var(--accent)] hover:bg-[var(--accent-soft)]"
-            : "text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]"
+          : "text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]"
       )}
     >
       <Icon
@@ -162,7 +158,6 @@ export function HudNav() {
               href={t.href}
               label={t.label}
               icon={t.icon}
-              emphasis={"emphasis" in t ? t.emphasis : undefined}
             />
           ))}
         </div>
