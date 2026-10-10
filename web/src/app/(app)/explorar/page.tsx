@@ -12,22 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Trophy,
-  Dumbbell,
-  MessageCircle,
-  UserPlus,
-  UserCheck,
-  Search,
-  Compass,
-  Globe,
-  Users,
-  Utensils,
-  Heart,
-  Send,
-  Trash2,
-  Star,
-} from "lucide-react";
+import { Trophy, Barbell as Dumbbell, ChatCircleDots as MessageCircle, UserPlus, UserCheck, MagnifyingGlass as Search, Compass, Globe, Users, ForkKnife as Utensils, Heart, PaperPlaneTilt as Send, Trash as Trash2, Star } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton, Avatar } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/data";
@@ -755,7 +740,7 @@ export default function ExplorarPage() {
                             src={author?.avatar_url}
                             alt={author ? displayName(author) : undefined}
                             initialsText={author ? displayName(author) : undefined}
-                            className="rounded-xl font-bold"
+                            
                             size={40}
                           />
                         </Link>
@@ -763,7 +748,7 @@ export default function ExplorarPage() {
                         <Avatar
                           alt="Atleta"
                           initialsText="Atleta"
-                          className="rounded-xl font-bold"
+                          
                           size={40}
                         />
                       )}

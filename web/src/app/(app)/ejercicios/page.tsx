@@ -8,7 +8,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Dumbbell, Search, X, SlidersHorizontal, Wrench } from "lucide-react";
+import { Barbell as Dumbbell, MagnifyingGlass as Search, X, SlidersHorizontal, Wrench } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/primitives";
 import { Dialog } from "@/components/ui/dialog";

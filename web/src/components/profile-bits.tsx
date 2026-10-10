@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { Pause, Play } from "lucide-react";
+import { Pause, Play } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { VerifiedBadge, ShimmerIcon } from "@/components/premium-icons";
 

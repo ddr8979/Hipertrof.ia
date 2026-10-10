@@ -4,7 +4,7 @@
  */
 
 import Link from "next/link";
-import { Dumbbell } from "lucide-react";
+import { Barbell as Dumbbell } from "@phosphor-icons/react/dist/ssr";
 
 /** Vista pública de los términos y condiciones. */
 export default function TerminosPage() {

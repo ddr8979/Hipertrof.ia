@@ -9,19 +9,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Download,
-  Trash2,
-  LogOut,
-  ShieldAlert,
-  UserX,
-  GraduationCap,
-  Search,
-  UserPlus,
-  ShieldCheck,
-  Users,
-  Sun,
-} from "lucide-react";
+import { Download, Trash as Trash2, SignOut as LogOut, ShieldWarning as ShieldAlert, UserMinus as UserX, GraduationCap, MagnifyingGlass as Search, UserPlus, ShieldCheck, Users, Sun } from "@phosphor-icons/react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Dialog } from "@/components/ui/dialog";

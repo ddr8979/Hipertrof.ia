@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { create } from "zustand";
-import { CheckCircle2, Info, X, AlertTriangle, XCircle } from "lucide-react";
+import { CheckCircle as CheckCircle2, Info, X, Warning as AlertTriangle, XCircle } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 // Tipo semántico del toast.

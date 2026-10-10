@@ -19,14 +19,7 @@ import {
   startOfYear,
   endOfYear,
 } from "date-fns";
-import {
-  Flame,
-  Dumbbell,
-  Clock,
-  Trophy,
-  ChevronDown,
-  ChartLine,
-} from "lucide-react";
+import { Flame, Barbell as Dumbbell, Clock, Trophy, CaretDown as ChevronDown, ChartLineUp as ChartLine } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/data";

@@ -6,7 +6,7 @@
  * La selección se guarda directamente en el campo `plan` del perfil
  * (la pasarela de pago real queda para más adelante).
  */
-import { CreditCard, Check, Crown, Star, Zap } from "lucide-react";
+import { CreditCard, Check, Crown, Star, Lightning as Zap } from "@phosphor-icons/react";
 import { useProfile } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { PlanBadge } from "@/components/plan-badge";

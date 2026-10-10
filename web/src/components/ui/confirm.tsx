@@ -1,7 +1,7 @@
 // Diálogo reutilizable de confirmación para acciones destructivas.
 "use client";
 
-import { AlertCircle, Trash2 } from "lucide-react";
+import { Info as AlertCircle, Trash as Trash2 } from "@phosphor-icons/react";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 

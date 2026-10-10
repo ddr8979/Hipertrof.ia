@@ -10,7 +10,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Dumbbell, Mail, ArrowRight, Loader2 } from "lucide-react";
+import { Barbell as Dumbbell, Envelope as Mail, ArrowRight, CircleNotch as Loader2 } from "@phosphor-icons/react";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";

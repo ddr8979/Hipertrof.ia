@@ -10,24 +10,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Users,
-  Check,
-  X,
-  ClipboardList,
-  Plus,
-  Dumbbell,
-  GraduationCap,
-  Utensils,
-  PartyPopper,
-  Search,
-  UserPlus,
-  Trash2,
-  ChevronRight,
-  Pencil,
-  QrCode,
-  ChartLine,
-} from "lucide-react";
+import { Users, Check, X, ClipboardText as ClipboardList, Plus, Barbell as Dumbbell, GraduationCap, ForkKnife as Utensils, Confetti as PartyPopper, MagnifyingGlass as Search, UserPlus, Trash as Trash2, CaretRight as ChevronRight, PencilSimple as Pencil, QrCode, ChartLineUp as ChartLine } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";

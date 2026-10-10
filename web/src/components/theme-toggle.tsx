@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Monitor } from "lucide-react";
+import { Sun, Moon, Monitor } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/controls";
 

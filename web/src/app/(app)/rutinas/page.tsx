@@ -11,23 +11,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  Play,
-  Dumbbell,
-  Copy,
-  GripVertical,
-  Clock,
-  LayoutList,
-  BookOpen,
-  ChevronUp,
-  ChevronDown,
-  Share2,
-  AlertCircle,
-  Users,
-} from "lucide-react";
+import { Plus, PencilSimple as Pencil, Trash as Trash2, Play, Barbell as Dumbbell, Copy, DotsSixVertical as GripVertical, Clock, ListDashes as LayoutList, BookOpen, CaretUp as ChevronUp, CaretDown as ChevronDown, ShareNetwork as Share2, Info as AlertCircle, Users } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, Skeleton } from "@/components/ui/primitives";

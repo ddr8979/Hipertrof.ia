@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Camera, X, Loader2, Check, AlertTriangle } from "lucide-react";
+import { Camera, X, CircleNotch as Loader2, Check, Warning as AlertTriangle } from "@phosphor-icons/react";
 
 // Tipos de alimentos reconocibles (subset común para demo)
 export const FOOD_CLASSES = [

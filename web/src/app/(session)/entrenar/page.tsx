@@ -11,17 +11,7 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Plus,
-  X,
-  Check,
-  Play,
-  Timer,
-  Pencil,
-  Square,
-  Dumbbell,
-  Trash2,
-} from "lucide-react";
+import { Plus, X, Check, Play, Timer, PencilSimple as Pencil, Square, Barbell as Dumbbell, Trash as Trash2 } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import {
   useWorkoutStore,
@@ -150,7 +140,7 @@ const ExerciseCard = memo(function ExerciseCard({
                     : "border-[var(--border)] text-transparent hover:border-[var(--accent)]"
                 )}
               >
-                <Check className="size-4" strokeWidth={3} />
+                <Check className="size-4" weight="bold" />
               </button>
 
               <div className="relative">

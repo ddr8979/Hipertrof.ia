@@ -3,7 +3,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Dumbbell, Flame, Clock, Trophy, Utensils, ChartLine } from "lucide-react";
+import { Barbell as Dumbbell, Flame, Clock, Trophy, ForkKnife as Utensils, ChartLineUp as ChartLine } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/primitives";
 import { estimate1RM, formatDate, formatDuration } from "@/lib/utils";

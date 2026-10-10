@@ -5,20 +5,16 @@
  */
 
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
-// Tipografías optimizadas por next/font, expuestas como variables CSS.
+// Tipografía optimizada por next/font. Una sola familia para todo (display y
+// cuerpo): el tracking cerrado de las headings aporta el look de grotesco
+// moderno tipo Instagram Sans.
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-  display: "swap",
-});
-
-const space = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space",
   display: "swap",
 });
 
@@ -59,8 +55,8 @@ export const metadata: Metadata = {
 // Configuración del viewport móvil/PWA (color de barra, escalas, safe areas).
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0b0d0b" },
-    { media: "(prefers-color-scheme: light)", color: "#f5f6f3" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -82,7 +78,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://api.spotify.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       </head>
-      <body className={`${inter.variable} ${space.variable} antialiased`}>
+      <body className={`${inter.variable} antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>

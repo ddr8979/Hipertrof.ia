@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEven
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Star, Send, Lock, ImagePlus, X, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Star, PaperPlaneTilt as Send, Lock, Images as ImagePlus, X, Eye, EyeSlash as EyeOff } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/primitives";
 import { toast } from "@/components/ui/toast";

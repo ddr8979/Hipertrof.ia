@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X, Star } from "lucide-react";
+import { X, Star } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/components/providers";
 import { Avatar } from "@/components/ui/primitives";

@@ -8,29 +8,11 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Camera,
-  ChartLine,
-  Check,
-  Flame,
-  Music4,
-  Plus,
-  Pencil,
-  Trash2,
-  Trophy,
-  CalendarCheck,
-  Dumbbell,
-  Medal,
-  Rocket,
-  Zap,
-  Cpu,
-  Weight,
-  ShieldCheck,
-  Play,
-} from "lucide-react";
+import { Camera, ChartLineUp as ChartLine, Check, Flame, MusicNotes as Music4, Plus, PencilSimple as Pencil, Trash as Trash2, Trophy, CalendarCheck, Barbell as Dumbbell, Medal, Rocket, Lightning as Zap, Cpu, ShieldCheck, Play } from "@phosphor-icons/react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { playlistThumb, splitEmojiRuns, pastelAccent} from "@/lib/utils";
+import { playlistThumb, splitEmojiRuns, cn, vibrate } from "@/lib/utils";
+import { ACCENTS, DEFAULT_ACCENT, resolveAccent } from "@/lib/accents";
 import { SpotifyNowCard, SpotifyConnectCard } from "@/components/spotify-now";
 import { ProfileTrackPlayer, SocialCircles, VerifiedBadge } from "@/components/profile-bits";
 import { SpotifyIcon } from "@/components/brand-icons";
@@ -44,7 +26,6 @@ import { Field, Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 import { useProfile } from "@/components/providers";
 import { ICONS, PROVIDERS } from "@/lib/profile-meta";
-import { cn, vibrate } from "@/lib/utils";
 
 // Logro desbloqueado con su fecha de obtención.
 type Achievement = {
@@ -74,7 +55,7 @@ export default function PerfilPage() {
   const [name, setName] = useState(profile?.display_name ?? "");
   const [bio, setBio] = useState((profile?.bio as string) ?? "");
   const [weight, setWeight] = useState(profile?.weight_kg?.toString() ?? "");
-  const [accent, setAccent] = useState(pastelAccent(profile?.accent_color ?? "#a0c499"));
+  const [accent, setAccent] = useState(resolveAccent(profile?.accent_color).slug);
   const [showWeight, setShowWeight] = useState(profile?.show_weight !== false);
   const [showHeight, setShowHeight] = useState(profile?.show_height !== false);
   const [showFollowers, setShowFollowers] = useState(profile?.show_followers !== false);
@@ -173,7 +154,7 @@ export default function PerfilPage() {
           username: username.trim() || null,
           bio: bio.trim() || null,
           weight_kg: weight ? Number(weight) : null,
-          accent_color: accent,
+          accent_color: ACCENTS.find((a) => a.slug === accent)?.fill ?? DEFAULT_ACCENT.fill,
           show_weight: showWeight,
           show_height: showHeight,
           show_followers: showFollowers,
@@ -555,14 +536,26 @@ export default function PerfilPage() {
             />
           </Field>
           <Field label="Color de acento">
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={accent}
-                  onChange={(e) => setAccent(e.target.value)}
-                  className="size-10 cursor-pointer rounded-xl border border-[var(--border)] bg-transparent p-1"
-                />
-                <span className="text-sm font-mono text-[var(--text-2)]">{accent}</span>
+              <div className="flex flex-wrap gap-2.5">
+                {ACCENTS.map((a) => {
+                  const selected = accent === a.slug;
+                  return (
+                    <button
+                      key={a.slug}
+                      type="button"
+                      onClick={() => setAccent(a.slug)}
+                      aria-label={a.label}
+                      aria-pressed={selected}
+                      className={cn(
+                        "relative flex size-10 items-center justify-center rounded-full transition-transform hover:scale-110",
+                        selected && "scale-110 ring-2 ring-[var(--text)] ring-offset-2 ring-offset-[var(--surface)]"
+                      )}
+                      style={{ background: a.fill, color: a.ink }}
+                    >
+                      {selected && <Check weight="bold" className="size-5" />}
+                    </button>
+                  );
+                })}
               </div>
             </Field>
 

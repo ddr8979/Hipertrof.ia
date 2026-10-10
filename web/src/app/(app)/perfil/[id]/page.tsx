@@ -9,18 +9,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Flame,
-  Scale,
-  Users,
-  UserPlus,
-  UserCheck,
-  Play,
-  Lock,
-  Ruler,
-  MessageCircle,
-  Star,
-} from "lucide-react";
+import { Flame, Scales as Scale, Users, UserPlus, UserCheck, Play, Lock, Ruler, ChatCircleDots as MessageCircle, Star } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { playlistThumb } from "@/lib/utils";
 import { SpotifyNowCard } from "@/components/spotify-now";

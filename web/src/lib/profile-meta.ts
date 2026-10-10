@@ -1,4 +1,4 @@
-import { Flame, Dumbbell, Cpu, Rocket, Zap, CalendarCheck, Medal, Weight } from "lucide-react";
+import { Flame, Barbell as Dumbbell, Cpu, Rocket, Lightning as Zap, CalendarCheck, Medal, Scales as Weight } from "@phosphor-icons/react";
 
 /**
  * Mapa de iconos de lucide disponibles para elegir en el perfil.

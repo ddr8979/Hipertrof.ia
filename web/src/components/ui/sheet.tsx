@@ -4,7 +4,7 @@
 
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { X } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 // Contador global para gestionar el bloqueo del scroll con varios sheets.

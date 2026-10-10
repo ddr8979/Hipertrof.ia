@@ -9,37 +9,17 @@
 import { useState } from "react";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Dumbbell,
-  Flame,
-  Palette,
-  Utensils,
-  Check,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Barbell as Dumbbell, Flame, Palette, ForkKnife as Utensils, Check } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 import { useProfile } from "@/components/providers";
 import { cn } from "@/lib/utils";
+import { ACCENTS, DEFAULT_ACCENT, accentVars, resolveAccent } from "@/lib/accents";
 
 // Títulos de los pasos del asistente.
 const STEPS = ["Tu identidad", "Tu cuerpo", "Tu objetivo", "Tu estilo", "Tu comida"];
-
-// Paleta de acentos disponibles para el perfil.
-const ACCENTS = [
-  "#a0c499",
-  "#f2b8c6",
-  "#f5cfa0",
-  "#a9cbee",
-  "#c9b6ea",
-  "#9fd6c8",
-  "#eeb79b",
-  "#dfb0d8",
-  "#a8d0d4",
-];
 
 const SEX = [
   { id: "male", label: "Masculino" },
@@ -109,7 +89,7 @@ export default function OnboardingPage() {
     activity: "moderate",
     goal: "volumen",
     diet: "omnivoro",
-    accent: "#a0c499",
+    accent: DEFAULT_ACCENT.slug,
     foodPrefs: [] as string[],
     foodRestrictions: [] as string[],
   });
@@ -171,7 +151,7 @@ export default function OnboardingPage() {
         activity_level: form.activity,
         diet_goal: form.goal,
         diet_type: form.diet,
-        accent_color: form.accent,
+        accent_color: resolveAccent(form.accent).fill,
         food_preferences: form.foodPrefs,
         food_restrictions: form.foodRestrictions,
         bmr_kcal: kcal.bmr,
@@ -197,7 +177,11 @@ export default function OnboardingPage() {
       }
 
       // Aplicar acento al instante
-      document.documentElement.style.setProperty("--user-accent", form.accent);
+      const a = resolveAccent(form.accent);
+      for (const [k, v] of Object.entries(accentVars(a))) {
+        document.documentElement.style.setProperty(k, v);
+      }
+      document.documentElement.setAttribute("data-accent", "true");
       setProfile(data);
       toast("success", "¡Perfil listo!", "Ya podés empezar a entrenar");
       router.push("/dashboard");
@@ -450,24 +434,26 @@ export default function OnboardingPage() {
 
               <Field label="Color de acento">
                 <div className="flex flex-wrap gap-2.5">
-                  {ACCENTS.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => set("accent", c)}
-                      aria-label={`Acento ${c}`}
-                      className={cn(
-                        "size-10 rounded-xl border-2 transition-transform hover:scale-110",
-                        form.accent === c
-                          ? "border-[var(--text)] scale-110"
-                          : "border-transparent"
-                      )}
-                      style={{ background: c }}
-                    >
-                      {form.accent === c && (
-                        <Check className="mx-auto size-5 text-[var(--accent-ink)]" />
-                      )}
-                    </button>
-                  ))}
+                  {ACCENTS.map((a) => {
+                    const selected = form.accent === a.slug;
+                    return (
+                      <button
+                        key={a.slug}
+                        type="button"
+                        onClick={() => set("accent", a.slug)}
+                        aria-label={a.label}
+                        aria-pressed={selected}
+                        className={cn(
+                          "relative flex size-10 items-center justify-center rounded-full transition-transform hover:scale-110",
+                          selected &&
+                            "scale-110 ring-2 ring-[var(--text)] ring-offset-2 ring-offset-[var(--surface)]"
+                        )}
+                        style={{ background: a.fill, color: a.ink }}
+                      >
+                        {selected && <Check weight="bold" className="size-5" />}
+                      </button>
+                    );
+                  })}
                 </div>
               </Field>
 

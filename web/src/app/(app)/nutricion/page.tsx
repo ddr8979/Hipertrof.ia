@@ -10,26 +10,7 @@ import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { startOfDay, endOfDay, format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
-import {
-  Utensils,
-  Plus,
-  Search,
-  Trash2,
-  Flame,
-  Beef,
-  Wheat,
-  Droplet,
-  Sparkles,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  BookOpen,
-  BookOpenText,
-  ImagePlus,
-  Pencil,
-  Share2,
-} from "lucide-react";
+import { ForkKnife as Utensils, Plus, MagnifyingGlass as Search, Trash as Trash2, Flame, ForkKnife as Beef, Leaf as Wheat, Drop as Droplet, Sparkle as Sparkles, CaretDown as ChevronDown, CaretLeft as ChevronLeft, CaretRight as ChevronRight, Check, BookOpen, BookOpenText, Images as ImagePlus, PencilSimple as Pencil, ShareNetwork as Share2 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/primitives";

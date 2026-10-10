@@ -6,7 +6,7 @@
  * y filtro por categoría. Todo el filtrado se hace en el cliente con useMemo.
  */
 import { useMemo, useState } from "react";
-import { BookOpenText, Search } from "lucide-react";
+import { BookOpenText, MagnifyingGlass as Search } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { GLOSARIO_ITEMS, type GlosarioItem } from "@/lib/glosario-data";
 import { cn } from "@/lib/utils";

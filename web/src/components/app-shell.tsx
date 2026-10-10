@@ -10,21 +10,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  Dumbbell,
-  Utensils,
-  User,
-  Users,
-  LogOut,
-  Settings,
-  History,
-  ChartLine,
-  BookOpenText,
-  Calculator,
-  BicepsFlexed,
-  Menu,
-  MessageCircle,
-} from "lucide-react";
+import { ForkKnife as Utensils, User, Users, SignOut as LogOut, Gear as Settings, ClockCounterClockwise as History, ChartLineUp as ChartLine, BookOpenText, Calculator, Barbell as BicepsFlexed, List as Menu, ChatCircleDots } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useProfile } from "@/components/providers";
 import { Avatar } from "@/components/ui/primitives";
@@ -106,14 +92,11 @@ const NavLink = memo(function NavLink({
   );
 });
 
-/** Marca centrada: el logo es el elemento centrado de ambas barras. */
+/** Marca: wordmark limpio a la izquierda de la barra (estilo Instagram). */
 function BrandMark() {
   return (
-    <Link href="/dashboard" className="flex items-center gap-2" aria-label="Hipertrof.ia - Inicio">
-      <span className="flex size-7 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-ink)]">
-        <Dumbbell className="size-4" />
-      </span>
-      <span className="font-display text-[15px] font-bold tracking-tight">
+    <Link href="/dashboard" className="flex items-center" aria-label="Hipertrof.ia - Inicio">
+      <span className="font-display text-[17px] font-extrabold tracking-[-0.03em] leading-none">
         hypertrof<span className="text-[var(--accent)]">.ia</span>
       </span>
     </Link>
@@ -159,9 +142,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-dvh">
       <div className="flex min-h-dvh items-start lg:pl-60">
         {/* Sidebar desktop */}
-        <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur-xl lg:flex">
-          {/* Logo centrado */}
-          <div className="flex h-16 items-center justify-center border-b border-[var(--border)] px-5">
+        <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-[var(--border)] bg-[var(--surface)] lg:flex">
+          {/* Wordmark alineado a la izquierda */}
+          <div className="flex h-14 items-center border-b border-[var(--border)] px-5">
             <BrandMark />
           </div>
 
@@ -208,54 +191,53 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
 
-        {/* Contenido + header móvil: ☰ · logo centrado · mensajes */}
+        {/* Contenido + header móvil: wordmark a la izquierda, acciones a la
+            derecha (estilo Instagram: logo + iconos, sin centrar). */}
         <div className="relative flex min-w-0 flex-1 flex-col">
           {!isChatThread && (
             <header
-              className="sticky top-0 z-30 border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--bg)_78%,transparent)] backdrop-blur-xl lg:hidden"
+              className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--surface)] lg:hidden"
               style={{ paddingTop: "env(safe-area-inset-top)" }}
             >
-              <div className="relative flex h-13 items-center justify-between px-4">
-                <button
-                  type="button"
-                  onClick={() => setMoreOpen(true)}
-                  aria-label="Más opciones"
-                  aria-expanded={moreOpen}
-                  className={cn(
-                    "-ml-1 flex size-8 items-center justify-center rounded-lg transition-colors",
-                    secondaryActive
-                      ? "text-[var(--accent)]"
-                      : "text-[var(--text-2)] hover:bg-[var(--surface-2)]"
-                  )}
-                >
-                  <Menu className="size-5" />
-                </button>
-                {/* Logo centrado en el eje del header */}
-                <div className="pointer-events-none absolute inset-x-0 flex justify-center">
-                  <BrandMark />
+              <div className="flex h-11 items-center justify-between px-4">
+                <BrandMark />
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setMoreOpen(true)}
+                    aria-label="Más opciones"
+                    aria-expanded={moreOpen}
+                    className={cn(
+                      "flex size-9 items-center justify-center rounded-full transition-colors",
+                      secondaryActive
+                        ? "text-[var(--text)]"
+                        : "text-[var(--text)] hover:bg-[var(--surface-2)]"
+                    )}
+                  >
+                    <Menu className="size-6" weight={secondaryActive ? "fill" : "light"} />
+                  </button>
+                  <Link
+                    href="/mensajes"
+                    aria-label="Mensajes"
+                    className="relative flex size-9 items-center justify-center rounded-full text-[var(--text)] transition-colors hover:bg-[var(--surface-2)]"
+                  >
+                    <ChatCircleDots className="size-6" weight="light" />
+                    {unread > 0 && (
+                      <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[9px] font-bold leading-none text-white animate-pop">
+                        {unread > 9 ? "9+" : unread}
+                      </span>
+                    )}
+                  </Link>
                 </div>
-                {/* Mensajes con badge (Perfil vive en la píldora inferior) */}
-                <Link
-                  href="/mensajes"
-                  aria-label="Mensajes"
-                  className="relative flex size-8 items-center justify-center rounded-lg transition-colors text-[var(--text-2)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
-                >
-                  <MessageCircle className="size-5" />
-                  {unread > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-4.5 min-w-[4.5px] items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[9px] font-bold text-white animate-pop">
-                      {unread > 9 ? "9+" : unread}
-                    </span>
-                  )}
-                </Link>
               </div>
             </header>
           )}
           <main
             className={cn(
-              "mx-auto w-full min-w-0 flex-1 max-w-3xl px-4 pt-6 sm:px-6 sm:pt-8 lg:max-w-none lg:pb-14 lg:pt-8",
+              "mx-auto w-full min-w-0 flex-1 max-w-3xl px-4 pt-5 sm:px-6 sm:pt-7 lg:max-w-none lg:pb-14 lg:pt-7",
               isChatThread
                 ? "pb-4"
-                : "pb-[calc(4.75rem_+_env(safe-area-inset-bottom))]"
+                : "pb-[calc(3.5rem_+_env(safe-area-inset-bottom))]"
             )}
           >
             {children}

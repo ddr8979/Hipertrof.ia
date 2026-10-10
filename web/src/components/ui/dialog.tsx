@@ -4,7 +4,7 @@
 
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { X } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 // Contador global para no desbloquear el scroll si hay varios diálogos abiertos.

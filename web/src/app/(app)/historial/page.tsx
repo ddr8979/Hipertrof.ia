@@ -9,12 +9,7 @@
 
 import { useMemo, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import {
-  Clock,
-  Dumbbell,
-  ChevronDown,
-  Check,
-} from "lucide-react";
+import { Clock, Barbell as Dumbbell, CaretDown as ChevronDown, Check } from "@phosphor-icons/react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/primitives";
@@ -292,7 +287,7 @@ export default function HistorialPage() {
                                       : "bg-[var(--surface-3)]"
                                   )}
                                 >
-                                  {s.completed && <Check className="size-3" strokeWidth={3} />}
+                                  {s.completed && <Check className="size-3" weight="bold" />}
                                 </span>
                                 <span className="w-6 text-xs font-bold text-[var(--muted)]">
                                   {s.type}

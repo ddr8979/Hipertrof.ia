@@ -5,7 +5,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Dumbbell } from "lucide-react";
+import { Barbell as Dumbbell } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 /** Frases que dice Mr Mancuernas en la interfaz. */

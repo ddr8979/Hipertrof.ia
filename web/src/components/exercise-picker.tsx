@@ -3,7 +3,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, X, SlidersHorizontal, Wrench } from "lucide-react";
+import { MagnifyingGlass as Search, X, SlidersHorizontal, Wrench } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { Dialog } from "@/components/ui/dialog";

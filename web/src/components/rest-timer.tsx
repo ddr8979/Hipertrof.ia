@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Minus, Plus, Play, Square } from "lucide-react";
+import { Minus, Plus, Play, Square } from "@phosphor-icons/react";
 import { useWorkoutStore } from "@/lib/workout-store";
 import { Button } from "@/components/ui/button";
 import { cn, formatDuration } from "@/lib/utils";

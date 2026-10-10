@@ -10,7 +10,7 @@
  */
 
 import { useMemo, useState, useCallback } from "react";
-import { Calculator, Flame, Activity, Target, Save, Utensils, Trash2, Sparkles } from "lucide-react";
+import { Calculator, Flame, Pulse as Activity, Target, FloppyDisk as Save, ForkKnife as Utensils, Trash as Trash2, Sparkle as Sparkles } from "@phosphor-icons/react";
 
 type Sex = "male" | "female";
 import { Field, Input, Select } from "@/components/ui/input";

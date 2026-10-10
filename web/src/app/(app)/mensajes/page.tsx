@@ -8,22 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  MessageCircle,
-  Send,
-  Search,
-  Star,
-  Bell,
-  MoreHorizontal,
-  Camera,
-  Mic,
-  Heart,
-  Paperclip,
-  X,
-  ChevronLeft,
-  UserPlus,
-  ShieldCheck,
-} from "lucide-react";
+import { ChatCircleDots as MessageCircle, PaperPlaneTilt as Send, MagnifyingGlass as Search, Star, Bell, DotsThreeOutline as MoreHorizontal, Camera, Microphone as Mic, Heart, Paperclip, X, CaretLeft as ChevronLeft, UserPlus, ShieldCheck } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/components/providers";
 import { Skeleton, Avatar } from "@/components/ui/primitives";

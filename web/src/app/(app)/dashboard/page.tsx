@@ -8,15 +8,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Play,
-  Flame,
-  Trophy,
-  Dumbbell,
-  CalendarDays,
-  ChevronRight,
-  Sparkles,
-} from "lucide-react";
+import { Play, Flame, Trophy, Barbell as Dumbbell, Calendar as CalendarDays, CaretRight as ChevronRight, Sparkle as Sparkles } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/components/providers";
 import { Button } from "@/components/ui/button";

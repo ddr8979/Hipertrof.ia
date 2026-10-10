@@ -2,75 +2,77 @@
 
 /* ============================================================================
    hypertrof.ia — Design System
-   Tokens semánticos que cambian con .dark. Acento personalizable por usuario
-   (html[data-accent]) para el toque "2000s pero moderno".
+   Estética de claridad tipo Instagram: fondos neutros puros, hairlines
+   #DBDBDB, secundarios #737373, chrome mínimo. El acento es personalizable
+   por usuario desde una paleta acotada (src/lib/accents.ts) que garantiza
+   legibilidad (WCAG AA) en rellenos, texto y bordes.
    ========================================================================== */
 
 :root {
   color-scheme: light;
 
-  --bg: #f2efe8;
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-2: #f8f6f0;
-  --surface-3: #edeae1;
-  --border: #e4e0d4;
-  --text: #26261f;
-  --text-2: #57564a;
-  --muted: #8b897a;
+  --surface-2: #fafafa;
+  --surface-3: #f2f2f2;
+  --border: #dbdbdb;
+  --text: #262626;
+  --text-2: #737373;
+  --muted: #a8a8a8;
 
-  --accent: #7ea679;
-  --accent-hover: #709a6b;
-  --accent-soft: rgba(126, 166, 121, 0.16);
-  --accent-ink: #17211a;
+  --accent: #0077d6;
+  --accent-hover: #0068c4;
+  --accent-soft: rgba(0, 119, 214, 0.12);
+  --accent-ink: #ffffff;
+  --accent-text: #00376b;
 
-  --danger: #d76a70;
-  --danger-soft: rgba(215, 106, 112, 0.12);
-  --warn: #d19a55;
-  --warn-soft: rgba(209, 154, 85, 0.14);
-  --info: #7aa7cc;
-  --info-soft: rgba(122, 167, 204, 0.14);
-  --success: #6a9e7f;
-  --success-soft: rgba(106, 158, 127, 0.14);
+  --danger: #ed4956;
+  --danger-soft: rgba(237, 73, 86, 0.12);
+  --warn: #c77e00;
+  --warn-soft: rgba(199, 126, 0, 0.12);
+  --info: #0077d6;
+  --info-soft: rgba(0, 119, 214, 0.12);
+  --success: #00a868;
+  --success-soft: rgba(0, 168, 104, 0.12);
 
-  --glow: 0 0 12px 0 var(--accent-soft);
-  /* Sombras en capas (premium: contacto + difusa) y hairline de luz superior */
-  --shadow-sm: 0 1px 2px rgba(18, 24, 16, 0.05), 0 1px 1px rgba(18, 24, 16, 0.03);
-  --shadow-md: 0 4px 12px -4px rgba(18, 24, 16, 0.08), 0 2px 4px -2px rgba(18, 24, 16, 0.04);
-  --shadow-lg: 0 16px 32px -8px rgba(18, 24, 16, 0.12), 0 6px 16px -6px rgba(18, 24, 16, 0.06);
-  --card-hi: rgba(255, 255, 255, 0.75);
+  /* Sombras mínimas: solo contacto, sin brillo interior (estilo IG). */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px -4px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 28px -8px rgba(0, 0, 0, 0.12);
+  --card-hi: transparent;
 }
 
 .dark {
   color-scheme: dark;
 
-  --bg: #171a17;
-  --surface: #1e221e;
-  --surface-2: #252a25;
-  --surface-3: #2d332d;
-  --border: #3a413a;
-  --text: #eff1ec;
-  --text-2: #b4b8ae;
-  --muted: #7e857c;
+  --bg: #000000;
+  --surface: #000000;
+  --surface-2: #121212;
+  --surface-3: #1a1a1a;
+  --border: #262626;
+  --text: #f5f5f5;
+  --text-2: #a8a8a8;
+  --muted: #737373;
 
-  --accent: #a8c9a2;
-  --accent-hover: #b6d4b1;
-  --accent-soft: rgba(168, 201, 162, 0.16);
-  --accent-ink: #16211a;
+  --accent: #0095f6;
+  --accent-hover: #1a9ff7;
+  --accent-soft: rgba(0, 149, 246, 0.16);
+  --accent-ink: #ffffff;
+  --accent-text: #4cb5f9;
 
-  --danger: #e98a8f;
-  --danger-soft: rgba(233, 138, 143, 0.14);
-  --warn: #dfae72;
-  --warn-soft: rgba(223, 174, 114, 0.14);
-  --info: #93bbe0;
-  --info-soft: rgba(147, 187, 224, 0.14);
-  --success: #8fc7a2;
-  --success-soft: rgba(143, 199, 162, 0.14);
+  --danger: #ff4d61;
+  --danger-soft: rgba(255, 77, 97, 0.16);
+  --warn: #e0a52e;
+  --warn-soft: rgba(224, 165, 46, 0.16);
+  --info: #0095f6;
+  --info-soft: rgba(0, 149, 246, 0.16);
+  --success: #00c477;
+  --success-soft: rgba(0, 196, 119, 0.16);
 
-  /* Dark mode shadows: subtle, using surface tones not pure black */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 12px -4px rgba(0, 0, 0, 0.25), 0 2px 4px -2px rgba(0, 0, 0, 0.15);
-  --shadow-lg: 0 16px 32px -8px rgba(0, 0, 0, 0.3), 0 6px 16px -6px rgba(0, 0, 0, 0.18);
-  --card-hi: rgba(255, 255, 255, 0.03);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px -4px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 28px -8px rgba(0, 0, 0, 0.5);
+  --card-hi: transparent;
 }
 
 @theme inline {
@@ -86,17 +88,21 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-soft: var(--accent-soft);
   --color-accent-ink: var(--accent-ink);
+  --color-accent-text: var(--accent-text);
   --color-danger: var(--danger);
   --color-warn: var(--warn);
   --color-info: var(--info);
   --color-success: var(--success);
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-space), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
   --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
-  --radius-3xl: 1.75rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.5rem;
 
   --animate-fade-up: fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-fade-in: fade-in 0.25s ease both;
@@ -148,7 +154,6 @@ html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  /* El fondo del html pinta el área de overscroll/rubber-band de iOS */
   background: var(--bg);
 }
 
@@ -200,9 +205,7 @@ button,
 }
 
 body {
-  background:
-    radial-gradient(1200px 540px at 50% -6%, color-mix(in srgb, var(--accent) 15%, transparent), transparent 70%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -211,8 +214,13 @@ body {
   overflow-x: hidden;
 }
 
-/* Hint de capa GPU solo en elementos que animan posición/transformación.
-   Evita will-change global que satura memoria. */
+/* Tipografía display: una sola familia (Inter) con tracking cerrado y peso
+   alto — el look de un grotesco moderno tipo Instagram Sans. */
+.font-display {
+  letter-spacing: -0.022em;
+}
+
+/* Hint de capa GPU solo en elementos que animan posición/transformación. */
 .animate-fade-up,
 .animate-fade-in,
 .animate-scale-in,
@@ -223,15 +231,13 @@ body {
   backface-visibility: hidden;
 }
 
-.glass {
-  transform: translateZ(0);
-}
-
-/* Acento personalizable del perfil (se aplica desde el cliente) */
+/* Acento personalizable del perfil: relleno + tinta + texto, siempre legibles. */
 [data-accent] {
-  --accent: var(--user-accent, #a0c499);
-  --accent-hover: color-mix(in srgb, var(--user-accent, #a0c499) 80%, white);
-  --accent-soft: color-mix(in srgb, var(--user-accent, #a0c499) 12%, transparent);
+  --accent: var(--user-accent, #0077d6);
+  --accent-hover: color-mix(in srgb, var(--user-accent, #0077d6) 82%, black);
+  --accent-soft: color-mix(in srgb, var(--user-accent, #0077d6) 12%, transparent);
+  --accent-ink: var(--user-accent-ink, #ffffff);
+  --accent-text: var(--user-accent-text, #00376b);
 }
 
 ::selection {
@@ -249,13 +255,10 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-/* Utilidades de superficie */
+/* Utilidades de superficie: planas, sin glass ni brillo interior. */
 .glass {
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  backdrop-filter: blur(20px) saturate(1.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
-  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--card-hi);
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 
 :where(a, button) {
@@ -266,24 +269,20 @@ body {
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-sm), inset 0 1px 0 var(--card-hi);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
   transition:
     border-color 0.2s ease,
-    box-shadow 0.2s ease,
+    background-color 0.2s ease,
     transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .card-hover:hover {
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
-  box-shadow:
-    var(--shadow-md),
-    inset 0 1px 0 var(--card-hi),
-    0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent);
-  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--text) 22%, var(--border));
+  background: var(--surface-2);
 }
 .card-hover:active {
-  transform: translateY(0) scale(0.985);
+  transform: scale(0.99);
   transition-duration: 0.06s;
 }
 

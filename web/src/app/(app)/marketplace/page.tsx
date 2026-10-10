@@ -6,7 +6,7 @@
  * inscribirse (registra la inscripción vía Supabase, pago pendiente).
  */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Store, GraduationCap, Check, BadgeCheck } from "lucide-react";
+import { Storefront as Store, GraduationCap, Check, SealCheck as BadgeCheck } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/data";

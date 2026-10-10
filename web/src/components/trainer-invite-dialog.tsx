@@ -7,7 +7,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { Check, Copy, QrCode, RefreshCw, Share2 } from "lucide-react";
+import { Check, Copy, QrCode, ArrowsClockwise as RefreshCw, ShareNetwork as Share2 } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";

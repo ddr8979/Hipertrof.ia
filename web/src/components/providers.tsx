@@ -9,12 +9,13 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider, useTheme } from "next-themes";
+import { IconContext } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { Toaster } from "@/components/ui/toast";
 import { SWRegister } from "@/components/sw-register";
 import { createClient } from "@/lib/supabase/client";
-import { pastelAccent } from "@/lib/utils";
+import { resolveAccent } from "@/lib/accents";
 
 // Forma de la fila de `profiles` (con campos extra permitidos).
 export type ProfileRow = {
@@ -78,7 +79,7 @@ function ThemeColorSync() {
     const root = document.documentElement;
     const bg =
       getComputedStyle(root).getPropertyValue("--bg").trim() ||
-      (resolvedTheme === "dark" ? "#171a17" : "#f2efe8");
+      (resolvedTheme === "dark" ? "#000000" : "#ffffff");
 
     let meta = document.querySelector<HTMLMetaElement>(
       'meta[name="theme-color"]:not([media])'
@@ -95,7 +96,7 @@ function ThemeColorSync() {
   return null;
 }
 
-/** Aplica el color de acento del perfil como variable CSS global. */
+/** Aplica el color de acento del perfil como variables CSS globales. */
 function AccentApplier() {
   const profile = useProfile((s) => s.profile);
 
@@ -104,11 +105,12 @@ function AccentApplier() {
       document.documentElement.removeAttribute("data-accent");
       return;
     }
-    document.documentElement.style.setProperty(
-      "--user-accent",
-      pastelAccent(profile.accent_color)
-    );
-    document.documentElement.setAttribute("data-accent", "true");
+    const { fill, ink, text } = resolveAccent(profile.accent_color);
+    const root = document.documentElement;
+    root.style.setProperty("--user-accent", fill);
+    root.style.setProperty("--user-accent-ink", ink);
+    root.style.setProperty("--user-accent-text", text);
+    root.setAttribute("data-accent", "true");
   }, [profile?.accent_color]);
 
   return null;
@@ -225,12 +227,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
         enableColorScheme
         disableTransitionOnChange
       >
-        <ThemeColorSync />
-        <AccentApplier />
-        <ProfileSync />
-        <SWRegister />
-        {children}
-        <Toaster />
+        {/* Peso global de los iconos: "light" (trazo fino premium). El estado
+            activo de la nav lo sobreescribe con weight="fill". */}
+        <IconContext.Provider value={{ weight: "light" }}>
+          <ThemeColorSync />
+          <AccentApplier />
+          <ProfileSync />
+          <SWRegister />
+          {children}
+          <Toaster />
+        </IconContext.Provider>
       </ThemeProvider>
     </QueryClientProvider>
   );
