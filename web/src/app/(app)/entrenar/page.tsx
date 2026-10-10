@@ -2,16 +2,24 @@
 
 /**
  * Menú de Entrenar.
- * Selector de rutinas: pregunta "¿Qué rutina querés iniciar?" y lista las
- * rutinas del usuario para lanzar una sesión directa (o entrenar libre).
- * Diseño centrado, sin scroll de página; la lista crece con su propio scroll.
+ * Dos acciones: "Comenzar rutina" (despliega el selector "¿Qué rutina querés
+ * iniciar?" con las rutinas del usuario + opción libre) y "Rutinas" (gestión).
+ * Centrado, sin scroll de página; la lista crece con su propio scroll.
  */
 
+import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Play, Plus, Spinner } from "@phosphor-icons/react";
+import {
+  Play,
+  Plus,
+  Spinner,
+  CaretDown,
+  ListDashes,
+} from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { MrMancuernas } from "@/components/mascot";
+import { cn } from "@/lib/utils";
 
 type RoutineLite = {
   id: string;
@@ -20,6 +28,8 @@ type RoutineLite = {
 };
 
 export default function EntrenarMenuPage() {
+  const [picking, setPicking] = useState(false);
+
   const { data: routines, isLoading } = useQuery({
     queryKey: ["routines", "picker"],
     queryFn: async () => {
@@ -35,74 +45,103 @@ export default function EntrenarMenuPage() {
         .order("updated_at", { ascending: false });
       return (data ?? []) as unknown as RoutineLite[];
     },
+    enabled: picking,
   });
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-6 py-10">
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-5 px-6 py-10">
       {/* Mascota saludando */}
       <MrMancuernas size={80} />
 
-      {/* Encabezado: la pregunta */}
-      <div className="flex flex-col items-center gap-1 text-center">
-        <h1 className="font-display text-2xl font-bold tracking-tight">
-          ¿Qué rutina querés iniciar?
-        </h1>
-        <p className="text-sm text-[var(--text-2)]">
-          Elegí una rutina o arrancá una sesión libre
-        </p>
-      </div>
+      <h1 className="font-display text-2xl font-bold tracking-tight">
+        Entrenar
+      </h1>
 
-      {/* Lista de rutinas + opción libre */}
       <div className="flex w-full max-w-sm flex-col gap-3">
-        {isLoading && (
-          <div className="flex items-center justify-center gap-2 py-8 text-sm text-[var(--muted)]">
-            <Spinner className="size-4 animate-spin" />
-            Cargando rutinas…
+        {/* Comenzar rutina: despliega el selector */}
+        <button
+          type="button"
+          onClick={() => setPicking((v) => !v)}
+          className="card flex w-full items-center gap-3 p-4 text-left transition-colors"
+        >
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-2)]">
+            <Play className="size-4.5 fill-current" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">Comenzar rutina</span>
+            <span className="block text-xs text-[var(--muted)]">
+              Elegí una rutina para iniciar
+            </span>
+          </span>
+          <CaretDown
+            className={cn(
+              "size-4.5 shrink-0 text-[var(--muted)] transition-transform",
+              picking && "rotate-180"
+            )}
+          />
+        </button>
+
+        {/* Selector desplegado: ¿Qué rutina? + lista + libre */}
+        {picking && (
+          <div className="card flex flex-col gap-2 p-3">
+            <p className="px-1 text-center text-sm font-semibold text-[var(--text-2)]">
+              ¿Qué rutina querés iniciar?
+            </p>
+
+            {isLoading && (
+              <div className="flex items-center justify-center gap-2 py-4 text-sm text-[var(--muted)]">
+                <Spinner className="size-4 animate-spin" />
+                Cargando…
+              </div>
+            )}
+
+            {!isLoading && routines?.length === 0 && (
+              <Link
+                href="/rutinas"
+                className="rounded-xl border border-dashed border-[var(--border)] px-3 py-4 text-center text-sm text-[var(--muted)] transition-colors hover:border-[var(--accent)]"
+              >
+                Creá tu primera rutina
+              </Link>
+            )}
+
+            <div className="flex max-h-[40vh] flex-col gap-1 overflow-y-auto">
+              {routines?.map((r) => (
+                <Link
+                  key={r.id}
+                  href={`/entrenar/sesion?routine=${r.id}`}
+                  className="flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-[var(--surface-2)]"
+                >
+                  <span className="min-w-0 truncate font-medium">{r.name}</span>
+                  <span className="shrink-0 text-xs text-[var(--muted)]">
+                    {r.routine_exercises.length} ejercicios
+                  </span>
+                </Link>
+              ))}
+            </div>
+
+            {/* Sesión libre */}
+            <Link
+              href="/entrenar/sesion"
+              className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-[var(--surface-2)]"
+            >
+              <Plus className="size-4 text-[var(--muted)]" />
+              <span className="font-medium">Entrenamiento libre</span>
+            </Link>
           </div>
         )}
 
-        {!isLoading && routines?.length === 0 && (
-          <Link
-            href="/rutinas"
-            className="card flex flex-col items-center gap-1 border border-dashed border-[var(--border)] p-6 text-center transition-colors hover:border-[var(--accent)]"
-          >
-            <span className="font-semibold">Todavía no tenés rutinas</span>
-            <span className="text-xs text-[var(--muted)]">
-              Creá tu primera rutina para lanzarla desde acá
-            </span>
-          </Link>
-        )}
-
-        {routines?.map((r) => (
-          <Link
-            key={r.id}
-            href={`/entrenar/sesion?routine=${r.id}`}
-            className="card group flex items-center gap-3 p-4 transition-transform hover:-translate-y-0.5"
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-2)] transition-colors group-hover:text-[var(--accent)]">
-              <Play className="size-4.5 fill-current" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate font-semibold">{r.name}</span>
-              <span className="block text-xs text-[var(--muted)]">
-                {r.routine_exercises.length} ejercicios
-              </span>
-            </span>
-          </Link>
-        ))}
-
-        {/* Sesión libre: desde cero */}
+        {/* Rutinas: gestión */}
         <Link
-          href="/entrenar/sesion"
-          className="card group flex items-center gap-3 p-4 transition-transform hover:-translate-y-0.5"
+          href="/rutinas"
+          className="card flex w-full items-center gap-3 p-4 transition-colors"
         >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-2)] transition-colors group-hover:text-[var(--accent)]">
-            <Plus className="size-4.5" />
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-2)]">
+            <ListDashes className="size-4.5" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block font-semibold">Entrenamiento libre</span>
+            <span className="block font-semibold">Rutinas</span>
             <span className="block text-xs text-[var(--muted)]">
-              Armá la sesión a tu manera
+              Creá y editá tus rutinas
             </span>
           </span>
         </Link>
