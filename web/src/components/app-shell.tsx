@@ -142,7 +142,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-dvh">
-      <div className="flex min-h-dvh items-start lg:pl-60">
+      <div className="flex min-h-dvh lg:pl-60">
         {/* Sidebar desktop */}
         <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur-xl lg:flex">
           {/* Logo centrado */}
