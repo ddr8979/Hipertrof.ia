@@ -4,7 +4,7 @@
  * Mensajes estilo Instagram — lista de conversaciones + chat activo.
  * Mobile: single column con tabs (Chats / Solicitudes). Desktop: split view.
  */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -88,6 +88,36 @@ export default function MensajesPage() {
     refetchInterval: 15000,
   });
 
+  // Mi círculo social (follows en ambas direcciones): con quien tengo vínculo
+  // es "Chat"; quien me escribe sin vínculo va a "Solicitudes".
+  const { data: circle } = useQuery({
+    queryKey: ["dm_circle", me?.id],
+    enabled: !!me?.id,
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("followers")
+        .select("follower_id, following_id")
+        .or(`follower_id.eq.${me!.id},following_id.eq.${me!.id}`);
+      const ids = new Set<string>();
+      for (const r of data ?? []) {
+        if (r.follower_id === me!.id) ids.add(r.following_id);
+        else ids.add(r.follower_id);
+      }
+      return ids;
+    },
+  });
+
+  // Filtra las conversaciones según la pestaña activa.
+  const visibleConvos = useMemo(() => {
+    const list = convos ?? [];
+    if (!circle) return list;
+    return list.filter((c) => {
+      const connected = circle.has(c.other_id);
+      return activeTab === "chats" ? connected : !connected;
+    });
+  }, [convos, circle, activeTab]);
+
   const { data: results, isLoading: searching } = useQuery({
     queryKey: ["dm_search", q],
     queryFn: async () => {
@@ -105,7 +135,10 @@ export default function MensajesPage() {
     enabled: q.trim().length >= 2,
   });
 
-  const totalUnread = (convos ?? []).reduce((s, c) => s + (c.unread ?? 0), 0);
+  const totalUnread = (convos ?? []).reduce(
+    (s, c) => s + (circle?.has(c.other_id) ? (c.unread ?? 0) : 0),
+    0
+  );
 
   async function enableNotifications() {
     try {
@@ -295,7 +328,7 @@ export default function MensajesPage() {
                 <Skeleton className="h-14" />
                 <Skeleton className="h-14" />
               </div>
-            ) : (convos ?? []).length === 0 ? (
+            ) : visibleConvos.length === 0 ? (
               <EmptyState
                 icon={<MessageCircle className="size-8" />}
                 title={activeTab === "chats" ? "Todavía no tenés chats" : "Sin solicitudes"}
@@ -310,7 +343,7 @@ export default function MensajesPage() {
               />
             ) : (
               <div className="divide-y divide-[var(--border)]">
-                {(convos ?? []).map((c) => (
+                {visibleConvos.map((c) => (
                   <Link
                     key={c.other_id}
                     href={isMobile ? `/mensajes/${c.other_id}` : "#"}
