@@ -49,7 +49,7 @@ export default function EntrenarMenuPage() {
   });
 
   return (
-    <main className="flex h-dvh flex-col items-center justify-center overflow-hidden px-6">
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden">
       {/* Bloque único: mascot + título + botones, agrupados y centrados */}
       <div className="flex w-full max-w-sm flex-col items-center gap-4">
         <MrMancuernas size={72} />
@@ -150,6 +150,6 @@ export default function EntrenarMenuPage() {
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

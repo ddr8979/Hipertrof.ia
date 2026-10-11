@@ -237,7 +237,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
           <main
             className={cn(
-              "mx-auto w-full min-w-0 flex-1 max-w-3xl px-4 pt-6 sm:px-6 sm:pt-8 lg:max-w-none lg:pb-14 lg:pt-8",
+              "mx-auto flex w-full min-w-0 flex-1 flex-col max-w-3xl px-4 pt-6 sm:px-6 sm:pt-8 lg:max-w-none lg:pb-14 lg:pt-8",
               isChatThread
                 ? "pb-4"
                 : "pb-[calc(4.75rem_+_env(safe-area-inset-bottom))]"
